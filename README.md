@@ -10,7 +10,6 @@ This release contains a Codex Skill for research-grade life-cycle assessment of 
 
 - `piezocatalysis-lca-modeling/`: installable Skill folder / 可安装 Skill 文件夹
 - `USER_MANUAL_BILINGUAL.md`: Chinese-English user manual / 中英双语使用手册
-- `GITHUB_RELEASE_GUIDE_BILINGUAL.md`: publication checklist / GitHub 发布指南
 - `LICENSE`: MIT license for original package content / 原创内容 MIT 许可证
 - `NOTICE.md`: third-party, database, and confidentiality notice / 第三方、数据库与保密声明
 
