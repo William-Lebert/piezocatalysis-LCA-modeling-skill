@@ -1,0 +1,4 @@
+interface:
+  display_name: "Piezocatalysis LCA Modeling"
+  short_description: "Research-grade OpenLCA and SimaPro workflows"
+  default_prompt: "Use $piezocatalysis-lca-modeling to build and audit a piezocatalysis LCA model from experimental data."

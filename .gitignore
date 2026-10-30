@@ -1,0 +1,13 @@
+__pycache__/
+*.py[cod]
+*.log
+.DS_Store
+Thumbs.db
+*.zolca
+*.spold
+*.spre
+*.opju
+*.xlsx
+*.xls
+private/
+raw-data/

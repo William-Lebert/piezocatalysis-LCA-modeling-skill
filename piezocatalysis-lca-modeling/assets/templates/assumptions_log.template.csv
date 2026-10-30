@@ -1,0 +1,2 @@
+assumption_id,parameter_or_boundary,value,unit,evidence_class,source,rationale,lower_bound,upper_bound,distribution,sensitivity_case,status
+A-001,illumination boundary,excluded,,scenario,replace-me,Natural-light deployment scenario,,,,include artificial lamp,pending

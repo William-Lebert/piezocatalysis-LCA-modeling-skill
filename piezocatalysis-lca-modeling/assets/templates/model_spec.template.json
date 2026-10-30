@@ -1,0 +1,71 @@
+{
+  "schema_version": "1.0",
+  "study": {
+    "title": "replace-me",
+    "model_tag": "replace-me",
+    "version": "0.1.0",
+    "status": "draft",
+    "goal": "replace-me",
+    "decision_context": "replace-me",
+    "geography": "replace-me",
+    "temporal_scope": "replace-me"
+  },
+  "functional_unit": {
+    "name": "replace-me",
+    "amount": 1.0,
+    "unit": "replace-me",
+    "service_definition": "replace-me",
+    "reference_flow": "replace-me",
+    "calculation_rule": "replace-me"
+  },
+  "system_boundary": {
+    "type": "preparation-only or cradle-to-treatment",
+    "included_stages": [],
+    "excluded_stages": [],
+    "allocation_rule": "replace-me",
+    "electricity_scenario": "replace-me",
+    "illumination_decision": "replace-me"
+  },
+  "systems": [
+    {
+      "name": "Material-A-PPC",
+      "mode": "PPC",
+      "catalyst": "Material A",
+      "foreground_inventory": [
+        {
+          "flow_name": "dry catalyst",
+          "stage": "preparation",
+          "direction": "output",
+          "value": 0.5,
+          "unit": "g",
+          "evidence_class": "scenario",
+          "source": "replace-me"
+        }
+      ],
+      "kinetics": {
+        "model": "pseudo-first-order",
+        "kobs_min-1": null,
+        "source": "replace-me"
+      },
+      "lifetime": {
+        "reuse_cycles": null,
+        "recovery_fraction": null,
+        "evidence_class": "scenario"
+      }
+    }
+  ],
+  "lcia": {
+    "software": "openLCA or SimaPro",
+    "software_version": "replace-me",
+    "database": "replace-me",
+    "database_version": "replace-me",
+    "system_model": "replace-me",
+    "methods": []
+  },
+  "data_policy": {
+    "allowed_evidence_classes": ["measured", "reported", "calculated", "proxy", "scenario"],
+    "proxy_policy": "record rationale and sensitivity alternative",
+    "missing_data_rule": "do not silently invent or zero-fill",
+    "public_release_exclusions": ["licensed databases", "credentials", "private raw data"]
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "model_tag": "replace-me",
+  "calculation_date": "YYYY-MM-DD",
+  "software": {
+    "name": "openLCA or SimaPro",
+    "version": "replace-me"
+  },
+  "database": {
+    "name": "replace-me",
+    "version": "replace-me",
+    "system_model": "replace-me"
+  },
+  "lcia_methods": [
+    {"name": "replace-me", "version": "replace-me", "id": "replace-me"}
+  ],
+  "functional_unit": "replace-me",
+  "system_ids": {},
+  "exclusions": [],
+  "warnings": [],
+  "script_or_commit": "replace-me"
+}
