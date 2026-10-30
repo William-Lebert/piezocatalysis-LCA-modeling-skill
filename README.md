@@ -1,5 +1,7 @@
 # Piezocatalysis LCA Modeling Skill / 压电催化 LCA 建模技能包
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23813629.svg)](https://doi.org/10.5281/zenodo.23813629)
+
 Version 1.0.0, 2026-10-30.
 
 This release contains a Codex Skill for research-grade life-cycle assessment of piezocatalysis, photocatalysis, and piezo-photocatalysis systems. It supports software-neutral model design plus implementation routes for openLCA and SimaPro.
@@ -16,3 +18,19 @@ This release contains a Codex Skill for research-grade life-cycle assessment of 
 The source DOCX and licensed LCA databases are intentionally not included.
 
 原始 DOCX、许可证信息及商业数据库未包含在公开包中。
+
+## Citation / 引用
+
+If you use this software in research, please cite the specific version used.
+
+如果您在科研工作中使用本软件，请引用实际使用的具体版本。
+
+### Version v1.0.0
+
+Pu, X. (2026). *Piezocatalysis LCA Modeling Skill (Version v1.0.0)* [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.23813630
+
+### All versions / 所有版本
+
+Project DOI: https://doi.org/10.5281/zenodo.23813629
+
+For machine-readable citation metadata, see [`CITATION.cff`](CITATION.cff).
