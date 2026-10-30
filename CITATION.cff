@@ -1,0 +1,12 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it using the metadata below."
+title: "Piezocatalysis LCA Modeling Skill"
+version: 1.0.0
+date-released: 2026-10-30
+type: software
+authors:
+  - family-names: "Pu"
+    given-names: "Xiaoyu"
+    orcid: "https://orcid.org/0009-0002-3687-7560"
+license: MIT
+repository-code: "https://github.com/William-Lebert/piezocatalysis-LCA-modeling-skill"
