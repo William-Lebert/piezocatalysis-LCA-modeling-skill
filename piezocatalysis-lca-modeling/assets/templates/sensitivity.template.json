@@ -1,0 +1,109 @@
+{
+  "description": "replace-me: describe study and the provenance of absolute impact contributions",
+  "routes": [
+    {
+      "id": "route-A",
+      "scope": {
+        "functional_unit": {
+          "description": "replace-me",
+          "amount": 1,
+          "unit": "replace-me"
+        },
+        "system_boundary": "replace-me",
+        "geography": "replace-me",
+        "database": "replace-me",
+        "database_version": "replace-me",
+        "system_model": "replace-me",
+        "allocation": "replace-me",
+        "lcia_method": "replace-me",
+        "lcia_version": "replace-me",
+        "temporal_scope": "replace-me",
+        "cutoff_rules": "replace-me",
+        "recycling_approach": "replace-me",
+        "electricity_scenario": "replace-me",
+        "illumination_decision": "replace-me"
+      },
+      "components_are_non_overlapping": true,
+      "impact_categories": {
+        "impact-1": {
+          "unit": "replace-me",
+          "total": 1,
+          "source": "replace-me",
+          "evidence_class": "calculated"
+        }
+      },
+      "components": [
+        {
+          "id": "treatment_electricity",
+          "source": "replace-me",
+          "evidence_class": "calculated",
+          "impacts": {
+            "impact-1": 1
+          }
+        }
+      ],
+      "result_basis": "absolute"
+    },
+    {
+      "id": "route-B",
+      "scope": {
+        "functional_unit": {
+          "description": "replace-me",
+          "amount": 1,
+          "unit": "replace-me"
+        },
+        "system_boundary": "replace-me",
+        "geography": "replace-me",
+        "database": "replace-me",
+        "database_version": "replace-me",
+        "system_model": "replace-me",
+        "allocation": "replace-me",
+        "lcia_method": "replace-me",
+        "lcia_version": "replace-me",
+        "temporal_scope": "replace-me",
+        "cutoff_rules": "replace-me",
+        "recycling_approach": "replace-me",
+        "electricity_scenario": "replace-me",
+        "illumination_decision": "replace-me"
+      },
+      "components_are_non_overlapping": true,
+      "impact_categories": {
+        "impact-1": {
+          "unit": "replace-me",
+          "total": 2,
+          "source": "replace-me",
+          "evidence_class": "calculated"
+        }
+      },
+      "components": [
+        {
+          "id": "treatment_electricity",
+          "source": "replace-me",
+          "evidence_class": "calculated",
+          "impacts": {
+            "impact-1": 2
+          }
+        }
+      ],
+      "result_basis": "absolute"
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "power-alternative",
+      "variable": "replace-me",
+      "baseline": 1,
+      "value": 2,
+      "unit": "replace-me",
+      "evidence_class": "scenario",
+      "source": "replace-me",
+      "adjustments": [
+        {
+          "route": "route-A",
+          "component": "treatment_electricity",
+          "operator": "linear"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,266 @@
+{
+  "description": "Entirely synthetic impact contributions; not an experimental study or database result.",
+  "routes": [
+    {
+      "id": "A",
+      "scope": {
+        "functional_unit": {
+          "description": "100 mg synthetic pollutant removed under the same conditions",
+          "amount": 100,
+          "unit": "mg"
+        },
+        "system_boundary": "synthetic preparation and treatment",
+        "geography": "synthetic",
+        "database": "synthetic database",
+        "database_version": "1",
+        "system_model": "synthetic cutoff",
+        "allocation": "synthetic allocation",
+        "lcia_method": "synthetic method",
+        "lcia_version": "1",
+        "temporal_scope": "synthetic study year",
+        "cutoff_rules": "synthetic cutoff rules",
+        "recycling_approach": "synthetic recycling policy",
+        "electricity_scenario": "synthetic grid",
+        "illumination_decision": "synthetic lamp included"
+      },
+      "impact_categories": {
+        "climate": {
+          "unit": "synthetic kg CO2-eq",
+          "total": 3,
+          "source": "synthetic reference total",
+          "evidence_class": "scenario"
+        },
+        "energy": {
+          "unit": "synthetic MJ",
+          "total": 12,
+          "source": "synthetic reference total",
+          "evidence_class": "scenario"
+        }
+      },
+      "components": [
+        {
+          "id": "preparation",
+          "source": "synthetic contribution",
+          "impacts": {
+            "climate": 1,
+            "energy": 4
+          },
+          "evidence_class": "scenario"
+        },
+        {
+          "id": "treatment_electricity",
+          "source": "synthetic contribution",
+          "impacts": {
+            "climate": 2,
+            "energy": 8
+          },
+          "evidence_class": "scenario"
+        }
+      ],
+      "components_are_non_overlapping": true,
+      "result_basis": "absolute"
+    },
+    {
+      "id": "B",
+      "scope": {
+        "functional_unit": {
+          "description": "100 mg synthetic pollutant removed under the same conditions",
+          "amount": 100,
+          "unit": "mg"
+        },
+        "system_boundary": "synthetic preparation and treatment",
+        "geography": "synthetic",
+        "database": "synthetic database",
+        "database_version": "1",
+        "system_model": "synthetic cutoff",
+        "allocation": "synthetic allocation",
+        "lcia_method": "synthetic method",
+        "lcia_version": "1",
+        "temporal_scope": "synthetic study year",
+        "cutoff_rules": "synthetic cutoff rules",
+        "recycling_approach": "synthetic recycling policy",
+        "electricity_scenario": "synthetic grid",
+        "illumination_decision": "synthetic lamp included"
+      },
+      "impact_categories": {
+        "climate": {
+          "unit": "synthetic kg CO2-eq",
+          "total": 4,
+          "source": "synthetic reference total",
+          "evidence_class": "scenario"
+        },
+        "energy": {
+          "unit": "synthetic MJ",
+          "total": 14,
+          "source": "synthetic reference total",
+          "evidence_class": "scenario"
+        }
+      },
+      "components": [
+        {
+          "id": "preparation",
+          "source": "synthetic contribution",
+          "impacts": {
+            "climate": 2,
+            "energy": 6
+          },
+          "evidence_class": "scenario"
+        },
+        {
+          "id": "treatment_electricity",
+          "source": "synthetic contribution",
+          "impacts": {
+            "climate": 2,
+            "energy": 8
+          },
+          "evidence_class": "scenario"
+        }
+      ],
+      "components_are_non_overlapping": true,
+      "result_basis": "absolute"
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "A_power_double",
+      "variable": "A treatment active power",
+      "baseline": 1,
+      "value": 2,
+      "unit": "synthetic kW",
+      "evidence_class": "scenario",
+      "source": "synthetic assumption; A runtime and treatment performance unchanged",
+      "adjustments": [
+        {
+          "route": "A",
+          "component": "treatment_electricity",
+          "operator": "linear"
+        }
+      ]
+    },
+    {
+      "id": "A_yield_double",
+      "variable": "A dry catalyst yield",
+      "baseline": 1,
+      "value": 2,
+      "unit": "synthetic g per batch",
+      "evidence_class": "scenario",
+      "source": "synthetic assumption; all other preparation inputs held constant",
+      "adjustments": [
+        {
+          "route": "A",
+          "component": "preparation",
+          "operator": "inverse"
+        }
+      ]
+    },
+    {
+      "id": "A_proxy_alternative",
+      "variable": "A preparation proxy dataset",
+      "baseline": "synthetic proxy 1",
+      "value": "synthetic proxy 2",
+      "unit": "dataset",
+      "evidence_class": "proxy",
+      "source": "synthetic alternative calculation; all other items unchanged",
+      "adjustments": [
+        {
+          "route": "A",
+          "component": "preparation",
+          "operator": "replace",
+          "replacement_source": "synthetic alternative absolute contribution",
+          "replacement_impacts": {
+            "climate": 3,
+            "energy": 9
+          },
+          "replacement_evidence_class": "proxy"
+        }
+      ]
+    },
+    {
+      "id": "A_time_double",
+      "variable": "A treatment run time",
+      "baseline": 1,
+      "value": 2,
+      "unit": "synthetic h",
+      "evidence_class": "scenario",
+      "source": "synthetic assumption; active power and removal per run held fixed",
+      "adjustments": [
+        {
+          "route": "A",
+          "component": "treatment_electricity",
+          "operator": "linear"
+        }
+      ]
+    },
+    {
+      "id": "A_reuse_double",
+      "variable": "A effective catalyst uses",
+      "baseline": 2,
+      "value": 4,
+      "unit": "uses",
+      "evidence_class": "scenario",
+      "source": "synthetic assumption; constant performance and no additional regeneration inputs",
+      "adjustments": [
+        {
+          "route": "A",
+          "component": "preparation",
+          "operator": "inverse"
+        }
+      ]
+    },
+    {
+      "id": "A_recovery_change",
+      "variable": "A solvent recovery fraction",
+      "baseline": 0.5,
+      "value": 0.8,
+      "unit": "fraction",
+      "evidence_class": "scenario",
+      "source": "synthetic alternative inventory; treatment and all other variables held fixed",
+      "adjustments": [
+        {
+          "route": "A",
+          "component": "preparation",
+          "operator": "replace",
+          "replacement_source": "synthetic separately recalculated preparation contribution",
+          "replacement_impacts": {
+            "climate": 0.75,
+            "energy": 3
+          },
+          "replacement_evidence_class": "calculated"
+        }
+      ]
+    },
+    {
+      "id": "alternative_grid",
+      "variable": "electricity mix",
+      "baseline": "synthetic grid 1",
+      "value": "synthetic grid 2",
+      "unit": "dataset",
+      "evidence_class": "scenario",
+      "source": "synthetic alternative electricity calculations for both routes; all other items fixed",
+      "adjustments": [
+        {
+          "route": "A",
+          "component": "treatment_electricity",
+          "operator": "replace",
+          "replacement_source": "synthetic grid 2 calculation for A",
+          "replacement_impacts": {
+            "climate": 1,
+            "energy": 7
+          },
+          "replacement_evidence_class": "calculated"
+        },
+        {
+          "route": "B",
+          "component": "treatment_electricity",
+          "operator": "replace",
+          "replacement_source": "synthetic grid 2 calculation for B",
+          "replacement_impacts": {
+            "climate": 1,
+            "energy": 7
+          },
+          "replacement_evidence_class": "calculated"
+        }
+      ]
+    }
+  ]
+}

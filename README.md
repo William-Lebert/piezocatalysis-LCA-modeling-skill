@@ -2,7 +2,7 @@
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23813629.svg)](https://doi.org/10.5281/zenodo.23813629)
 
-Version 1.0.0, 2026-10-30.
+Version 1.1.0, 2026-11-08.
 
 This release contains a Codex Skill for research-grade life-cycle assessment of piezocatalysis, photocatalysis, and piezo-photocatalysis systems. It supports software-neutral model design plus implementation routes for openLCA and SimaPro.
 
@@ -34,3 +34,20 @@ Pu, X. (2026). *Piezocatalysis LCA Modeling Skill (Version v1.0.0)* [Computer so
 Project DOI: https://doi.org/10.5281/zenodo.23813629
 
 For machine-readable citation metadata, see [`CITATION.cff`](CITATION.cff).
+
+## Optional advanced-engine feasibility / 可选高级引擎评估
+
+A synthetic Brightway example and the limits on parameterization, uncertainty analysis, and prospective scenarios are documented in [the feasibility record](piezocatalysis-lca-modeling/assets/examples/synthetic-brightway/README.md). These engines are not core dependencies.
+
+合成 Brightway 案例及参数化、不确定性分析和前瞻情景的限制见[可行性记录](piezocatalysis-lca-modeling/assets/examples/synthetic-brightway/README.md)；高级引擎不属于核心依赖。
+
+## Related projects / 参考项目
+
+The following projects informed the evaluation of LCA engines and integration approaches; each is independently maintained and has its own license.
+
+以下项目为生命周期评价引擎与对接方式的评估提供了参考；各项目独立维护，分别适用其自身许可证。
+
+- [Brightway2](https://github.com/brightway-lca/brightway2), [bw2calc](https://github.com/brightway-lca/brightway2-calc), and [bw2io](https://github.com/brightway-lca/brightway2-io): LCA calculation and data import.
+- [openLCA IPC Python client](https://github.com/GreenDelta/olca-ipc.py) and [openLCA Python examples](https://github.com/GreenDelta/openlca-python-examples): openLCA integration.
+- [lca_algebraic](https://github.com/oie-mines-paristech/lca_algebraic): parametric modeling and sensitivity analysis.
+- [premise](https://github.com/polca/premise): prospective background scenarios.

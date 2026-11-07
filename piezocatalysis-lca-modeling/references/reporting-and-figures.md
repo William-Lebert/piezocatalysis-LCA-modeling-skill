@@ -35,6 +35,8 @@ Provide:
 - sensitivity scenarios;
 - EE/O parameters and results when relevant.
 
+The optional sensitivity report exports absolute values, baseline differences, percentages, per-category ranking groups and whether the ranking changes. Keep the included component-level inputs and scenario provenance with the results. `--csv` creates a new file only; text cells beginning with spreadsheet formula characters are prefixed with an apostrophe. A null percentage is not a zero change. Ranking uses exact numerical ties and lower numerical impact, so it does not by itself establish statistical significance or an overall environmental preference across categories.
+
 ## 3. Figure set
 
 Recommended figures for a piezocatalysis paper:

@@ -97,6 +97,8 @@ Allocate preparation burden over total lifetime pollutant removal:
 
 If cycle conditions differ, calculate each cycle separately. Do not use a simple arithmetic mean of removal percentages when concentration, volume, or catalyst recovery changes.
 
+The optional `scripts/audit_and_scale_inventory.py` handles only a simplified equal-performance service: `runs_per_FU = target_removed_mg / removed_per_run_mg` and `preparation_batches_per_FU = runs_per_FU × catalyst_dose_g / dry_batch_yield_g / effective_uses`. Each preparation inventory row is per synthesis batch; each treatment row is per treatment run. `effective_uses` is an explicitly sourced assumption, not a measured recovery fraction. It may represent an average effective lifetime only when the equal-dose, equal-removal and allocation assumptions are appropriate. For changing performance, replacement, regeneration or cycle-specific losses, use an explicit cycle-by-cycle model instead; this tool does not model those processes automatically.
+
 Report catalyst loss, regeneration inputs, washing between cycles, and the rule used after the last observed cycle. Treat extrapolated lifetime as a scenario.
 
 ## 7. Scale-up and comparative claims

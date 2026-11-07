@@ -56,6 +56,10 @@ For each mapping record:
 
 Do not select providers by name similarity alone. Inspect the reference product, production technology, geography, and sign convention.
 
+The inventory template's `dataset_mapping` field may refer to a unique `mapping_id` in `dataset_mapping.template.csv`. For the inventory audit/scaling tool, use `exact`, `proxy` or `constructed` as match type, `pending` or `reviewed` as review status, and a conversion factor expressing dataset units per one foreground unit. The tool checks only a limited mass, volume and energy unit list; it does not establish that a dataset is scientifically appropriate or available. A reviewed status is supplied by the user, not verified by the script. Proxy and constructed mappings require a rationale and expected bias; record a sensitivity alternative where available. Old mapping CSVs need `mapping_id` and `rationale` columns before this tool can read them.
+
+The tool reports unmapped included flows as warnings with null dataset amounts; an unknown mapping identifier or mismatched flow/unit is an error. A warning-bearing report is not a complete mapped inventory and must not be treated as one.
+
 ## 4. Data-quality scoring
 
 Score reliability, completeness, temporal correlation, geographic correlation, and technological correlation. Use a pedigree matrix or an equivalent documented scheme. A proxy with high numerical precision is still low-confidence evidence.

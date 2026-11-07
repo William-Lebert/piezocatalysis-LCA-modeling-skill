@@ -1,0 +1,181 @@
+{
+  "report_type": "foreground_inventory_scaling",
+  "system": "Synthetic-A",
+  "functional_unit": {
+    "description": "Synthetic pollutant removed from 1 L water, influent 20 mg/L, outlet 10 mg/L per illustrative run",
+    "amount": 100.0,
+    "unit": "mg"
+  },
+  "parameters": {
+    "service_definition": {
+      "value": "Synthetic pollutant removed from 1 L water, influent 20 mg/L, outlet 10 mg/L per illustrative run",
+      "evidence_class": "scenario",
+      "source": "synthetic service definition"
+    },
+    "target_removed_mg": {
+      "value": 100,
+      "unit": "mg",
+      "evidence_class": "scenario",
+      "source": "synthetic functional unit"
+    },
+    "removed_per_run_mg": {
+      "value": 10,
+      "unit": "mg",
+      "evidence_class": "scenario",
+      "source": "synthetic equal-performance treatment run"
+    },
+    "catalyst_dose_g": {
+      "value": 1,
+      "unit": "g",
+      "evidence_class": "scenario",
+      "source": "synthetic catalyst loading"
+    },
+    "effective_uses": {
+      "value": 2,
+      "unit": "uses",
+      "evidence_class": "scenario",
+      "source": "synthetic constant-performance reuse assumption"
+    }
+  },
+  "reference_output": {
+    "flow_name": "dry catalyst",
+    "amount": 5.0,
+    "unit": "g",
+    "yield_g": 5.0,
+    "evidence_class": "scenario",
+    "source": "synthetic synthesis yield"
+  },
+  "scaling": {
+    "runs_per_fu": 10.0,
+    "preparation_batches_per_fu": 1.0
+  },
+  "assumptions": [
+    "Equal pollutant removal and catalyst dose per run.",
+    "Effective uses allocate preparation burden evenly; recovery losses and changing performance must be reflected in this assumption.",
+    "Preparation entries are per synthesis batch; treatment entries are per run.",
+    "No LCIA is calculated; mappings require human review."
+  ],
+  "flows": [
+    {
+      "inventory_row": 2,
+      "stage": "preparation",
+      "flow_name": "precursor A",
+      "direction": "input",
+      "original_amount": 10.0,
+      "unit": "g",
+      "evidence_class": "scenario",
+      "source": "synthetic synthesis recipe",
+      "note": "illustrative",
+      "amount_per_fu": 10.0,
+      "mapping_id": "map-precursor",
+      "dataset_amount_per_fu": 0.01,
+      "dataset_unit": "kg",
+      "mapping": {
+        "mapping_id": "map-precursor",
+        "foreground_flow": "precursor A",
+        "foreground_unit": "g",
+        "database": "Synthetic DB",
+        "database_version": "1.0",
+        "system_model": "synthetic",
+        "dataset_name": "precursor proxy",
+        "reference_product": "precursor",
+        "dataset_unit": "kg",
+        "geography": "global",
+        "match_type": "proxy",
+        "conversion_factor": "0.001",
+        "rationale": "illustrative substitute",
+        "expected_bias": "unknown",
+        "alternative_dataset": "alternative precursor",
+        "review_status": "pending"
+      }
+    },
+    {
+      "inventory_row": 3,
+      "stage": "preparation",
+      "flow_name": "electricity",
+      "direction": "input",
+      "original_amount": 2.0,
+      "unit": "kWh",
+      "evidence_class": "scenario",
+      "source": "synthetic synthesis recipe",
+      "note": "preparation electricity",
+      "amount_per_fu": 2.0,
+      "mapping_id": "map-electricity",
+      "dataset_amount_per_fu": 2.0,
+      "dataset_unit": "kWh",
+      "mapping": {
+        "mapping_id": "map-electricity",
+        "foreground_flow": "electricity",
+        "foreground_unit": "kWh",
+        "database": "Synthetic DB",
+        "database_version": "1.0",
+        "system_model": "synthetic",
+        "dataset_name": "electricity mix",
+        "reference_product": "electricity",
+        "dataset_unit": "kWh",
+        "geography": "global",
+        "match_type": "exact",
+        "conversion_factor": "1",
+        "rationale": "illustrative mapping",
+        "expected_bias": "unknown",
+        "alternative_dataset": "",
+        "review_status": "pending"
+      }
+    },
+    {
+      "inventory_row": 5,
+      "stage": "treatment",
+      "flow_name": "electricity",
+      "direction": "input",
+      "original_amount": 0.1,
+      "unit": "kWh",
+      "evidence_class": "scenario",
+      "source": "synthetic treatment run",
+      "note": "treatment electricity",
+      "amount_per_fu": 1.0,
+      "mapping_id": "map-electricity",
+      "dataset_amount_per_fu": 1.0,
+      "dataset_unit": "kWh",
+      "mapping": {
+        "mapping_id": "map-electricity",
+        "foreground_flow": "electricity",
+        "foreground_unit": "kWh",
+        "database": "Synthetic DB",
+        "database_version": "1.0",
+        "system_model": "synthetic",
+        "dataset_name": "electricity mix",
+        "reference_product": "electricity",
+        "dataset_unit": "kWh",
+        "geography": "global",
+        "match_type": "exact",
+        "conversion_factor": "1",
+        "rationale": "illustrative mapping",
+        "expected_bias": "unknown",
+        "alternative_dataset": "",
+        "review_status": "pending"
+      }
+    },
+    {
+      "inventory_row": 6,
+      "stage": "treatment",
+      "flow_name": "wastewater",
+      "direction": "output",
+      "original_amount": 1.0,
+      "unit": "L",
+      "evidence_class": "scenario",
+      "source": "synthetic treatment run",
+      "note": "unmapped output kept visible",
+      "amount_per_fu": 10.0,
+      "mapping_id": null,
+      "dataset_amount_per_fu": null,
+      "dataset_unit": null,
+      "mapping": null
+    }
+  ],
+  "excluded_flows": [],
+  "warnings": [
+    "mapping row 2: mapping map-precursor is pending human review",
+    "mapping row 3: mapping map-electricity is pending human review",
+    "inventory row 6: unmapped flow wastewater; dataset amount unavailable"
+  ]
+}

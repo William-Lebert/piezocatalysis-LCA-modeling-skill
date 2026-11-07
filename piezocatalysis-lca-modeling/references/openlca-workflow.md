@@ -38,6 +38,24 @@ The workspace contains application metadata and database connections; the instal
 
 Use IPC when reproducibility or batch calculation is required.
 
+### Local read-only adapter (openLCA 2.x JSON-RPC)
+
+`scripts/openlca_readonly.py` uses only the Python standard library and connects to `127.0.0.1` at the explicitly supplied IPC port. It supports listing descriptors and calculating an **existing** product system. Its method allowlist has no database create, update, import or delete operation. Calculating schedules a temporary server result and `result/dispose` frees that temporary result; this is not a persistent database write. It does not start or configure the server.
+
+```sh
+python scripts/openlca_readonly.py --port 8080 list --type ProductSystem
+python scripts/openlca_readonly.py --port 8080 list --type ImpactMethod
+python scripts/openlca_readonly.py --port 8080 list --type FlowProperty
+```
+
+Review the active database in openLCA and select exact UUIDs. A sample calculation command is in `assets/examples/synthetic-openlca/README.md`. The adapter requires product-system, impact-method, unit and flow-property UUIDs, amount, functional-unit description, and user-supplied version/database/system-model labels. It verifies system and method IDs against descriptors, but **cannot independently identify the active database or verify the unit/property relationship**. The user must confirm those in openLCA; the exported metadata explicitly marks labels as user asserted. Descriptor lists and reports may contain private dataset information; keep them local and respect database licenses.
+
+It polls result state with a timeout, returns absolute impacts and category-specific process contributions, checks their numerical sum where available, and attempts result disposal even after errors. Empty impact results, server errors, non-finite numbers and disposal failures stop the command rather than returning fabricated zeroes. Empty contributions and unreconciled sums are warnings. Result output is JSON on standard output; save it to a new file and do not overwrite an input. The API doesn't expose every assumption or guarantee that results are scientifically valid: check the product-system reference flow, unit, LCIA method, model context and any warnings independently.
+
+The synthetic test uses a local mock server, not an openLCA database. Actual compatibility depends on the running openLCA and server version. This implementation follows the official [descriptor](https://greendelta.github.io/openLCA-ApiDoc/data/get_descriptors.html), [calculation](https://greendelta.github.io/openLCA-ApiDoc/results/calculate.html), and [result lifecycle](https://greendelta.github.io/openLCA-ApiDoc/results/results.html) documentation.
+
+### General IPC procedure
+
 1. Ask the user to open the target database and start the IPC server.
 2. Connect to the confirmed port.
 3. Read descriptors before writing; verify the database contains the target process, flow, provider, and method.

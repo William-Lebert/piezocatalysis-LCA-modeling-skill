@@ -1,0 +1,6 @@
+system,stage,flow_name,amount,unit,direction,evidence_class,source,dataset_mapping,included,note
+Synthetic-A,preparation,precursor A,10,g,input,scenario,synthetic synthesis recipe,map-precursor,true,illustrative
+Synthetic-A,preparation,electricity,2,kWh,input,scenario,synthetic synthesis recipe,map-electricity,true,preparation electricity
+Synthetic-A,preparation,dry catalyst,5,g,output,scenario,synthetic synthesis yield,,true,reference product
+Synthetic-A,treatment,electricity,0.1,kWh,input,scenario,synthetic treatment run,map-electricity,true,treatment electricity
+Synthetic-A,treatment,wastewater,1,L,output,scenario,synthetic treatment run,,true,unmapped output kept visible

@@ -101,12 +101,16 @@ Reconcile totals, verify one hand calculation, retain absolute LCIA, run sensiti
 5. Calculate absolute impacts and contribution results.
 6. Re-read modified processes and archive the manifest.
 
+For read-only IPC listing and calculation of existing systems, see `piezocatalysis-lca-modeling/references/openlca-workflow.md` and the mock example in `assets/examples/synthetic-openlca/`. The adapter connects only to localhost, does not create or edit entities, and cannot verify the active database or user-supplied unit labels.
+
 1. 打开授权数据库并确认 LCIA 方法。
 2. 仅在需要脚本自动化时启动 IPC。
 3. 使用软件中立模型规格与稳定 UUID 清单。
 4. 修改前导出过程备份。
 5. 计算绝对影响与贡献结果。
 6. 回读修改后的过程并归档 manifest。
+
+通过 IPC 只读列出数据并计算现有产品系统的方法见 `piezocatalysis-lca-modeling/references/openlca-workflow.md` 及 `assets/examples/synthetic-openlca/` 中的模拟示例。适配器仅连接本机，不创建或修改数据库实体，也不能自动核实活动数据库和用户填写的单位标签。
 
 ## 7. SimaPro quick start / SimaPro 快速开始
 
@@ -136,6 +140,18 @@ The templates contain illustrative placeholders. Replace them before scientific 
 
 模板包含示例占位值，科研使用前必须替换。
 
+The model-spec validator checks only part of the structure. It warns about recognized placeholders; add `--reject-placeholders` to reject them. Passing either mode does not certify scientific completeness, comparability, dataset mappings, or software results. Inventory entries must include a source, stage, and input/output direction, even when migrating older model files. Calculation commands reject non-finite inputs and results; units must match the command arguments.
+
+模型规格校验器只检查部分结构。它会提示已识别的占位值；添加 `--reject-placeholders` 可将这些占位值作为错误。任何模式通过均不代表科研内容完整、方案可比、数据集映射正确或软件结果可靠。前景清单条目必须包含来源、阶段和输入／输出方向，旧模型文件也须补齐。计算命令拒绝非有限输入和结果，单位须与命令参数一致。
+
+For an end-to-end inventory audit and functional-unit scaling example, see `assets/examples/synthetic-treatment/README.md`. The script expects preparation flows per synthesis batch and treatment flows per run. Dataset mappings use a unique `mapping_id`; older mapping tables need the new ID and rationale columns. Inspect all warnings: pending or absent mappings mean the report is not a complete, verified inventory.
+
+清单审查与功能单位缩放的完整示例见 `assets/examples/synthetic-treatment/README.md`。制备清单按每个合成批次填写，处理清单按每次运行填写；数据集映射通过唯一的 `mapping_id` 关联，旧映射表需补充编号和理由列。请逐条检查警告：待审核或缺失映射意味着清单尚未完整核实。
+
+For single-factor sensitivity reporting from existing absolute LCIA results, use `scripts/sensitivity_report.py` and see `assets/examples/synthetic-sensitivity/README.md`. Provide traceable, non-overlapping contributions that reconcile with each route's total. Comparison metadata must match. The tool does not perform an LCA calculation or establish scientific equivalence; its scaling assumptions and replacement values require independent justification.
+
+基于已有 LCIA 绝对结果进行单因素敏感性报告，可使用 `scripts/sensitivity_report.py`，示例见 `assets/examples/synthetic-sensitivity/README.md`。请提供来源可追溯、互不重叠且与各路线总量一致的组成项，并确保比较元数据一致。该工具不执行 LCA 建模计算，也不能证明研究条件在科学上等同；缩放假设和替代数值需独立论证。
+
 ## 9. Definition of done / 完成标准
 
 A model is complete only when the functional unit, boundary, evidence classes, providers, software versions, absolute results, sensitivity cases, exclusions, and reproducibility files are all present.
@@ -147,3 +163,13 @@ A model is complete only when the functional unit, boundary, evidence classes, p
 Do not publish commercial databases, private experimental records, license keys, connector binaries, or copyrighted papers. Publish templates, original scripts, methodological instructions, and synthetic examples only.
 
 不得发布商业数据库、私人实验记录、许可证密钥、连接器二进制文件或受版权保护的论文。仅发布模板、原创脚本、方法说明和合成示例。
+
+## Optional advanced-engine evaluation / 可选高级引擎评估
+
+For the isolated synthetic Brightway experiment and conditions for further parameterization or prospective scenarios, see `piezocatalysis-lca-modeling/assets/examples/synthetic-brightway/README.md`. The main workflow does not require these engines.
+
+独立的 Brightway 合成实验及参数化、前瞻情景的后续条件见 `piezocatalysis-lca-modeling/assets/examples/synthetic-brightway/README.md`。主要工作流程不依赖这些高级引擎。
+
+Replacement sensitivity contributions must state their own `replacement_source` and `replacement_evidence_class`; the scenario and baseline evidence remain separately traceable. Older `replace` inputs must add this field.
+
+敏感性分析中的替代贡献必须单独填写 `replacement_source` 和 `replacement_evidence_class`，以便分别追溯情景与基准证据；旧版 `replace` 输入需要补充该字段。

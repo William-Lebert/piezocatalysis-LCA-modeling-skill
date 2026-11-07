@@ -1,0 +1,3 @@
+mapping_id,foreground_flow,foreground_unit,database,database_version,system_model,dataset_name,reference_product,dataset_unit,geography,match_type,conversion_factor,rationale,expected_bias,alternative_dataset,review_status
+map-precursor,precursor A,g,Synthetic DB,1.0,synthetic,precursor proxy,precursor,kg,global,proxy,0.001,illustrative substitute,unknown,alternative precursor,pending
+map-electricity,electricity,kWh,Synthetic DB,1.0,synthetic,electricity mix,electricity,kWh,global,exact,1,illustrative mapping,unknown,,pending

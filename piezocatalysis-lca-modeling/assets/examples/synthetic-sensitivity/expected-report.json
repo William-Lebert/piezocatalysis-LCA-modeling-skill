@@ -1,0 +1,1018 @@
+{
+  "description": "Entirely synthetic impact contributions; not an experimental study or database result.",
+  "input_result_basis": "absolute",
+  "components_non_overlapping_user_asserted": true,
+  "scope_user_asserted": {
+    "functional_unit": {
+      "description": "100 mg synthetic pollutant removed under the same conditions",
+      "amount": 100.0,
+      "unit": "mg"
+    },
+    "system_boundary": "synthetic preparation and treatment",
+    "geography": "synthetic",
+    "database": "synthetic database",
+    "database_version": "1",
+    "system_model": "synthetic cutoff",
+    "allocation": "synthetic allocation",
+    "lcia_method": "synthetic method",
+    "lcia_version": "1",
+    "temporal_scope": "synthetic study year",
+    "cutoff_rules": "synthetic cutoff rules",
+    "recycling_approach": "synthetic recycling policy",
+    "electricity_scenario": "synthetic grid",
+    "illumination_decision": "synthetic lamp included"
+  },
+  "baseline_total_sources": {
+    "A": {
+      "climate": {
+        "source": "synthetic reference total",
+        "evidence_class": "scenario"
+      },
+      "energy": {
+        "source": "synthetic reference total",
+        "evidence_class": "scenario"
+      }
+    },
+    "B": {
+      "climate": {
+        "source": "synthetic reference total",
+        "evidence_class": "scenario"
+      },
+      "energy": {
+        "source": "synthetic reference total",
+        "evidence_class": "scenario"
+      }
+    }
+  },
+  "cases": [
+    {
+      "id": "baseline",
+      "change": null,
+      "results": {
+        "A": {
+          "climate": {
+            "absolute": 3.0,
+            "unit": "synthetic kg CO2-eq",
+            "baseline": 3.0,
+            "delta": 0.0,
+            "change_percent": 0.0
+          },
+          "energy": {
+            "absolute": 12.0,
+            "unit": "synthetic MJ",
+            "baseline": 12.0,
+            "delta": 0.0,
+            "change_percent": 0.0
+          }
+        },
+        "B": {
+          "climate": {
+            "absolute": 4.0,
+            "unit": "synthetic kg CO2-eq",
+            "baseline": 4.0,
+            "delta": 0.0,
+            "change_percent": 0.0
+          },
+          "energy": {
+            "absolute": 14.0,
+            "unit": "synthetic MJ",
+            "baseline": 14.0,
+            "delta": 0.0,
+            "change_percent": 0.0
+          }
+        }
+      },
+      "rankings": {
+        "climate": {
+          "groups": [
+            [
+              "A"
+            ],
+            [
+              "B"
+            ]
+          ],
+          "changed_from_baseline": false
+        },
+        "energy": {
+          "groups": [
+            [
+              "A"
+            ],
+            [
+              "B"
+            ]
+          ],
+          "changed_from_baseline": false
+        }
+      },
+      "components": {
+        "A": {
+          "preparation": {
+            "source": "synthetic contribution",
+            "evidence_class": "scenario",
+            "impacts": {
+              "climate": 1.0,
+              "energy": 4.0
+            }
+          },
+          "treatment_electricity": {
+            "source": "synthetic contribution",
+            "evidence_class": "scenario",
+            "impacts": {
+              "climate": 2.0,
+              "energy": 8.0
+            }
+          }
+        },
+        "B": {
+          "preparation": {
+            "source": "synthetic contribution",
+            "evidence_class": "scenario",
+            "impacts": {
+              "climate": 2.0,
+              "energy": 6.0
+            }
+          },
+          "treatment_electricity": {
+            "source": "synthetic contribution",
+            "evidence_class": "scenario",
+            "impacts": {
+              "climate": 2.0,
+              "energy": 8.0
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "A_power_double",
+      "change": {
+        "id": "A_power_double",
+        "variable": "A treatment active power",
+        "baseline": 1.0,
+        "value": 2.0,
+        "unit": "synthetic kW",
+        "evidence_class": "scenario",
+        "source": "synthetic assumption; A runtime and treatment performance unchanged",
+        "adjustments": [
+          {
+            "route": "A",
+            "component": "treatment_electricity",
+            "operator": "linear",
+            "multiplier": 2.0
+          }
+        ]
+      },
+      "results": {
+        "A": {
+          "climate": {
+            "absolute": 5.0,
+            "unit": "synthetic kg CO2-eq",
+            "baseline": 3.0,
+            "delta": 2.0,
+            "change_percent": 66.66666666666666
+          },
+          "energy": {
+            "absolute": 20.0,
+            "unit": "synthetic MJ",
+            "baseline": 12.0,
+            "delta": 8.0,
+            "change_percent": 66.66666666666666
+          }
+        },
+        "B": {
+          "climate": {
+            "absolute": 4.0,
+            "unit": "synthetic kg CO2-eq",
+            "baseline": 4.0,
+            "delta": 0.0,
+            "change_percent": 0.0
+          },
+          "energy": {
+            "absolute": 14.0,
+            "unit": "synthetic MJ",
+            "baseline": 14.0,
+            "delta": 0.0,
+            "change_percent": 0.0
+          }
+        }
+      },
+      "rankings": {
+        "climate": {
+          "groups": [
+            [
+              "B"
+            ],
+            [
+              "A"
+            ]
+          ],
+          "changed_from_baseline": true
+        },
+        "energy": {
+          "groups": [
+            [
+              "B"
+            ],
+            [
+              "A"
+            ]
+          ],
+          "changed_from_baseline": true
+        }
+      },
+      "components": {
+        "A": {
+          "preparation": {
+            "source": "synthetic contribution",
+            "evidence_class": "scenario",
+            "impacts": {
+              "climate": 1.0,
+              "energy": 4.0
+            }
+          },
+          "treatment_electricity": {
+            "source": "synthetic contribution; scaled under A_power_double (synthetic assumption; A runtime and treatment performance unchanged)",
+            "evidence_class": "calculated",
+            "impacts": {
+              "climate": 4.0,
+              "energy": 16.0
+            },
+            "baseline_source": "synthetic contribution",
+            "baseline_evidence_class": "scenario",
+            "scenario_evidence_class": "scenario"
+          }
+        },
+        "B": {
+          "preparation": {
+            "source": "synthetic contribution",
+            "evidence_class": "scenario",
+            "impacts": {
+              "climate": 2.0,
+              "energy": 6.0
+            }
+          },
+          "treatment_electricity": {
+            "source": "synthetic contribution",
+            "evidence_class": "scenario",
+            "impacts": {
+              "climate": 2.0,
+              "energy": 8.0
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "A_yield_double",
+      "change": {
+        "id": "A_yield_double",
+        "variable": "A dry catalyst yield",
+        "baseline": 1.0,
+        "value": 2.0,
+        "unit": "synthetic g per batch",
+        "evidence_class": "scenario",
+        "source": "synthetic assumption; all other preparation inputs held constant",
+        "adjustments": [
+          {
+            "route": "A",
+            "component": "preparation",
+            "operator": "inverse",
+            "multiplier": 0.5
+          }
+        ]
+      },
+      "results": {
+        "A": {
+          "climate": {
+            "absolute": 2.5,
+            "unit": "synthetic kg CO2-eq",
+            "baseline": 3.0,
+            "delta": -0.5,
+            "change_percent": -16.666666666666664
+          },
+          "energy": {
+            "absolute": 10.0,
+            "unit": "synthetic MJ",
+            "baseline": 12.0,
+            "delta": -2.0,
+            "change_percent": -16.666666666666664
+          }
+        },
+        "B": {
+          "climate": {
+            "absolute": 4.0,
+            "unit": "synthetic kg CO2-eq",
+            "baseline": 4.0,
+            "delta": 0.0,
+            "change_percent": 0.0
+          },
+          "energy": {
+            "absolute": 14.0,
+            "unit": "synthetic MJ",
+            "baseline": 14.0,
+            "delta": 0.0,
+            "change_percent": 0.0
+          }
+        }
+      },
+      "rankings": {
+        "climate": {
+          "groups": [
+            [
+              "A"
+            ],
+            [
+              "B"
+            ]
+          ],
+          "changed_from_baseline": false
+        },
+        "energy": {
+          "groups": [
+            [
+              "A"
+            ],
+            [
+              "B"
+            ]
+          ],
+          "changed_from_baseline": false
+        }
+      },
+      "components": {
+        "A": {
+          "preparation": {
+            "source": "synthetic contribution; scaled under A_yield_double (synthetic assumption; all other preparation inputs held constant)",
+            "evidence_class": "calculated",
+            "impacts": {
+              "climate": 0.5,
+              "energy": 2.0
+            },
+            "baseline_source": "synthetic contribution",
+            "baseline_evidence_class": "scenario",
+            "scenario_evidence_class": "scenario"
+          },
+          "treatment_electricity": {
+            "source": "synthetic contribution",
+            "evidence_class": "scenario",
+            "impacts": {
+              "climate": 2.0,
+              "energy": 8.0
+            }
+          }
+        },
+        "B": {
+          "preparation": {
+            "source": "synthetic contribution",
+            "evidence_class": "scenario",
+            "impacts": {
+              "climate": 2.0,
+              "energy": 6.0
+            }
+          },
+          "treatment_electricity": {
+            "source": "synthetic contribution",
+            "evidence_class": "scenario",
+            "impacts": {
+              "climate": 2.0,
+              "energy": 8.0
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "A_proxy_alternative",
+      "change": {
+        "id": "A_proxy_alternative",
+        "variable": "A preparation proxy dataset",
+        "baseline": "synthetic proxy 1",
+        "value": "synthetic proxy 2",
+        "unit": "dataset",
+        "evidence_class": "proxy",
+        "source": "synthetic alternative calculation; all other items unchanged",
+        "adjustments": [
+          {
+            "route": "A",
+            "component": "preparation",
+            "operator": "replace",
+            "replacement_source": "synthetic alternative absolute contribution",
+            "replacement_evidence_class": "proxy",
+            "replacement_impacts": {
+              "climate": 3.0,
+              "energy": 9.0
+            }
+          }
+        ]
+      },
+      "results": {
+        "A": {
+          "climate": {
+            "absolute": 5.0,
+            "unit": "synthetic kg CO2-eq",
+            "baseline": 3.0,
+            "delta": 2.0,
+            "change_percent": 66.66666666666666
+          },
+          "energy": {
+            "absolute": 17.0,
+            "unit": "synthetic MJ",
+            "baseline": 12.0,
+            "delta": 5.0,
+            "change_percent": 41.66666666666667
+          }
+        },
+        "B": {
+          "climate": {
+            "absolute": 4.0,
+            "unit": "synthetic kg CO2-eq",
+            "baseline": 4.0,
+            "delta": 0.0,
+            "change_percent": 0.0
+          },
+          "energy": {
+            "absolute": 14.0,
+            "unit": "synthetic MJ",
+            "baseline": 14.0,
+            "delta": 0.0,
+            "change_percent": 0.0
+          }
+        }
+      },
+      "rankings": {
+        "climate": {
+          "groups": [
+            [
+              "B"
+            ],
+            [
+              "A"
+            ]
+          ],
+          "changed_from_baseline": true
+        },
+        "energy": {
+          "groups": [
+            [
+              "B"
+            ],
+            [
+              "A"
+            ]
+          ],
+          "changed_from_baseline": true
+        }
+      },
+      "components": {
+        "A": {
+          "preparation": {
+            "source": "synthetic alternative absolute contribution",
+            "evidence_class": "proxy",
+            "impacts": {
+              "climate": 3.0,
+              "energy": 9.0
+            },
+            "baseline_source": "synthetic contribution",
+            "baseline_evidence_class": "scenario",
+            "scenario_evidence_class": "proxy"
+          },
+          "treatment_electricity": {
+            "source": "synthetic contribution",
+            "evidence_class": "scenario",
+            "impacts": {
+              "climate": 2.0,
+              "energy": 8.0
+            }
+          }
+        },
+        "B": {
+          "preparation": {
+            "source": "synthetic contribution",
+            "evidence_class": "scenario",
+            "impacts": {
+              "climate": 2.0,
+              "energy": 6.0
+            }
+          },
+          "treatment_electricity": {
+            "source": "synthetic contribution",
+            "evidence_class": "scenario",
+            "impacts": {
+              "climate": 2.0,
+              "energy": 8.0
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "A_time_double",
+      "change": {
+        "id": "A_time_double",
+        "variable": "A treatment run time",
+        "baseline": 1.0,
+        "value": 2.0,
+        "unit": "synthetic h",
+        "evidence_class": "scenario",
+        "source": "synthetic assumption; active power and removal per run held fixed",
+        "adjustments": [
+          {
+            "route": "A",
+            "component": "treatment_electricity",
+            "operator": "linear",
+            "multiplier": 2.0
+          }
+        ]
+      },
+      "results": {
+        "A": {
+          "climate": {
+            "absolute": 5.0,
+            "unit": "synthetic kg CO2-eq",
+            "baseline": 3.0,
+            "delta": 2.0,
+            "change_percent": 66.66666666666666
+          },
+          "energy": {
+            "absolute": 20.0,
+            "unit": "synthetic MJ",
+            "baseline": 12.0,
+            "delta": 8.0,
+            "change_percent": 66.66666666666666
+          }
+        },
+        "B": {
+          "climate": {
+            "absolute": 4.0,
+            "unit": "synthetic kg CO2-eq",
+            "baseline": 4.0,
+            "delta": 0.0,
+            "change_percent": 0.0
+          },
+          "energy": {
+            "absolute": 14.0,
+            "unit": "synthetic MJ",
+            "baseline": 14.0,
+            "delta": 0.0,
+            "change_percent": 0.0
+          }
+        }
+      },
+      "rankings": {
+        "climate": {
+          "groups": [
+            [
+              "B"
+            ],
+            [
+              "A"
+            ]
+          ],
+          "changed_from_baseline": true
+        },
+        "energy": {
+          "groups": [
+            [
+              "B"
+            ],
+            [
+              "A"
+            ]
+          ],
+          "changed_from_baseline": true
+        }
+      },
+      "components": {
+        "A": {
+          "preparation": {
+            "source": "synthetic contribution",
+            "evidence_class": "scenario",
+            "impacts": {
+              "climate": 1.0,
+              "energy": 4.0
+            }
+          },
+          "treatment_electricity": {
+            "source": "synthetic contribution; scaled under A_time_double (synthetic assumption; active power and removal per run held fixed)",
+            "evidence_class": "calculated",
+            "impacts": {
+              "climate": 4.0,
+              "energy": 16.0
+            },
+            "baseline_source": "synthetic contribution",
+            "baseline_evidence_class": "scenario",
+            "scenario_evidence_class": "scenario"
+          }
+        },
+        "B": {
+          "preparation": {
+            "source": "synthetic contribution",
+            "evidence_class": "scenario",
+            "impacts": {
+              "climate": 2.0,
+              "energy": 6.0
+            }
+          },
+          "treatment_electricity": {
+            "source": "synthetic contribution",
+            "evidence_class": "scenario",
+            "impacts": {
+              "climate": 2.0,
+              "energy": 8.0
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "A_reuse_double",
+      "change": {
+        "id": "A_reuse_double",
+        "variable": "A effective catalyst uses",
+        "baseline": 2.0,
+        "value": 4.0,
+        "unit": "uses",
+        "evidence_class": "scenario",
+        "source": "synthetic assumption; constant performance and no additional regeneration inputs",
+        "adjustments": [
+          {
+            "route": "A",
+            "component": "preparation",
+            "operator": "inverse",
+            "multiplier": 0.5
+          }
+        ]
+      },
+      "results": {
+        "A": {
+          "climate": {
+            "absolute": 2.5,
+            "unit": "synthetic kg CO2-eq",
+            "baseline": 3.0,
+            "delta": -0.5,
+            "change_percent": -16.666666666666664
+          },
+          "energy": {
+            "absolute": 10.0,
+            "unit": "synthetic MJ",
+            "baseline": 12.0,
+            "delta": -2.0,
+            "change_percent": -16.666666666666664
+          }
+        },
+        "B": {
+          "climate": {
+            "absolute": 4.0,
+            "unit": "synthetic kg CO2-eq",
+            "baseline": 4.0,
+            "delta": 0.0,
+            "change_percent": 0.0
+          },
+          "energy": {
+            "absolute": 14.0,
+            "unit": "synthetic MJ",
+            "baseline": 14.0,
+            "delta": 0.0,
+            "change_percent": 0.0
+          }
+        }
+      },
+      "rankings": {
+        "climate": {
+          "groups": [
+            [
+              "A"
+            ],
+            [
+              "B"
+            ]
+          ],
+          "changed_from_baseline": false
+        },
+        "energy": {
+          "groups": [
+            [
+              "A"
+            ],
+            [
+              "B"
+            ]
+          ],
+          "changed_from_baseline": false
+        }
+      },
+      "components": {
+        "A": {
+          "preparation": {
+            "source": "synthetic contribution; scaled under A_reuse_double (synthetic assumption; constant performance and no additional regeneration inputs)",
+            "evidence_class": "calculated",
+            "impacts": {
+              "climate": 0.5,
+              "energy": 2.0
+            },
+            "baseline_source": "synthetic contribution",
+            "baseline_evidence_class": "scenario",
+            "scenario_evidence_class": "scenario"
+          },
+          "treatment_electricity": {
+            "source": "synthetic contribution",
+            "evidence_class": "scenario",
+            "impacts": {
+              "climate": 2.0,
+              "energy": 8.0
+            }
+          }
+        },
+        "B": {
+          "preparation": {
+            "source": "synthetic contribution",
+            "evidence_class": "scenario",
+            "impacts": {
+              "climate": 2.0,
+              "energy": 6.0
+            }
+          },
+          "treatment_electricity": {
+            "source": "synthetic contribution",
+            "evidence_class": "scenario",
+            "impacts": {
+              "climate": 2.0,
+              "energy": 8.0
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "A_recovery_change",
+      "change": {
+        "id": "A_recovery_change",
+        "variable": "A solvent recovery fraction",
+        "baseline": 0.5,
+        "value": 0.8,
+        "unit": "fraction",
+        "evidence_class": "scenario",
+        "source": "synthetic alternative inventory; treatment and all other variables held fixed",
+        "adjustments": [
+          {
+            "route": "A",
+            "component": "preparation",
+            "operator": "replace",
+            "replacement_source": "synthetic separately recalculated preparation contribution",
+            "replacement_evidence_class": "calculated",
+            "replacement_impacts": {
+              "climate": 0.75,
+              "energy": 3.0
+            }
+          }
+        ]
+      },
+      "results": {
+        "A": {
+          "climate": {
+            "absolute": 2.75,
+            "unit": "synthetic kg CO2-eq",
+            "baseline": 3.0,
+            "delta": -0.25,
+            "change_percent": -8.333333333333332
+          },
+          "energy": {
+            "absolute": 11.0,
+            "unit": "synthetic MJ",
+            "baseline": 12.0,
+            "delta": -1.0,
+            "change_percent": -8.333333333333332
+          }
+        },
+        "B": {
+          "climate": {
+            "absolute": 4.0,
+            "unit": "synthetic kg CO2-eq",
+            "baseline": 4.0,
+            "delta": 0.0,
+            "change_percent": 0.0
+          },
+          "energy": {
+            "absolute": 14.0,
+            "unit": "synthetic MJ",
+            "baseline": 14.0,
+            "delta": 0.0,
+            "change_percent": 0.0
+          }
+        }
+      },
+      "rankings": {
+        "climate": {
+          "groups": [
+            [
+              "A"
+            ],
+            [
+              "B"
+            ]
+          ],
+          "changed_from_baseline": false
+        },
+        "energy": {
+          "groups": [
+            [
+              "A"
+            ],
+            [
+              "B"
+            ]
+          ],
+          "changed_from_baseline": false
+        }
+      },
+      "components": {
+        "A": {
+          "preparation": {
+            "source": "synthetic separately recalculated preparation contribution",
+            "evidence_class": "calculated",
+            "impacts": {
+              "climate": 0.75,
+              "energy": 3.0
+            },
+            "baseline_source": "synthetic contribution",
+            "baseline_evidence_class": "scenario",
+            "scenario_evidence_class": "scenario"
+          },
+          "treatment_electricity": {
+            "source": "synthetic contribution",
+            "evidence_class": "scenario",
+            "impacts": {
+              "climate": 2.0,
+              "energy": 8.0
+            }
+          }
+        },
+        "B": {
+          "preparation": {
+            "source": "synthetic contribution",
+            "evidence_class": "scenario",
+            "impacts": {
+              "climate": 2.0,
+              "energy": 6.0
+            }
+          },
+          "treatment_electricity": {
+            "source": "synthetic contribution",
+            "evidence_class": "scenario",
+            "impacts": {
+              "climate": 2.0,
+              "energy": 8.0
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "alternative_grid",
+      "change": {
+        "id": "alternative_grid",
+        "variable": "electricity mix",
+        "baseline": "synthetic grid 1",
+        "value": "synthetic grid 2",
+        "unit": "dataset",
+        "evidence_class": "scenario",
+        "source": "synthetic alternative electricity calculations for both routes; all other items fixed",
+        "adjustments": [
+          {
+            "route": "A",
+            "component": "treatment_electricity",
+            "operator": "replace",
+            "replacement_source": "synthetic grid 2 calculation for A",
+            "replacement_evidence_class": "calculated",
+            "replacement_impacts": {
+              "climate": 1.0,
+              "energy": 7.0
+            }
+          },
+          {
+            "route": "B",
+            "component": "treatment_electricity",
+            "operator": "replace",
+            "replacement_source": "synthetic grid 2 calculation for B",
+            "replacement_evidence_class": "calculated",
+            "replacement_impacts": {
+              "climate": 1.0,
+              "energy": 7.0
+            }
+          }
+        ]
+      },
+      "results": {
+        "A": {
+          "climate": {
+            "absolute": 2.0,
+            "unit": "synthetic kg CO2-eq",
+            "baseline": 3.0,
+            "delta": -1.0,
+            "change_percent": -33.33333333333333
+          },
+          "energy": {
+            "absolute": 11.0,
+            "unit": "synthetic MJ",
+            "baseline": 12.0,
+            "delta": -1.0,
+            "change_percent": -8.333333333333332
+          }
+        },
+        "B": {
+          "climate": {
+            "absolute": 3.0,
+            "unit": "synthetic kg CO2-eq",
+            "baseline": 4.0,
+            "delta": -1.0,
+            "change_percent": -25.0
+          },
+          "energy": {
+            "absolute": 13.0,
+            "unit": "synthetic MJ",
+            "baseline": 14.0,
+            "delta": -1.0,
+            "change_percent": -7.142857142857142
+          }
+        }
+      },
+      "rankings": {
+        "climate": {
+          "groups": [
+            [
+              "A"
+            ],
+            [
+              "B"
+            ]
+          ],
+          "changed_from_baseline": false
+        },
+        "energy": {
+          "groups": [
+            [
+              "A"
+            ],
+            [
+              "B"
+            ]
+          ],
+          "changed_from_baseline": false
+        }
+      },
+      "components": {
+        "A": {
+          "preparation": {
+            "source": "synthetic contribution",
+            "evidence_class": "scenario",
+            "impacts": {
+              "climate": 1.0,
+              "energy": 4.0
+            }
+          },
+          "treatment_electricity": {
+            "source": "synthetic grid 2 calculation for A",
+            "evidence_class": "calculated",
+            "impacts": {
+              "climate": 1.0,
+              "energy": 7.0
+            },
+            "baseline_source": "synthetic contribution",
+            "baseline_evidence_class": "scenario",
+            "scenario_evidence_class": "scenario"
+          }
+        },
+        "B": {
+          "preparation": {
+            "source": "synthetic contribution",
+            "evidence_class": "scenario",
+            "impacts": {
+              "climate": 2.0,
+              "energy": 6.0
+            }
+          },
+          "treatment_electricity": {
+            "source": "synthetic grid 2 calculation for B",
+            "evidence_class": "calculated",
+            "impacts": {
+              "climate": 1.0,
+              "energy": 7.0
+            },
+            "baseline_source": "synthetic contribution",
+            "baseline_evidence_class": "scenario",
+            "scenario_evidence_class": "scenario"
+          }
+        }
+      }
+    }
+  ],
+  "limitations": [
+    "Absolute impacts and additive decomposition are user supplied; no LCA engine is run.",
+    "Compatible metadata are user asserted, not scientifically verified.",
+    "Each case changes only the explicitly identified variable and components; all other inputs are held fixed.",
+    "Linear/inverse scaling must be justified; nonlinear recovery or proxy changes require explicit replacement impacts.",
+    "A null percent means a zero baseline or a non-finite percentage; ranking uses exact numeric ties."
+  ]
+}

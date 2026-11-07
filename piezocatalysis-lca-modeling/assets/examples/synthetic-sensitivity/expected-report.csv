@@ -1,0 +1,33 @@
+case,route,category,unit,absolute,baseline,delta,change_percent
+baseline,A,climate,synthetic kg CO2-eq,3.0,3.0,0.0,0.0
+baseline,A,energy,synthetic MJ,12.0,12.0,0.0,0.0
+baseline,B,climate,synthetic kg CO2-eq,4.0,4.0,0.0,0.0
+baseline,B,energy,synthetic MJ,14.0,14.0,0.0,0.0
+A_power_double,A,climate,synthetic kg CO2-eq,5.0,3.0,2.0,66.66666666666666
+A_power_double,A,energy,synthetic MJ,20.0,12.0,8.0,66.66666666666666
+A_power_double,B,climate,synthetic kg CO2-eq,4.0,4.0,0.0,0.0
+A_power_double,B,energy,synthetic MJ,14.0,14.0,0.0,0.0
+A_yield_double,A,climate,synthetic kg CO2-eq,2.5,3.0,-0.5,-16.666666666666664
+A_yield_double,A,energy,synthetic MJ,10.0,12.0,-2.0,-16.666666666666664
+A_yield_double,B,climate,synthetic kg CO2-eq,4.0,4.0,0.0,0.0
+A_yield_double,B,energy,synthetic MJ,14.0,14.0,0.0,0.0
+A_proxy_alternative,A,climate,synthetic kg CO2-eq,5.0,3.0,2.0,66.66666666666666
+A_proxy_alternative,A,energy,synthetic MJ,17.0,12.0,5.0,41.66666666666667
+A_proxy_alternative,B,climate,synthetic kg CO2-eq,4.0,4.0,0.0,0.0
+A_proxy_alternative,B,energy,synthetic MJ,14.0,14.0,0.0,0.0
+A_time_double,A,climate,synthetic kg CO2-eq,5.0,3.0,2.0,66.66666666666666
+A_time_double,A,energy,synthetic MJ,20.0,12.0,8.0,66.66666666666666
+A_time_double,B,climate,synthetic kg CO2-eq,4.0,4.0,0.0,0.0
+A_time_double,B,energy,synthetic MJ,14.0,14.0,0.0,0.0
+A_reuse_double,A,climate,synthetic kg CO2-eq,2.5,3.0,-0.5,-16.666666666666664
+A_reuse_double,A,energy,synthetic MJ,10.0,12.0,-2.0,-16.666666666666664
+A_reuse_double,B,climate,synthetic kg CO2-eq,4.0,4.0,0.0,0.0
+A_reuse_double,B,energy,synthetic MJ,14.0,14.0,0.0,0.0
+A_recovery_change,A,climate,synthetic kg CO2-eq,2.75,3.0,-0.25,-8.333333333333332
+A_recovery_change,A,energy,synthetic MJ,11.0,12.0,-1.0,-8.333333333333332
+A_recovery_change,B,climate,synthetic kg CO2-eq,4.0,4.0,0.0,0.0
+A_recovery_change,B,energy,synthetic MJ,14.0,14.0,0.0,0.0
+alternative_grid,A,climate,synthetic kg CO2-eq,2.0,3.0,-1.0,-33.33333333333333
+alternative_grid,A,energy,synthetic MJ,11.0,12.0,-1.0,-8.333333333333332
+alternative_grid,B,climate,synthetic kg CO2-eq,3.0,4.0,-1.0,-25.0
+alternative_grid,B,energy,synthetic MJ,13.0,14.0,-1.0,-7.142857142857142

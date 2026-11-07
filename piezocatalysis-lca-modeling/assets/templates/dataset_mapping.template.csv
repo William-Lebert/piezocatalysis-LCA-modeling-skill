@@ -1,2 +1,2 @@
-foreground_flow,foreground_unit,database,database_version,system_model,dataset_name,reference_product,dataset_unit,geography,match_type,conversion_factor,expected_bias,alternative_dataset,review_status
-precursor A,g,replace-me,replace-me,replace-me,replace-me,replace-me,kg,replace-me,proxy,0.001,unknown,replace-me,pending
+mapping_id,foreground_flow,foreground_unit,database,database_version,system_model,dataset_name,reference_product,dataset_unit,geography,match_type,conversion_factor,rationale,expected_bias,alternative_dataset,review_status
+map-precursor,precursor A,g,replace-me,replace-me,replace-me,replace-me,replace-me,kg,replace-me,proxy,0.001,replace-me,unknown,replace-me,pending

@@ -48,6 +48,7 @@ Build transparent and reproducible LCA models for piezocatalytic materials and w
 - Build treatment processes separately from catalyst preparation.
 - Scale preparation burden through catalyst demand and lifetime; scale treatment burden through pollutant removal or treated-water service.
 - Use `scripts/piezocatalysis_calculations.py` for kinetic removal, EE/O, batch energy, and functional-unit scaling checks.
+- For a pollutant-removal service with equal performance per run and a justified effective-use assumption, `scripts/audit_and_scale_inventory.py` can audit and scale the foreground inventory; see `assets/examples/synthetic-treatment/README.md`. Treat warnings and unmapped flows as unresolved, and use cycle-by-cycle modeling when those assumptions do not hold.
 
 ### 4. Map background datasets
 
@@ -59,6 +60,7 @@ Build transparent and reproducible LCA models for piezocatalytic materials and w
 ### 5. Execute in the selected software
 
 - For openLCA, read `references/openlca-workflow.md` and use the UI or IPC only after confirming the active database and LCIA methods.
+- For local read-only discovery or calculation of existing product systems, use `scripts/openlca_readonly.py` only after confirming database, UUIDs, functional unit and software context. It does not verify user-supplied database or unit labels; review warnings and verify result metadata independently.
 - For SimaPro, read `references/simapro-workflow.md`. Probe Direct Import, Excel external links, and COM authorization separately; a Developer installation does not by itself prove COM entitlement.
 - Keep a software-neutral model specification as the authoritative record.
 
@@ -68,6 +70,7 @@ Build transparent and reproducible LCA models for piezocatalytic materials and w
 - Verify reference flows, target units, provider links, signs, scaling factors, mass balance, energy balance, and contribution totals.
 - Compare at least one manually calculated anchor against the software result.
 - Run sensitivity cases for dominant equipment energy, catalyst lifetime, yield, electricity mix, solvent recovery, proxy choice, and scale-up assumptions.
+- For a documented additive approximation based on existing absolute impact results, use `scripts/sensitivity_report.py`; follow its scope checks and require complete, non-overlapping contributions. Use separate LCA recalculation when scaling assumptions are not justified.
 - Read `references/calculation-and-qa.md` for formulas and stop conditions.
 
 ### 7. Interpret and report

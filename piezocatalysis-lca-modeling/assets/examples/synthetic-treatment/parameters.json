@@ -1,0 +1,7 @@
+{
+  "service_definition": {"value": "Synthetic pollutant removed from 1 L water, influent 20 mg/L, outlet 10 mg/L per illustrative run", "evidence_class": "scenario", "source": "synthetic service definition"},
+  "target_removed_mg": {"value": 100, "unit": "mg", "evidence_class": "scenario", "source": "synthetic functional unit"},
+  "removed_per_run_mg": {"value": 10, "unit": "mg", "evidence_class": "scenario", "source": "synthetic equal-performance treatment run"},
+  "catalyst_dose_g": {"value": 1, "unit": "g", "evidence_class": "scenario", "source": "synthetic catalyst loading"},
+  "effective_uses": {"value": 2, "unit": "uses", "evidence_class": "scenario", "source": "synthetic constant-performance reuse assumption"}
+}
