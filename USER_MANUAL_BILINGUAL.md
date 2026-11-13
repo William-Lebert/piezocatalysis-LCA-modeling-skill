@@ -103,6 +103,8 @@ Reconcile totals, verify one hand calculation, retain absolute LCIA, run sensiti
 
 For read-only IPC listing and calculation of existing systems, see `piezocatalysis-lca-modeling/references/openlca-workflow.md` and the mock example in `assets/examples/synthetic-openlca/`. The adapter connects only to localhost, does not create or edit entities, and cannot verify the active database or user-supplied unit labels.
 
+On the verified macOS openLCA 2.7.0 distribution, `--start-local --workspace PATH --database NAME` starts a temporary guarded server using an APFS clone and stops it after the command. Close the original database first. Review the limitations and local security boundary in `references/openlca-workflow.md`.
+
 1. 打开授权数据库并确认 LCIA 方法。
 2. 仅在需要脚本自动化时启动 IPC。
 3. 使用软件中立模型规格与稳定 UUID 清单。
@@ -111,6 +113,8 @@ For read-only IPC listing and calculation of existing systems, see `piezocatalys
 6. 回读修改后的过程并归档 manifest。
 
 通过 IPC 只读列出数据并计算现有产品系统的方法见 `piezocatalysis-lca-modeling/references/openlca-workflow.md` 及 `assets/examples/synthetic-openlca/` 中的模拟示例。适配器仅连接本机，不创建或修改数据库实体，也不能自动核实活动数据库和用户填写的单位标签。
+
+在已验证的 macOS openLCA 2.7.0 发行版上，使用 `--start-local --workspace 路径 --database 库名` 可在 APFS 临时副本上启动受限服务，命令结束后自动停止。请先关闭原数据库，并阅读 `references/openlca-workflow.md` 中的限制和本机安全边界。
 
 ## 7. SimaPro quick start / SimaPro 快速开始
 

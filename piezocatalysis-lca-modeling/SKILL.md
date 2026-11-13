@@ -61,6 +61,7 @@ Build transparent and reproducible LCA models for piezocatalytic materials and w
 
 - For openLCA, read `references/openlca-workflow.md` and use the UI or IPC only after confirming the active database and LCIA methods.
 - For local read-only discovery or calculation of existing product systems, use `scripts/openlca_readonly.py` only after confirming database, UUIDs, functional unit and software context. It does not verify user-supplied database or unit labels; review warnings and verify result metadata independently.
+- For the verified macOS openLCA 2.7.0 distribution, the adapter can start a guarded temporary localhost server on an APFS clone of an existing closed database with `--start-local --workspace PATH --database NAME`; check the launcher constraints and local-access risks in `references/openlca-workflow.md`. Discovery of an already running server does not authenticate it, and automatic startup on other versions or platforms is unsupported.
 - For SimaPro, read `references/simapro-workflow.md`. Probe Direct Import, Excel external links, and COM authorization separately; a Developer installation does not by itself prove COM entitlement.
 - Keep a software-neutral model specification as the authoritative record.
 
@@ -83,7 +84,7 @@ Build transparent and reproducible LCA models for piezocatalytic materials and w
 
 | Situation | Route |
 | --- | --- |
-| Reproducible scripted model creation and result export | openLCA IPC, after the user starts the IPC server |
+| Reproducible scripted model creation and result export | openLCA IPC with separately verified permissions; the guarded adapter only reads descriptors and calculates existing systems |
 | Stable human-confirmed workflow with limited automation rights | SimaPro Direct Import or Excel external links |
 | SimaPro COM error or uncertain license | Stop COM writes, document capability result, use the manual-import route |
 | Database mapping remains uncertain | Build an auditable proxy table before calculation |

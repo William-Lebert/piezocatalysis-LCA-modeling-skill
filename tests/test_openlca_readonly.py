@@ -6,6 +6,8 @@ from pathlib import Path
 import subprocess
 import sys
 import threading
+import socket
+import tempfile
 import unittest
 
 SCRIPT = Path(__file__).resolve().parents[1] / 'piezocatalysis-lca-modeling/scripts/openlca_readonly.py'
@@ -109,5 +111,70 @@ class ReadOnlyTests(unittest.TestCase):
         client=mod.Client(self.server.server_port)
         with self.assertRaises(ValueError):client.call('data/put',{})
         self.assertEqual(self.server.calls,[])
+
+    def test_auto_connect_finds_local_service_using_read_only_probe(self):
+        r=subprocess.run([sys.executable,str(SCRIPT),'--candidate-ports',str(self.server.server_port),
+                          'list','--type','ProductSystem'],capture_output=True,text=True)
+        self.assertEqual(r.returncode,0,r.stderr)
+        result=json.loads(r.stdout)
+        self.assertEqual(result['connection']['port'],self.server.server_port)
+        self.assertEqual(result['connection']['mode'],'automatic')
+        self.assertEqual([c['method'] for c in self.server.calls],['data/get/descriptors']*2)
+        self.assertEqual(self.server.calls[0]['params']['@type'],'FlowProperty')
+
+    def test_auto_connect_rejects_ambiguous_services(self):
+        other=FakeServer();thread=threading.Thread(target=other.serve_forever,daemon=True);thread.start()
+        try:
+            ports=f'{self.server.server_port},{other.server_port}'
+            r=subprocess.run([sys.executable,str(SCRIPT),'--candidate-ports',ports,
+                              'list','--type','ProductSystem'],capture_output=True,text=True)
+            self.assertNotEqual(r.returncode,0)
+            self.assertIn('multiple',r.stderr)
+            self.assertEqual([c['method'] for c in other.calls],['data/get/descriptors'])
+        finally:
+            other.shutdown();other.server_close();thread.join()
+
+    def test_auto_connect_reports_absent_service(self):
+        with socket.socket() as reserved:
+            reserved.bind(('127.0.0.1',0))
+            port=reserved.getsockname()[1]
+            r=subprocess.run([sys.executable,str(SCRIPT),'--candidate-ports',str(port),
+                              'list','--type','ProductSystem'],capture_output=True,text=True)
+        self.assertNotEqual(r.returncode,0)
+        self.assertIn('no compatible',r.stderr)
+
+    def test_auto_connect_calculates_and_disposes(self):
+        r=subprocess.run([sys.executable,str(SCRIPT),'--candidate-ports',str(self.server.server_port),
+            'calculate','--system-id',SYSTEM,'--method-id',METHOD,'--amount','1',
+            '--unit-id',UNIT,'--flow-property-id',PROPERTY,'--unit-label','kg',
+            '--database-label','synthetic DB','--database-version','1','--system-model','synthetic',
+            '--software-version','2.7','--functional-unit','1 synthetic unit'],capture_output=True,text=True)
+        self.assertEqual(r.returncode,0,r.stderr)
+        self.assertEqual(json.loads(r.stdout)['impacts'][0]['amount'],3.2)
+        self.assertEqual(self.server.calls[-1]['method'],'result/dispose')
+
+    def test_candidate_ports_reject_duplicates_and_out_of_range(self):
+        for ports in ('0', '65536', '8080,8080', '8080,invalid'):
+            r=subprocess.run([sys.executable,str(SCRIPT),'--candidate-ports',ports,
+                              'list','--type','ProductSystem'],capture_output=True,text=True)
+            self.assertNotEqual(r.returncode,0)
+        self.assertEqual(self.server.calls,[])
+
+    def test_autostart_requires_a_database_and_does_not_change_input_when_app_missing(self):
+        with tempfile.TemporaryDirectory() as temp:
+            workspace=Path(temp)
+            original=workspace/'databases'/'example'
+            original.mkdir(parents=True)
+            sentinel=original/'service.properties';sentinel.write_text('preserve me')
+            missing=workspace/'missing-openLCA.app'
+            r=subprocess.run([sys.executable,str(SCRIPT),'--start-local','--workspace',str(workspace),
+                              '--database','example','--openlca-app',str(missing),
+                              'list','--type','ProductSystem'],capture_output=True,text=True)
+            self.assertNotEqual(r.returncode,0)
+            self.assertEqual(sentinel.read_text(),'preserve me')
+        r=subprocess.run([sys.executable,str(SCRIPT),'--start-local',
+                          'list','--type','ProductSystem'],capture_output=True,text=True)
+        self.assertNotEqual(r.returncode,0)
+        self.assertIn('requires --workspace and --database',r.stderr)
 
 if __name__=='__main__': unittest.main()

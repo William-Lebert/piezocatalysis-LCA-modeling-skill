@@ -2,13 +2,17 @@
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23813629.svg)](https://doi.org/10.5281/zenodo.23813629)
 
-Version 1.1.0, 2026-11-08.
+Version 1.1.1, 2026-11-13. The version-specific DOI is pending archival.
 
-Development candidate: v1.1.1 (not yet released). / 开发候选版本：v1.1.1（尚未发布）。
+版本：1.1.1，2026-11-13。该版本的专属 DOI 待归档后取得。
 
 This release contains a Codex Skill for research-grade life-cycle assessment of piezocatalysis, photocatalysis, and piezo-photocatalysis systems. It supports software-neutral model design plus implementation routes for openLCA and SimaPro.
 
 本发布包面向压电催化、光催化和压电光催化体系的科研级生命周期评价，包含软件中立的建模规范，以及 openLCA 与 SimaPro 两条实施路径。
+
+The optional openLCA adapter can discover an existing local service. On the verified macOS openLCA 2.7.0 distribution it can also start a guarded temporary local server using a clone of an existing database; see the [openLCA workflow](piezocatalysis-lca-modeling/references/openlca-workflow.md) for setup and limitations.
+
+可选的 openLCA 适配器支持发现已有本机服务；在已验证的 macOS openLCA 2.7.0 发行版上，也可基于已有数据库的临时副本启动受限本机服务。具体条件和限制见 [openLCA 工作流](piezocatalysis-lca-modeling/references/openlca-workflow.md)。
 
 ## Contents / 内容
 
@@ -39,9 +43,9 @@ Pu, X. (2026). *Piezocatalysis LCA Modeling Skill (Version v1.0.0)* [Computer so
 
 Project DOI: https://doi.org/10.5281/zenodo.23813629
 
-For machine-readable citation metadata for the development candidate, see [`CITATION.cff`](CITATION.cff). The candidate's release date and version DOI are pending publication.
+For machine-readable citation metadata, see [`CITATION.cff`](CITATION.cff). The v1.1.1 version DOI is pending archival.
 
-开发候选版的机器可读引用信息见 [`CITATION.cff`](CITATION.cff)；其发布日期和版本 DOI 待正式发布后确定。
+机器可读引用信息见 [`CITATION.cff`](CITATION.cff)；v1.1.1 的版本 DOI 待归档后确定。
 
 ## Optional advanced-engine feasibility / 可选高级引擎评估
 

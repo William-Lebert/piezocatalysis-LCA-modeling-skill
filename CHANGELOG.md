@@ -1,11 +1,13 @@
 # Changelog
 
-## Unreleased — v1.1.1 candidate
+## 1.1.1 — 2026-11-13
 
+- Discover an already-running local openLCA IPC service on bounded candidate ports; ambiguous matches require an explicit port. Discovery does not authenticate the service. On the verified macOS 2.7.0 distribution, optionally start a guarded temporary local server on an APFS clone of an existing database.
 - Reject header-only inventories and normalize direction and evidence-class casing consistently between validation and scaling.
 - Reject nonzero calculation results that underflow to zero, including combined preparation shares; legitimate zero inputs remain valid.
 - Use relative tolerance without a fixed, unit-independent absolute tolerance for sensitivity and openLCA contribution reconciliation; near-zero results may require human review.
 - Add the v1.1.0 version-specific Zenodo citation and document architecture and verification limits.
+- Check two synthetic workflows from inventory validation and scaling to partial-impact sensitivity reporting against hand calculations.
 
 ## 1.1.0 — 2026-11-08
 

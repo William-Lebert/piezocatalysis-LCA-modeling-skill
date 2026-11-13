@@ -40,13 +40,30 @@ Use IPC when reproducibility or batch calculation is required.
 
 ### Local read-only adapter (openLCA 2.x JSON-RPC)
 
-`scripts/openlca_readonly.py` uses only the Python standard library and connects to `127.0.0.1` at the explicitly supplied IPC port. It supports listing descriptors and calculating an **existing** product system. Its method allowlist has no database create, update, import or delete operation. Calculating schedules a temporary server result and `result/dispose` frees that temporary result; this is not a persistent database write. It does not start or configure the server.
+`scripts/openlca_readonly.py` uses only the Python standard library and connects to `127.0.0.1`. When no port is specified, it probes only 8080 and 18808 with a read-only descriptor request; use `--candidate-ports 8080,9000` to specify up to 16 candidate ports. If more than one responds, it refuses to choose; use `--port` explicitly. Discovery tests protocol behavior, not service identity or database identity, and returns the selected port in its JSON output. It supports listing descriptors and calculating an **existing** product system. Its method allowlist has no database create, update, import or delete operation. Calculating schedules a temporary server result and `result/dispose` frees that temporary result; this is not a persistent database write. Existing servers are not reconfigured by the adapter.
 
 ```sh
+python scripts/openlca_readonly.py list --type ProductSystem
 python scripts/openlca_readonly.py --port 8080 list --type ProductSystem
 python scripts/openlca_readonly.py --port 8080 list --type ImpactMethod
 python scripts/openlca_readonly.py --port 8080 list --type FlowProperty
 ```
+
+#### Optional guarded automatic startup on macOS
+
+For the specifically verified, signed macOS openLCA 2.7.0 distribution, close the database in openLCA first, then run, replacing both paths with your own:
+
+```sh
+python scripts/openlca_readonly.py --start-local \
+  --workspace /path/to/openLCA-data-1.4 --database YOUR_EXISTING_DATABASE \
+  list --type FlowProperty
+```
+
+This starts openLCA automatically for the command, then stops the process. It clones the existing Derby database and workspace libraries using APFS `clonefile`, never passing the source database to the server. If cloning, signature checks, pinned 2.7.0 component hashes, required Derby files, lock checks, local binding, or server restrictions cannot be verified, startup fails. Other openLCA releases and platforms are not supported by this launcher. The database may be large; cloning requires a compatible local filesystem and free space for changes. A forced crash can leave an owner-only temporary clone in the system temporary directory; review it before removing it. Do not copy databases without the necessary license rights.
+
+The guarded launcher applies the separately provided Java guard at process startup: it binds the IPC listener to `127.0.0.1`, limits registered RPC methods to descriptor reads, calculation and result management, and terminates the child when its parent pipe closes. It checks the resulting listener belongs to the launched process. This is a narrow tested safeguard, not authentication: other local processes may access the listening port while it runs. The upstream 2.7.0 `--readonly` flag alone was observed accepting `data/put`, so the launcher does not rely on it as its sole protection. A JVM process and an embedded database may write temporary state to the clone. The source database must be closed and remain unchanged during cloning; lock-file checks cannot prevent every concurrent-access race. Check openLCA and database licenses and keep outputs private as needed.
+
+The independent guard source and reproducibility notes are in `scripts/openlca_guard/`. For a real software integration check with a temporary, fictional database, run `python3 tests/integration_openlca_guard.py` from the repository root. This optional test requires the verified macOS openLCA 2.7.0 app and APFS; ordinary unit tests do not require openLCA.
 
 Review the active database in openLCA and select exact UUIDs. A sample calculation command is in `assets/examples/synthetic-openlca/README.md`. The adapter requires product-system, impact-method, unit and flow-property UUIDs, amount, functional-unit description, and user-supplied version/database/system-model labels. It verifies system and method IDs against descriptors, but **cannot independently identify the active database or verify the unit/property relationship**. The user must confirm those in openLCA; the exported metadata explicitly marks labels as user asserted. Descriptor lists and reports may contain private dataset information; keep them local and respect database licenses.
 

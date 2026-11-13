@@ -7,6 +7,7 @@ Calculations allocate transient result resources which are disposed afterwards.
 from __future__ import annotations
 
 import argparse
+from contextlib import ExitStack
 from datetime import datetime, timezone
 import http.client
 import json
@@ -14,11 +15,14 @@ import math
 import sys
 import time
 import uuid
+from pathlib import Path
+
 
 ALLOWED_METHODS = frozenset({'data/get/descriptors', 'result/calculate', 'result/state',
                              'result/total-impacts', 'result/impact-contributions-of', 'result/dispose'})
 KINDS = ('ProductSystem', 'ImpactMethod', 'Process', 'Flow', 'FlowProperty')
 MAX_RESPONSE = 32 * 1024 * 1024
+DEFAULT_CANDIDATE_PORTS = (8080, 18808)
 
 
 class IPCError(Exception):
@@ -69,6 +73,32 @@ def descriptors(client: Client, kind: str) -> list:
     if not isinstance(result, list) or any(not isinstance(item, dict) for item in result):
         raise IPCError(f'{kind}: invalid descriptor list')
     return result
+
+
+def candidate_ports(value: str) -> tuple:
+    try:
+        parts = value.split(',')
+        ports = tuple(int(part.strip()) for part in parts)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError('use comma-separated port numbers') from exc
+    if not 1 <= len(ports) <= 16 or len(set(ports)) != len(ports) or any(not 1 <= p <= 65535 for p in ports):
+        raise argparse.ArgumentTypeError('provide 1–16 distinct ports from 1 to 65535')
+    return ports
+
+
+def discover_local(ports: tuple) -> Client:
+    matches = []
+    for port in ports:
+        try:
+            descriptors(Client(port, timeout=1.0), 'FlowProperty')
+        except IPCError:
+            continue
+        matches.append(port)
+    if not matches:
+        raise IPCError('no compatible local IPC service found on candidate ports; start openLCA or supply --port')
+    if len(matches) > 1:
+        raise IPCError('multiple compatible local IPC services found; select one explicitly with --port: ' + ', '.join(map(str, matches)))
+    return Client(matches[0])
 
 
 def known_ref(client: Client, kind: str, identifier: str) -> dict:
@@ -199,7 +229,13 @@ def nonempty(value: str) -> str:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--port', type=int, required=True, help='local IPC server port')
+    connection = parser.add_mutually_exclusive_group()
+    connection.add_argument('--port', type=int, help='explicit local IPC server port')
+    connection.add_argument('--candidate-ports', type=candidate_ports, help='comma-separated local ports to probe (default: 8080,18808)')
+    connection.add_argument('--start-local', action='store_true', help='start guarded openLCA on a temporary clone of an existing database (verified macOS 2.7.0 only)')
+    parser.add_argument('--workspace', type=Path, help='openLCA data workspace for --start-local')
+    parser.add_argument('--database', help='existing database name for --start-local')
+    parser.add_argument('--openlca-app', type=Path, default=Path('/Applications/openLCA.app'), help='verified openLCA 2.7.0 app path')
     sub = parser.add_subparsers(dest='command', required=True)
     listing = sub.add_parser('list'); listing.add_argument('--type', choices=KINDS, required=True)
     run = sub.add_parser('calculate')
@@ -210,16 +246,33 @@ def main() -> int:
     run.add_argument('--amount', type=positive, required=True)
     run.add_argument('--wait-seconds', type=positive, default=30)
     args = parser.parse_args()
+    if args.start_local and (args.workspace is None or not args.database):
+        parser.error('--start-local requires --workspace and --database')
+    if not args.start_local and (args.workspace is not None or args.database):
+        parser.error('--workspace and --database require --start-local')
     try:
-        client = Client(args.port)
-        if args.command == 'list':
-            output = {'type': args.type, 'descriptors': descriptors(client, args.type),
-                      'warning': 'Active database identity is not verified; confirm in openLCA.'}
-        else:
-            output = calculate(client, args)
+        with ExitStack() as stack:
+            automatic = args.port is None and not args.start_local
+            if args.start_local:
+                from openlca_local_launch import launch
+                port = stack.enter_context(launch(args.openlca_app, args.workspace, args.database))
+                client = Client(port)
+            else:
+                client = discover_local(args.candidate_ports or DEFAULT_CANDIDATE_PORTS) if automatic else Client(args.port)
+            if args.command == 'list':
+                output = {'type': args.type, 'descriptors': descriptors(client, args.type),
+                          'warning': 'Active database identity is not verified; confirm in openLCA.'}
+            else:
+                output = calculate(client, args)
+            if automatic or args.start_local:
+                output['connection'] = {'mode': 'guarded-autostart' if args.start_local else 'automatic',
+                    'host': '127.0.0.1', 'port': client.port,
+                    'identity_verification': 'guarded_temporary_clone' if args.start_local else 'protocol_probe_only_not_authenticated'}
+                if args.start_local:
+                    output['connection']['database_name'] = args.database
         print(json.dumps(output, ensure_ascii=False, indent=2, allow_nan=False))
         return 0
-    except (IPCError, ValueError, OverflowError) as exc:
+    except (IPCError, OSError, ValueError, OverflowError) as exc:
         print(f'ERROR: {exc}', file=sys.stderr)
         return 1
 
