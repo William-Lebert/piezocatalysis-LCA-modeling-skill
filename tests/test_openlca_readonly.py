@@ -32,6 +32,7 @@ class Handler(BaseHTTPRequestHandler):
             if method == 'data/get/descriptors':
                 typ=params['@type']; ident={'ProductSystem':SYSTEM,'ImpactMethod':METHOD}.get(typ)
                 result=[{'@type':typ,'@id':ident,'name':'synthetic '+typ}] if ident else []
+            elif method == 'data/get/parameters': result=[{'name':'power','value':2.0}]
             elif method == 'result/calculate': result={'@id':'result-synthetic','isReady':False}
             elif method == 'result/state':
                 self.server.states += 1
@@ -111,6 +112,19 @@ class ReadOnlyTests(unittest.TestCase):
         client=mod.Client(self.server.server_port)
         with self.assertRaises(ValueError):client.call('data/put',{})
         self.assertEqual(self.server.calls,[])
+
+    def test_product_system_parameters_are_readable(self):
+        spec=importlib.util.spec_from_file_location('olca_readonly', SCRIPT);mod=importlib.util.module_from_spec(spec);spec.loader.exec_module(mod)
+        client=mod.Client(self.server.server_port)
+        values=client.call('data/get/parameters',{'@type':'ProductSystem','@id':SYSTEM})
+        self.assertEqual(values[0]['name'],'power')
+        self.assertEqual(self.server.calls[-1]['method'],'data/get/parameters')
+
+    def test_cli_lists_parameters_for_existing_product_system(self):
+        result=self.invoke('parameters','--system-id',SYSTEM)
+        self.assertEqual(result.returncode,0,result.stderr)
+        self.assertEqual(json.loads(result.stdout)['parameters'][0]['name'],'power')
+        self.assertEqual([x['method'] for x in self.server.calls],['data/get/descriptors','data/get/parameters'])
 
     def test_auto_connect_finds_local_service_using_read_only_probe(self):
         r=subprocess.run([sys.executable,str(SCRIPT),'--candidate-ports',str(self.server.server_port),

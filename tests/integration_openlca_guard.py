@@ -1,5 +1,7 @@
 """Optional real openLCA 2.7.0 test; creates and deletes only a synthetic DB."""
 import hashlib
+import argparse
+import csv
 import http.client
 import json
 import socket
@@ -43,6 +45,12 @@ def rpc(port, method, params):
 
 
 def main():
+    global APP, JAVA, LIBS
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--openlca-app', type=Path, default=APP)
+    APP = parser.parse_args().openlca_app
+    JAVA = APP / 'Contents/Eclipse/jre/Contents/Home/bin/java'
+    LIBS = APP / 'Contents/Eclipse/plugins/olca-app_2.7.0/libs'
     with tempfile.TemporaryDirectory(prefix='piezolca-real-integration-') as temp:
         workspace = Path(temp) / 'workspace'
         database = workspace / 'databases' / 'synthetic_case'
@@ -79,15 +87,41 @@ def main():
             assert conn.connect_ex(('127.0.0.1', port)) != 0, 'server did not stop'
         assert fingerprint(database) == before, 'original synthetic DB changed'
         command = [sys.executable, str(SCRIPTS / 'openlca_readonly.py'), '--start-local', '--workspace', str(workspace),
-                   '--database', 'synthetic_case', 'list', '--type', 'ProductSystem']
+                   '--database', 'synthetic_case', '--openlca-app', str(APP), 'list', '--type', 'ProductSystem']
         p = subprocess.run(command, capture_output=True, text=True, timeout=90)
         if p.returncode: raise RuntimeError('automatic CLI failed: ' + p.stderr)
         result = json.loads(p.stdout)
         assert result['connection']['mode'] == 'guarded-autostart'
         assert any(item.get('@id') == ids['SYSTEM'] for item in result['descriptors'])
         assert fingerprint(database) == before, 'original synthetic DB changed after CLI'
+        inventory = Path(temp) / 'inventory.csv'
+        mapping = Path(temp) / 'mapping.csv'
+        inventory_fields = ['system', 'stage', 'flow_name', 'amount', 'unit', 'direction', 'evidence_class',
+                            'source', 'dataset_mapping', 'included', 'note']
+        with inventory.open('w', newline='') as f:
+            writer = csv.DictWriter(f, fieldnames=inventory_fields); writer.writeheader()
+            writer.writerow(dict(system='synthetic', stage='treatment', flow_name='synthetic service', amount='1',
+                                 unit='kg', direction='input', evidence_class='scenario', source='synthetic',
+                                 dataset_mapping='map-service', included='true', note=''))
+        from audit_and_scale_inventory import MAPPING_FIELDS
+        m = dict.fromkeys(MAPPING_FIELDS, '')
+        m.update(mapping_id='map-service', foreground_flow='synthetic service', foreground_unit='kg',
+                 database='synthetic_case', database_version='synthetic', system_model='synthetic',
+                 dataset_name='Synthetic treatment process', reference_product='Synthetic treatment service',
+                 dataset_unit='kg', match_type='exact', conversion_factor='1', review_status='pending')
+        with mapping.open('w', newline='') as f:
+            writer = csv.DictWriter(f, fieldnames=sorted(MAPPING_FIELDS)); writer.writeheader(); writer.writerow(m)
+        command = [sys.executable, str(SCRIPTS/'dataset_candidates.py'), '--inventory', str(inventory),
+                   '--mapping', str(mapping), '--database', 'synthetic_case', '--database-version', 'synthetic',
+                   '--system-model', 'synthetic', '--start-local', '--workspace', str(workspace), '--openlca-app', str(APP)]
+        p = subprocess.run(command, capture_output=True, text=True, timeout=90)
+        if p.returncode: raise RuntimeError('candidate query failed: ' + p.stderr)
+        candidate = json.loads(p.stdout)['rows'][0]
+        assert candidate['status'] == 'needs_review' and candidate['candidate_count'] == 1
+        assert candidate['selected_process_uuid'] is None
+        assert fingerprint(database) == before, 'original synthetic DB changed after candidate lookup'
         command = [sys.executable, str(SCRIPTS / 'openlca_readonly.py'), '--start-local', '--workspace', str(workspace),
-            '--database', 'synthetic_case', 'calculate', '--system-id', ids['SYSTEM'], '--method-id', ids['METHOD'],
+            '--database', 'synthetic_case', '--openlca-app', str(APP), 'calculate', '--system-id', ids['SYSTEM'], '--method-id', ids['METHOD'],
             '--unit-id', ids['UNIT'], '--flow-property-id', ids['PROPERTY'], '--amount', '1', '--unit-label', 'kg',
             '--database-label', 'synthetic_case', '--database-version', 'synthetic', '--system-model', 'synthetic',
             '--software-version', '2.7.0', '--functional-unit', '1 kg synthetic service']
@@ -136,6 +170,7 @@ def main():
         print('PASS: real openLCA synthetic calculations=3.2 and 6.4; source DB unchanged')
         print('PASS: local-only listener; write methods rejected; process stopped; CLI autostart succeeded')
         print('PASS: guarded server stopped after parent was killed')
+        print('PASS: candidate lookup against real synthetic openLCA process')
 
 
 if __name__ == '__main__':

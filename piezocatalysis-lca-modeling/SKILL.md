@@ -49,11 +49,13 @@ Build transparent and reproducible LCA models for piezocatalytic materials and w
 - Scale preparation burden through catalyst demand and lifetime; scale treatment burden through pollutant removal or treated-water service.
 - Use `scripts/piezocatalysis_calculations.py` for kinetic removal, EE/O, batch energy, and functional-unit scaling checks.
 - For a pollutant-removal service with equal performance per run and a justified effective-use assumption, `scripts/audit_and_scale_inventory.py` can audit and scale the foreground inventory; see `assets/examples/synthetic-treatment/README.md`. Treat warnings and unmapped flows as unresolved, and use cycle-by-cycle modeling when those assumptions do not hold.
+- For traceable experiment records, two functional-unit families, below-quantification limits and inventory CSV export, use `scripts/experimental_foreground.py`; see `assets/examples/synthetic-foreground/README.md`. The concentration difference is an apparent aqueous removal, not proof of mineralization.
 
 ### 4. Map background datasets
 
 - Prefer exact substance and technology matches, then stoichiometric construction, then transparent functional proxies.
 - Record dataset name, database version, system model, geography, unit, provider, proxy rationale, and expected bias.
+- Use `scripts/dataset_candidates.py` for read-only candidate discovery and review; see `assets/examples/synthetic-mapping/README.md`. Confirm reference flows, units and IDs before updating the mapping table.
 - Do not silently omit unmatched chemicals. Flag them for sensitivity analysis.
 - Validate unit conversion and reference-product direction before linking providers.
 
@@ -72,6 +74,7 @@ Build transparent and reproducible LCA models for piezocatalytic materials and w
 - Compare at least one manually calculated anchor against the software result.
 - Run sensitivity cases for dominant equipment energy, catalyst lifetime, yield, electricity mix, solvent recovery, proxy choice, and scale-up assumptions.
 - For a documented additive approximation based on existing absolute impact results, use `scripts/sensitivity_report.py`; follow its scope checks and require complete, non-overlapping contributions. Use separate LCA recalculation when scaling assumptions are not justified.
+- For actual one-at-a-time parameter recalculation of an existing openLCA product system, use `scripts/parameter_sensitivity.py` and check `assets/examples/synthetic-parametric/README.md`; keep its results distinct from additive approximations.
 - Read `references/calculation-and-qa.md` for formulas and stop conditions.
 
 ### 7. Interpret and report

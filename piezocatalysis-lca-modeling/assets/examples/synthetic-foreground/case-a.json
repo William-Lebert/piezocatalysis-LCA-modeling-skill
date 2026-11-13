@@ -1,0 +1,181 @@
+{
+  "system": "Synthetic-A",
+  "boundary": "Laboratory synthesis through catalyst use and wastewater collection; transport excluded",
+  "dry_yield": {
+    "value": 5,
+    "unit": "g",
+    "evidence_class": "scenario",
+    "source": "fictional dry yield"
+  },
+  "production_target": {
+    "value": 1,
+    "unit": "kg",
+    "evidence_class": "scenario",
+    "source": "fictional production functional unit"
+  },
+  "treatment_target": {
+    "value": 100,
+    "unit": "mg",
+    "evidence_class": "scenario",
+    "source": "fictional treatment functional unit"
+  },
+  "treatment": {
+    "volume": {
+      "value": 1,
+      "unit": "L",
+      "evidence_class": "scenario",
+      "source": "fictional reactor"
+    },
+    "influent": {
+      "value": 20,
+      "unit": "mg/L",
+      "evidence_class": "scenario",
+      "source": "fictional concentration"
+    },
+    "effluent": {
+      "value": 10,
+      "unit": "mg/L",
+      "evidence_class": "scenario",
+      "source": "fictional concentration",
+      "qualifier": "exact"
+    },
+    "catalyst_dose": {
+      "value": 1,
+      "unit": "g",
+      "evidence_class": "scenario",
+      "source": "fictional catalyst loading"
+    },
+    "effective_uses": {
+      "value": 2,
+      "unit": "uses",
+      "evidence_class": "scenario",
+      "source": "fictional equal-performance reuse"
+    }
+  },
+  "flows": [
+    {
+      "activity_id": "precursor",
+      "stage": "preparation",
+      "flow_name": "precursor A",
+      "direction": "input",
+      "quantity": {
+        "value": 10,
+        "unit": "g",
+        "evidence_class": "scenario",
+        "source": "fictional recipe"
+      },
+      "included": true
+    },
+    {
+      "activity_id": "wash",
+      "stage": "preparation",
+      "flow_name": "wash water",
+      "direction": "input",
+      "quantity": {
+        "value": 500,
+        "unit": "mL",
+        "evidence_class": "scenario",
+        "source": "fictional wash"
+      },
+      "included": true
+    },
+    {
+      "activity_id": "wash-waste",
+      "stage": "preparation",
+      "flow_name": "wash wastewater",
+      "direction": "output",
+      "quantity": {
+        "value": 500,
+        "unit": "mL",
+        "evidence_class": "scenario",
+        "source": "fictional collected wash"
+      },
+      "included": true
+    },
+    {
+      "activity_id": "prep-energy",
+      "stage": "preparation",
+      "flow_name": "synthesis electricity",
+      "direction": "input",
+      "quantity": {
+        "value": 2,
+        "unit": "kWh",
+        "evidence_class": "scenario",
+        "source": "fictional meter"
+      },
+      "included": true
+    },
+    {
+      "activity_id": "feed-water",
+      "stage": "treatment",
+      "flow_name": "treatment feed water",
+      "direction": "input",
+      "quantity": {
+        "value": 1,
+        "unit": "L",
+        "evidence_class": "scenario",
+        "source": "fictional feed water"
+      },
+      "included": true
+    },
+    {
+      "activity_id": "ultrasound",
+      "stage": "treatment",
+      "flow_name": "ultrasound electricity",
+      "direction": "input",
+      "power": {
+        "value": 100,
+        "unit": "W",
+        "evidence_class": "scenario",
+        "source": "fictional power"
+      },
+      "duration": {
+        "value": 60,
+        "unit": "min",
+        "evidence_class": "scenario",
+        "source": "fictional duration"
+      },
+      "included": true
+    },
+    {
+      "activity_id": "wastewater",
+      "stage": "treatment",
+      "flow_name": "wastewater",
+      "direction": "output",
+      "quantity": {
+        "value": 1,
+        "unit": "L",
+        "evidence_class": "scenario",
+        "source": "fictional collection"
+      },
+      "included": true
+    },
+    {
+      "activity_id": "spent-catalyst",
+      "stage": "treatment",
+      "flow_name": "spent catalyst",
+      "direction": "output",
+      "quantity": {
+        "value": 0.5,
+        "unit": "g",
+        "evidence_class": "scenario",
+        "source": "fictional waste collection"
+      },
+      "included": true
+    },
+    {
+      "activity_id": "transport",
+      "stage": "preparation",
+      "flow_name": "transport",
+      "direction": "input",
+      "quantity": {
+        "value": 3,
+        "unit": "kg",
+        "evidence_class": "scenario",
+        "source": "fictional placeholder"
+      },
+      "included": false,
+      "exclusion_reason": "outside stated laboratory boundary"
+    }
+  ]
+}

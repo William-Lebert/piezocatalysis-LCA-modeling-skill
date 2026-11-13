@@ -1,0 +1,9 @@
+{
+  "type": "Process",
+  "descriptors": [
+    {"@type":"Process","@id":"00000000-0000-4000-8000-000000000001","name":"electricity mix A","location":"CN"},
+    {"@type":"Process","@id":"00000000-0000-4000-8000-000000000002","name":"electricity mix B","location":"CN"},
+    {"@type":"Process","@id":"00000000-0000-4000-8000-000000000003","name":"water supply","location":"CN"},
+    {"@type":"Process","@id":"00000000-0000-4000-8000-000000000004","name":"reagent production","location":"CN"}
+  ]
+}

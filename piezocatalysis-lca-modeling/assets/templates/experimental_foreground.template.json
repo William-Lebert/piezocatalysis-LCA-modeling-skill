@@ -1,0 +1,181 @@
+{
+  "system": "replace-me",
+  "boundary": "replace-me: document included and excluded stages",
+  "dry_yield": {
+    "value": null,
+    "unit": "g",
+    "evidence_class": "scenario",
+    "source": "replace-me"
+  },
+  "production_target": {
+    "value": 1,
+    "unit": "kg",
+    "evidence_class": "scenario",
+    "source": "example target; replace for the study"
+  },
+  "treatment_target": {
+    "value": 100,
+    "unit": "mg",
+    "evidence_class": "scenario",
+    "source": "example target; replace for the study"
+  },
+  "treatment": {
+    "volume": {
+      "value": null,
+      "unit": "L",
+      "evidence_class": "scenario",
+      "source": "replace-me"
+    },
+    "influent": {
+      "value": null,
+      "unit": "mg/L",
+      "evidence_class": "scenario",
+      "source": "replace-me"
+    },
+    "effluent": {
+      "value": null,
+      "unit": "mg/L",
+      "evidence_class": "scenario",
+      "source": "replace-me",
+      "qualifier": "missing"
+    },
+    "catalyst_dose": {
+      "value": null,
+      "unit": "g",
+      "evidence_class": "scenario",
+      "source": "replace-me"
+    },
+    "effective_uses": {
+      "value": null,
+      "unit": "uses",
+      "evidence_class": "scenario",
+      "source": "replace-me"
+    }
+  },
+  "flows": [
+    {
+      "activity_id": "precursor",
+      "stage": "preparation",
+      "flow_name": "precursor A",
+      "direction": "input",
+      "quantity": {
+        "value": null,
+        "unit": "g",
+        "evidence_class": "scenario",
+        "source": "replace-me"
+      },
+      "included": true
+    },
+    {
+      "activity_id": "wash",
+      "stage": "preparation",
+      "flow_name": "wash water",
+      "direction": "input",
+      "quantity": {
+        "value": null,
+        "unit": "mL",
+        "evidence_class": "scenario",
+        "source": "replace-me"
+      },
+      "included": true
+    },
+    {
+      "activity_id": "wash-waste",
+      "stage": "preparation",
+      "flow_name": "wash wastewater",
+      "direction": "output",
+      "quantity": {
+        "value": null,
+        "unit": "mL",
+        "evidence_class": "scenario",
+        "source": "replace-me"
+      },
+      "included": true
+    },
+    {
+      "activity_id": "prep-energy",
+      "stage": "preparation",
+      "flow_name": "synthesis electricity",
+      "direction": "input",
+      "quantity": {
+        "value": null,
+        "unit": "kWh",
+        "evidence_class": "scenario",
+        "source": "replace-me"
+      },
+      "included": true
+    },
+    {
+      "activity_id": "feed-water",
+      "stage": "treatment",
+      "flow_name": "treatment feed water",
+      "direction": "input",
+      "quantity": {
+        "value": null,
+        "unit": "L",
+        "evidence_class": "scenario",
+        "source": "replace-me"
+      },
+      "included": true
+    },
+    {
+      "activity_id": "ultrasound",
+      "stage": "treatment",
+      "flow_name": "ultrasound electricity",
+      "direction": "input",
+      "power": {
+        "value": null,
+        "unit": "W",
+        "evidence_class": "scenario",
+        "source": "replace-me"
+      },
+      "duration": {
+        "value": null,
+        "unit": "min",
+        "evidence_class": "scenario",
+        "source": "replace-me"
+      },
+      "included": true
+    },
+    {
+      "activity_id": "wastewater",
+      "stage": "treatment",
+      "flow_name": "wastewater",
+      "direction": "output",
+      "quantity": {
+        "value": null,
+        "unit": "L",
+        "evidence_class": "scenario",
+        "source": "replace-me"
+      },
+      "included": true
+    },
+    {
+      "activity_id": "spent-catalyst",
+      "stage": "treatment",
+      "flow_name": "spent catalyst",
+      "direction": "output",
+      "quantity": {
+        "value": null,
+        "unit": "g",
+        "evidence_class": "scenario",
+        "source": "replace-me"
+      },
+      "included": true
+    },
+    {
+      "activity_id": "transport",
+      "stage": "preparation",
+      "flow_name": "transport",
+      "direction": "input",
+      "quantity": {
+        "value": null,
+        "unit": "kg",
+        "evidence_class": "scenario",
+        "source": "replace-me"
+      },
+      "included": false,
+      "exclusion_reason": "outside stated laboratory boundary"
+    }
+  ]
+}

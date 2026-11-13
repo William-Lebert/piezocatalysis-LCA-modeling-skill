@@ -15,7 +15,7 @@ import sys
 import tempfile
 import time
 
-GUARD_HASH = 'd0ee680936b9e5f13e69816da09af9389cad2a36dd260b4d33b6e88c08ac2595'
+GUARD_HASH = '14ab64589a17df8c20e83a3de71c5d4eaee680c059677e934d51865b967d655b'
 IPC_HASH = 'ddc9ebb829cbc2c70895c24ffd73cc2f0bea0273371071986fe0069abb4c3207'
 ASM_HASH = '6f3828a215c920059a5efa2fb55c233d6c54ec5cadca99ce1b1bdd10077c7ddd'
 
@@ -84,6 +84,21 @@ def clone_tree(source, destination):
     shutil.copytree(source, destination, copy_function=clone_file)
 
 
+def copy_runtime_bundle(source, destination, copy_function=None):
+    """Copy the bundle without known GUI caches; validate its signature afterward."""
+    source = Path(source)
+    configuration = source / 'Contents/Eclipse/configuration'
+    macos = source / 'Contents/MacOS'
+    def ignore(directory, names):
+        if Path(directory) == configuration:
+            return set(names) - {'config.ini'}
+        if Path(directory) == macos:
+            return {'derby.log'} & set(names)
+        return set()
+    shutil.copytree(source, destination, symlinks=True, ignore=ignore,
+                    copy_function=copy_function or clone_file)
+
+
 def own_loopback_listener(pid, port):
     result = subprocess.run(['/usr/sbin/lsof', '-nP', '-a', '-p', str(pid),
                              '-iTCP:' + str(port), '-sTCP:LISTEN'], capture_output=True, text=True)
@@ -93,9 +108,16 @@ def own_loopback_listener(pid, port):
 
 @contextmanager
 def launch(app, workspace, database):
-    app, workspace, db, java, libs, guard = validate_inputs(app, workspace, database)
     with tempfile.TemporaryDirectory(prefix='piezolca-openlca-local-') as temp:
         root = Path(temp)
+        try:
+            app, workspace, db, java, libs, guard = validate_inputs(app, workspace, database)
+        except LaunchError as exc:
+            if str(exc) != 'openLCA application signature verification failed':
+                raise
+            temporary_app = root / 'openLCA.app'
+            copy_runtime_bundle(Path(app).resolve(), temporary_app)
+            app, workspace, db, java, libs, guard = validate_inputs(temporary_app, workspace, database)
         data = root / 'data'
         (data / 'databases').mkdir(parents=True)
         clone_tree(db, data / 'databases' / database)

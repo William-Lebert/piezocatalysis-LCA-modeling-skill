@@ -42,12 +42,32 @@ Use IPC when reproducibility or batch calculation is required.
 
 `scripts/openlca_readonly.py` uses only the Python standard library and connects to `127.0.0.1`. When no port is specified, it probes only 8080 and 18808 with a read-only descriptor request; use `--candidate-ports 8080,9000` to specify up to 16 candidate ports. If more than one responds, it refuses to choose; use `--port` explicitly. Discovery tests protocol behavior, not service identity or database identity, and returns the selected port in its JSON output. It supports listing descriptors and calculating an **existing** product system. Its method allowlist has no database create, update, import or delete operation. Calculating schedules a temporary server result and `result/dispose` frees that temporary result; this is not a persistent database write. Existing servers are not reconfigured by the adapter.
 
+### Inventory mapping candidates / 清单映射候选
+
+Start with `assets/examples/synthetic-mapping/README.md`. For a closed local database on the verified macOS installation, replace the placeholders below with your inventory, mapping table, workspace and database information:
+
+```sh
+python scripts/dataset_candidates.py --inventory /path/to/inventory.csv \
+  --mapping /path/to/mapping.csv --start-local --workspace /path/to/openLCA-data-1.4 \
+  --database YOUR_DATABASE --database-version YOUR_VERSION --system-model YOUR_MODEL \
+  --format csv > /path/to/new-local-candidates.csv
+```
+
+Alternatively provide `--port PORT` for a running local service or `--descriptors FILE` for the JSON output of `openlca_readonly.py list --type Process`. With `--start-local`, `--database` is the actual directory name of the cloned source database. With a running service or saved descriptors the database identity is user asserted, not verified. Database name, version and system model must match a mapping row exactly; a mismatch blocks candidates for that row.
+
+The lookup searches an explicit `process_uuid` first and never falls back to a name when it is missing. Otherwise it searches the dataset name case-insensitively and filters by exact location if one is provided. No automatic selection is made: `needs_review` means a single candidate, `ambiguous` means multiple candidates, and `not_found` means none. Invalid UUIDs, database or foreground mismatch, and unsupported or inconsistent unit conversions are reported separately. More than 20 matches are counted but only the first 20 are listed. Unmapped inventory flows use their foreground names for searching and remain unmapped.
+
+Process descriptors do not supply the verified reference product, flow property, unit or all exchange details. Check those in openLCA, including waste treatment direction and technology, then manually enter the selected process UUID, reference flow UUID, flow property UUID, unit UUID, source and date in the mapping table. Review the conversion factor and mark `review_status` only after confirmation. Existing mapping files without the new optional columns remain supported. Candidates and CSV exports can contain licensed database information; store them locally and follow the applicable database license.
+
 ```sh
 python scripts/openlca_readonly.py list --type ProductSystem
 python scripts/openlca_readonly.py --port 8080 list --type ProductSystem
 python scripts/openlca_readonly.py --port 8080 list --type ImpactMethod
 python scripts/openlca_readonly.py --port 8080 list --type FlowProperty
+python scripts/openlca_readonly.py --port 8080 parameters --system-id PRODUCT_SYSTEM_UUID
 ```
+
+For actual one-parameter-at-a-time scenario recalculation, see `assets/examples/synthetic-parametric/README.md`. The read-only guard also permits `data/get/parameters`; the requested values are passed only in a temporary calculation setup, not written back to the database. Parameters are matched by name and context; confirm their units and the model's scientific assumptions.
 
 #### Optional guarded automatic startup on macOS
 
@@ -60,6 +80,10 @@ python scripts/openlca_readonly.py --start-local \
 ```
 
 This starts openLCA automatically for the command, then stops the process. It clones the existing Derby database and workspace libraries using APFS `clonefile`, never passing the source database to the server. If cloning, signature checks, pinned 2.7.0 component hashes, required Derby files, lock checks, local binding, or server restrictions cannot be verified, startup fails. Other openLCA releases and platforms are not supported by this launcher. The database may be large; cloning requires a compatible local filesystem and free space for changes. A forced crash can leave an owner-only temporary clone in the system temporary directory; review it before removing it. Do not copy databases without the necessary license rights.
+
+On macOS, openLCA 2.7.0 GUI startup can create Eclipse caches and a Derby log inside the signed application bundle. If strict verification fails, the launcher copies the application into its private temporary directory while excluding only these known runtime artifacts, then verifies the entire copied bundle and the pinned components before starting it. It does not modify the installed app; other signature failures still stop startup. The default path remains `/Applications/openLCA.app`, and `--openlca-app` selects another installation. Close the GUI database before cloning it.
+
+When creating foreground exchanges, check the unit on the **exchange itself**, not only the provider's quantitative reference or the flow descriptor. For example, an electricity flow can have MJ as its reference unit while the selected provider's exchange is in kWh. Explicitly set the intended unit and flow-property factor, then verify the saved exchange and provider link before calculating.
 
 The guarded launcher applies the separately provided Java guard at process startup: it binds the IPC listener to `127.0.0.1`, limits registered RPC methods to descriptor reads, calculation and result management, and terminates the child when its parent pipe closes. It checks the resulting listener belongs to the launched process. This is a narrow tested safeguard, not authentication: other local processes may access the listening port while it runs. The upstream 2.7.0 `--readonly` flag alone was observed accepting `data/put`, so the launcher does not rely on it as its sole protection. A JVM process and an embedded database may write temporary state to the clone. The source database must be closed and remain unchanged during cloning; lock-file checks cannot prevent every concurrent-access race. Check openLCA and database licenses and keep outputs private as needed.
 

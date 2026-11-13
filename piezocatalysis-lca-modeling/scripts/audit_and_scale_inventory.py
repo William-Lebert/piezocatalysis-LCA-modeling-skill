@@ -10,6 +10,7 @@ import csv
 import json
 import math
 import sys
+import uuid
 from pathlib import Path
 
 from validate_inventory import REQUIRED, EVIDENCE, DIRECTIONS, BOOLEAN
@@ -132,6 +133,12 @@ def audit(inventory_path: Path, mapping_path: Path, parameters_path: Path, syste
             raise ValueError(f'{label}: match_type must be exact, proxy, or constructed')
         if m['review_status'] not in {'pending', 'reviewed'}:
             raise ValueError(f'{label}: review_status must be pending or reviewed')
+        for field in ('process_uuid', 'reference_flow_uuid', 'flow_property_uuid', 'unit_uuid'):
+            if m.get(field):
+                try:
+                    uuid.UUID(m[field])
+                except ValueError:
+                    raise ValueError(f'{label}: invalid {field}') from None
         if m['match_type'] in {'proxy', 'constructed'}:
             require(m, {'rationale', 'expected_bias'}, label)
             if not m['alternative_dataset']:

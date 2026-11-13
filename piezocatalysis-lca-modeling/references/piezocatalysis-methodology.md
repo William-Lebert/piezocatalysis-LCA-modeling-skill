@@ -99,6 +99,8 @@ If cycle conditions differ, calculate each cycle separately. Do not use a simple
 
 The optional `scripts/audit_and_scale_inventory.py` handles only a simplified equal-performance service: `runs_per_FU = target_removed_mg / removed_per_run_mg` and `preparation_batches_per_FU = runs_per_FU × catalyst_dose_g / dry_batch_yield_g / effective_uses`. Each preparation inventory row is per synthesis batch; each treatment row is per treatment run. `effective_uses` is an explicitly sourced assumption, not a measured recovery fraction. It may represent an average effective lifetime only when the equal-dose, equal-removal and allocation assumptions are appropriate. For changing performance, replacement, regeneration or cycle-specific losses, use an explicit cycle-by-cycle model instead; this tool does not model those processes automatically.
 
+For experimental inputs, `scripts/experimental_foreground.py` calculates apparent concentration decrease from the declared liquid volume and influent/outlet concentrations, reports catalyst loading, and creates a per-batch/per-run inventory. It also reports dry-catalyst production and treatment functional units separately; see `assets/examples/synthetic-foreground/README.md`. A below-quantification-limit outlet yields a range, not an exact removal or an exact treatment scale. This calculation assumes the same relevant liquid volume for both concentrations and does not distinguish degradation, adsorption, sampling losses or other causes of concentration decrease. The simple mass-input check is not a closed mass balance.
+
 Report catalyst loss, regeneration inputs, washing between cycles, and the rule used after the last observed cycle. Treat extrapolated lifetime as a scenario.
 
 ## 7. Scale-up and comparative claims

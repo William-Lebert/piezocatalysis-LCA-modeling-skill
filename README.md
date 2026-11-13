@@ -2,9 +2,9 @@
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23813629.svg)](https://doi.org/10.5281/zenodo.23813629)
 
-Version 1.1.1, 2026-11-13.
+Version 1.2.0, 2026-11-14.
 
-版本：1.1.1，2026-11-13。
+版本：1.2.0，2026-11-14。
 
 This release contains a Codex Skill for research-grade life-cycle assessment of piezocatalysis, photocatalysis, and piezo-photocatalysis systems. It supports software-neutral model design plus implementation routes for openLCA and SimaPro.
 
@@ -13,6 +13,22 @@ This release contains a Codex Skill for research-grade life-cycle assessment of 
 The optional openLCA adapter can discover an existing local service. On the verified macOS openLCA 2.7.0 distribution it can also start a guarded temporary local server using a clone of an existing database; see the [openLCA workflow](piezocatalysis-lca-modeling/references/openlca-workflow.md) for setup and limitations.
 
 可选的 openLCA 适配器支持发现已有本机服务；在已验证的 macOS openLCA 2.7.0 发行版上，也可基于已有数据库的临时副本启动受限本机服务。具体条件和限制见 [openLCA 工作流](piezocatalysis-lca-modeling/references/openlca-workflow.md)。
+
+The release adds read-only process candidate discovery for inventory mapping; try the [synthetic example](piezocatalysis-lca-modeling/assets/examples/synthetic-mapping/README.md).
+
+本版新增清单到 openLCA 过程的只读候选查询，使用方式见[合成映射案例](piezocatalysis-lca-modeling/assets/examples/synthetic-mapping/README.md)。候选需人工确认后填入映射表。
+
+An isolated synthetic foreground has also been checked with a locally licensed ecoinvent background by comparing openLCA GUI and IPC results. The foreground data are illustrative; the database and test copy are not included in this repository.
+
+另已在隔离副本中用合成前景和本机 ecoinvent 背景对照验证 openLCA 界面与 IPC 结果；案例输入为虚构数据，数据库及测试副本不包含在仓库中。
+
+The release also converts documented experimental records into a foreground inventory and scales separate catalyst-production and pollutant-removal functional units. See the [two synthetic foreground cases](piezocatalysis-lca-modeling/assets/examples/synthetic-foreground/README.md).
+
+本版还支持从有来源的实验记录生成前景清单，分别按催化剂产量和污染物去除量缩放；使用方法见[两组合成前景案例](piezocatalysis-lca-modeling/assets/examples/synthetic-foreground/README.md)。
+
+One-at-a-time parameter scenarios can now be recalculated in openLCA with a reproducibility record; see the [synthetic parameter example](piezocatalysis-lca-modeling/assets/examples/synthetic-parametric/README.md).
+
+现可在 openLCA 中逐一重算参数情景并生成复现记录，见[合成参数案例](piezocatalysis-lca-modeling/assets/examples/synthetic-parametric/README.md)。
 
 ## Contents / 内容
 
@@ -30,6 +46,10 @@ The source DOCX and licensed LCA databases are intentionally not included.
 If you use this software in research, please cite the specific version used.
 
 如果您在科研工作中使用本软件，请引用实际使用的具体版本。
+
+The v1.2.0 version DOI will be added after the Zenodo archive is verified; the citation below is for v1.1.1.
+
+v1.2.0 版本 DOI 待 Zenodo 归档核验后补充；下方 DOI 对应 v1.1.1。
 
 ### Version v1.1.1
 

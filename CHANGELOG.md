@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.2.0 — 2026-11-14
+
+- Add reviewed process-candidate searches, optional openLCA IDs and source metadata for inventory mappings; preserve existing mapping files.
+- Build traceable experimental foreground inventories and scale catalyst-production and pollutant-removal functional units, including missing values and detection-limit ranges.
+- Recalculate one-parameter scenarios in openLCA and record model context, input/code hashes, results and redacted summaries; retain the separate additive approximation.
+- Restore guarded automatic startup after the macOS GUI generates bundle caches by verifying a temporary cache-free application copy; modified signed resources are still rejected.
+- Preserve zero-removal observations without attempting treatment scaling, and handle process descriptors without a location.
+
 ## 1.1.1 — 2026-11-13
 
 - Discover an already-running local openLCA IPC service on bounded candidate ports; ambiguous matches require an explicit port. Discovery does not authenticate the service. On the verified macOS 2.7.0 distribution, optionally start a guarded temporary local server on an APFS clone of an existing database.

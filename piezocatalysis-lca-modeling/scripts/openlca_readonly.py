@@ -18,7 +18,7 @@ import uuid
 from pathlib import Path
 
 
-ALLOWED_METHODS = frozenset({'data/get/descriptors', 'result/calculate', 'result/state',
+ALLOWED_METHODS = frozenset({'data/get/descriptors', 'data/get/parameters', 'result/calculate', 'result/state',
                              'result/total-impacts', 'result/impact-contributions-of', 'result/dispose'})
 KINDS = ('ProductSystem', 'ImpactMethod', 'Process', 'Flow', 'FlowProperty')
 MAX_RESPONSE = 32 * 1024 * 1024
@@ -162,6 +162,8 @@ def calculate(client: Client, args) -> dict:
              'impactMethod': {'@type': 'ImpactMethod', '@id': args.method_id},
              'amount': args.amount, 'unit': {'@type': 'Unit', '@id': args.unit_id},
              'flowProperty': {'@type': 'FlowProperty', '@id': args.flow_property_id}}
+    if getattr(args, 'parameters', None):
+        setup['parameters'] = args.parameters
     state = client.call('result/calculate', setup)
     if not isinstance(state, dict) or not isinstance(state.get('@id'), str) or not state['@id']:
         raise IPCError('calculation returned no result ID; no result can be retrieved or disposed')
@@ -238,6 +240,7 @@ def main() -> int:
     parser.add_argument('--openlca-app', type=Path, default=Path('/Applications/openLCA.app'), help='verified openLCA 2.7.0 app path')
     sub = parser.add_subparsers(dest='command', required=True)
     listing = sub.add_parser('list'); listing.add_argument('--type', choices=KINDS, required=True)
+    parameters = sub.add_parser('parameters'); parameters.add_argument('--system-id', type=valid_uuid, required=True)
     run = sub.add_parser('calculate')
     for arg in ('system-id', 'method-id', 'unit-id', 'flow-property-id'):
         run.add_argument('--' + arg, type=valid_uuid, required=True)
@@ -262,6 +265,13 @@ def main() -> int:
             if args.command == 'list':
                 output = {'type': args.type, 'descriptors': descriptors(client, args.type),
                           'warning': 'Active database identity is not verified; confirm in openLCA.'}
+            elif args.command == 'parameters':
+                system = known_ref(client, 'ProductSystem', args.system_id)
+                values = client.call('data/get/parameters', {'@type': 'ProductSystem', '@id': args.system_id})
+                if not isinstance(values, list) or any(not isinstance(x, dict) for x in values):
+                    raise IPCError('invalid parameter list')
+                output = {'target': system, 'parameters': values,
+                          'warning': 'Active database identity and parameter units require user confirmation.'}
             else:
                 output = calculate(client, args)
             if automatic or args.start_local:

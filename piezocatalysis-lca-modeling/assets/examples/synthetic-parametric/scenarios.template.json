@@ -1,0 +1,53 @@
+{
+  "model": {
+    "system_id": "00000000-0000-4000-8000-000000000001",
+    "method_id": "00000000-0000-4000-8000-000000000002",
+    "unit_id": "00000000-0000-4000-8000-000000000003",
+    "flow_property_id": "00000000-0000-4000-8000-000000000004",
+    "amount": 1
+  },
+  "context": {
+    "software_version": "2.7.0",
+    "database_label": "synthetic_parameterized",
+    "database_version": "synthetic 1",
+    "system_model": "synthetic",
+    "functional_unit": "1 kg synthetic service",
+    "unit_label": "kg",
+    "system_boundary": "synthetic single process",
+    "mapping_notes": "synthetic flows only",
+    "lcia_method_label": "synthetic method",
+    "lcia_version": "synthetic 1"
+  },
+  "scenarios": [
+    {
+      "id": "double_power",
+      "name": "power",
+      "context_id": "00000000-0000-4000-8000-000000000005",
+      "value": 4,
+      "unit": "kW",
+      "minimum": 0,
+      "source": "synthetic scenario",
+      "evidence_class": "scenario"
+    },
+    {
+      "id": "double_hours",
+      "name": "hours",
+      "context_id": "00000000-0000-4000-8000-000000000005",
+      "value": 2,
+      "unit": "h",
+      "minimum": 0,
+      "source": "synthetic scenario",
+      "evidence_class": "scenario"
+    },
+    {
+      "id": "double_reuse",
+      "name": "reuse",
+      "context_id": "00000000-0000-4000-8000-000000000005",
+      "value": 4,
+      "unit": "uses",
+      "minimum": 1,
+      "source": "synthetic scenario",
+      "evidence_class": "scenario"
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+mapping_id,foreground_flow,foreground_unit,database,database_version,system_model,dataset_name,reference_product,dataset_unit,geography,match_type,conversion_factor,rationale,expected_bias,alternative_dataset,review_status,process_uuid,reference_flow_uuid,flow_property_uuid,unit_uuid,mapping_source,verified_at
+map-electricity,electricity,kWh,Synthetic DB,1.0,synthetic,electricity mix,electricity,kWh,CN,exact,1,synthetic,unknown,,pending,,,,,,
+map-water,water,L,Synthetic DB,1.0,synthetic,water supply,water,L,CN,exact,1,synthetic,unknown,,pending,,,,,,
+map-reagent,reagent,g,Synthetic DB,1.0,synthetic,reagent production,reagent,kg,CN,exact,0.001,synthetic,unknown,,pending,00000000-0000-4000-8000-000000000099,,,,,
+map-wastewater,wastewater,L,Synthetic DB,1.0,synthetic,wastewater treatment,wastewater,L,CN,exact,1,synthetic,unknown,,pending,,,,,,

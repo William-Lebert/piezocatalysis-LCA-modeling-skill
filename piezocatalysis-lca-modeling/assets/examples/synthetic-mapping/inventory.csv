@@ -1,0 +1,5 @@
+system,stage,flow_name,amount,unit,direction,evidence_class,source,dataset_mapping,included,note
+Synthetic-Mapping,treatment,electricity,2,kWh,input,scenario,synthetic data,map-electricity,true,synthetic
+Synthetic-Mapping,treatment,water,5,L,input,scenario,synthetic data,map-water,true,synthetic
+Synthetic-Mapping,preparation,reagent,10,g,input,scenario,synthetic data,map-reagent,true,synthetic
+Synthetic-Mapping,treatment,wastewater,5,L,output,scenario,synthetic data,map-wastewater,true,synthetic

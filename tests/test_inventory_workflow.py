@@ -94,6 +94,16 @@ class WorkflowTests(unittest.TestCase):
         self.change_csv('dataset_mapping.csv', 1, 'mapping_id', 'map-precursor')
         result = self.run_case(); self.assertNotEqual(result.returncode, 0)
         self.assertIn('duplicate mapping_id', result.stderr)
+    def test_optional_process_uuid_is_validated(self):
+        path = self.case/'dataset_mapping.csv'
+        with path.open(newline='') as f:
+            reader = csv.DictReader(f); rows = list(reader); fields = reader.fieldnames + ['process_uuid']
+        rows[0]['process_uuid'] = 'invalid-id'
+        with path.open('w', newline='') as f:
+            writer = csv.DictWriter(f, fieldnames=fields); writer.writeheader(); writer.writerows(rows)
+        result = self.run_case()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('process_uuid', result.stderr)
     def test_unsupported_units_and_wrong_parameter_units_rejected(self):
         self.change_csv('inventory.csv', 0, 'unit', 'lb')
         self.assertNotEqual(self.run_case().returncode, 0)
