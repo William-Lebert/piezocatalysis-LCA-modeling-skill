@@ -96,7 +96,7 @@ def validate(data):
                              'impacts':{c:num(impacts[c],f'{rid}.{cid}.{c}') for c in units}}
         for cat,total in totals.items():
             actual=math.fsum(comp['impacts'][cat] for comp in components.values())
-            if not math.isfinite(actual) or not math.isclose(actual,total,rel_tol=1e-9,abs_tol=1e-12):
+            if not math.isfinite(actual) or not math.isclose(actual,total,rel_tol=1e-9,abs_tol=0.0):
                 raise ValueError(f'route {rid} category {cat}: components do not reconcile with absolute total')
         routes[rid]={'scope':scope,'totals':totals,'total_sources':sources,'components':components}
     scenarios=data.get('scenarios')

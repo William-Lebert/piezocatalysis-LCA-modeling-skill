@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased — v1.1.1 candidate
+
+- Reject header-only inventories and normalize direction and evidence-class casing consistently between validation and scaling.
+- Reject nonzero calculation results that underflow to zero, including combined preparation shares; legitimate zero inputs remain valid.
+- Use relative tolerance without a fixed, unit-independent absolute tolerance for sensitivity and openLCA contribution reconciliation; near-zero results may require human review.
+- Add the v1.1.0 version-specific Zenodo citation and document architecture and verification limits.
+
 ## 1.1.0 — 2026-11-08
 
 - Preserve baseline and scenario evidence separately for sensitivity adjustments; replacement values now require their own evidence class. Older `replace` inputs must add `replacement_evidence_class`.

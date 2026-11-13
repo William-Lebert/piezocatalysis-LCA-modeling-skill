@@ -44,6 +44,18 @@ class SensitivityTests(unittest.TestCase):
         self.assertNotEqual(self.run_data(d).returncode,0)
         d=copy.deepcopy(self.data);d['routes'][0]['result_basis']='normalized'
         self.assertNotEqual(self.run_data(d).returncode,0)
+    def test_tiny_nonzero_total_cannot_reconcile_with_zero_components(self):
+        d=copy.deepcopy(self.data);route=d['routes'][0]
+        route['impact_categories']['climate']['total']=1e-13
+        for component in route['components']:
+            component['impacts']['climate']=0
+        result=self.run_data(d)
+        self.assertNotEqual(result.returncode,0)
+        self.assertIn('reconcile',result.stderr)
+        route['components'][0]['impacts']['climate']=1e-13
+        result=self.run_data(d)
+        self.assertEqual(result.returncode,0,result.stderr)
+        self.assertEqual(json.loads(result.stdout)['cases'][0]['results']['A']['climate']['absolute'],1e-13)
     def test_missing_scenario_source_and_duplicate_adjustment_rejected(self):
         d=copy.deepcopy(self.data);d['scenarios'][0]['source']=''
         self.assertNotEqual(self.run_data(d).returncode,0)

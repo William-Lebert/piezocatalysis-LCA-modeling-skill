@@ -52,6 +52,8 @@ Review the active database in openLCA and select exact UUIDs. A sample calculati
 
 It polls result state with a timeout, returns absolute impacts and category-specific process contributions, checks their numerical sum where available, and attempts result disposal even after errors. Empty impact results, server errors, non-finite numbers and disposal failures stop the command rather than returning fabricated zeroes. Empty contributions and unreconciled sums are warnings. Result output is JSON on standard output; save it to a new file and do not overwrite an input. The API doesn't expose every assumption or guarantee that results are scientifically valid: check the product-system reference flow, unit, LCIA method, model context and any warnings independently.
 
+Contribution reconciliation uses relative tolerance `1e-6` and zero fixed absolute tolerance, and reports the chosen tolerance. A zero total requires an exactly zero contribution sum; rounding or cancellation may therefore trigger a warning that needs investigation.
+
 The synthetic test uses a local mock server, not an openLCA database. Actual compatibility depends on the running openLCA and server version. This implementation follows the official [descriptor](https://greendelta.github.io/openLCA-ApiDoc/data/get_descriptors.html), [calculation](https://greendelta.github.io/openLCA-ApiDoc/results/calculate.html), and [result lifecycle](https://greendelta.github.io/openLCA-ApiDoc/results/results.html) documentation.
 
 ### General IPC procedure

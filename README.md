@@ -4,6 +4,8 @@
 
 Version 1.1.0, 2026-11-08.
 
+Development candidate: v1.1.1 (not yet released). / 开发候选版本：v1.1.1（尚未发布）。
+
 This release contains a Codex Skill for research-grade life-cycle assessment of piezocatalysis, photocatalysis, and piezo-photocatalysis systems. It supports software-neutral model design plus implementation routes for openLCA and SimaPro.
 
 本发布包面向压电催化、光催化和压电光催化体系的科研级生命周期评价，包含软件中立的建模规范，以及 openLCA 与 SimaPro 两条实施路径。
@@ -25,6 +27,10 @@ If you use this software in research, please cite the specific version used.
 
 如果您在科研工作中使用本软件，请引用实际使用的具体版本。
 
+### Version v1.1.0
+
+Pu, X. (2026). *Piezocatalysis LCA Modeling Skill (Version v1.1.0)* [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.24040497
+
 ### Version v1.0.0
 
 Pu, X. (2026). *Piezocatalysis LCA Modeling Skill (Version v1.0.0)* [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.23813630
@@ -33,7 +39,9 @@ Pu, X. (2026). *Piezocatalysis LCA Modeling Skill (Version v1.0.0)* [Computer so
 
 Project DOI: https://doi.org/10.5281/zenodo.23813629
 
-For machine-readable citation metadata, see [`CITATION.cff`](CITATION.cff).
+For machine-readable citation metadata for the development candidate, see [`CITATION.cff`](CITATION.cff). The candidate's release date and version DOI are pending publication.
+
+开发候选版的机器可读引用信息见 [`CITATION.cff`](CITATION.cff)；其发布日期和版本 DOI 待正式发布后确定。
 
 ## Optional advanced-engine feasibility / 可选高级引擎评估
 

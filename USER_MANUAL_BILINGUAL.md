@@ -152,6 +152,10 @@ For single-factor sensitivity reporting from existing absolute LCIA results, use
 
 基于已有 LCIA 绝对结果进行单因素敏感性报告，可使用 `scripts/sensitivity_report.py`，示例见 `assets/examples/synthetic-sensitivity/README.md`。请提供来源可追溯、互不重叠且与各路线总量一致的组成项，并确保比较元数据一致。该工具不执行 LCA 建模计算，也不能证明研究条件在科学上等同；缩放假设和替代数值需独立论证。
 
+Sensitivity component totals use a relative tolerance of `1e-9` and no fixed absolute tolerance; openLCA contribution checks use `1e-6` and no fixed absolute tolerance. Zero totals require exactly zero sums. Rounding and cancellation near zero can require more precise inputs and human review.
+
+敏感性组成项核对使用 `1e-9` 相对容差，openLCA 贡献核对使用 `1e-6` 相对容差，均不使用固定绝对容差；总量为零时分项和须精确为零。接近零的舍入和抵消可能需要更高精度的数据及人工复核。
+
 ## 9. Definition of done / 完成标准
 
 A model is complete only when the functional unit, boundary, evidence classes, providers, software versions, absolute results, sensitivity cases, exclusions, and reproducibility files are all present.

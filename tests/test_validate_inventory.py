@@ -55,6 +55,15 @@ class ValidateInventoryTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertEqual(result.stdout, "PASS: 0 errors, 0 warning(s)\n")
 
+    def test_header_only_inventory_is_not_a_valid_inventory(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'empty.csv'
+            with path.open('w', newline='') as stream:
+                csv.DictWriter(stream, fieldnames=list(VALID_ROW)).writeheader()
+            result = subprocess.run([sys.executable, str(SCRIPT), str(path)], capture_output=True, text=True)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('no inventory rows', result.stdout)
+
     def test_zero_is_valid(self):
         result = self.run_inventory(amount="0")
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)

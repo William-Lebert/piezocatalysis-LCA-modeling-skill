@@ -47,6 +47,16 @@ class WorkflowTests(unittest.TestCase):
         self.change_csv('inventory.csv', 0, 'source', '')
         result = self.run_case(); self.assertNotEqual(result.returncode, 0); self.assertIn('source', result.stderr)
         self.assertEqual(result.stdout, '')
+    def test_validator_and_workflow_agree_on_case_insensitive_fields(self):
+        self.change_csv('inventory.csv', 0, 'direction', 'INPUT')
+        self.change_csv('inventory.csv', 0, 'evidence_class', 'SCENARIO')
+        validator = SKILL/'scripts/validate_inventory.py'
+        checked = subprocess.run([sys.executable, str(validator), str(self.case/'inventory.csv')], capture_output=True, text=True)
+        self.assertEqual(checked.returncode, 0, checked.stdout + checked.stderr)
+        result = self.run_case()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        flow = next(x for x in json.loads(result.stdout)['flows'] if x['flow_name'] == 'precursor A')
+        self.assertEqual((flow['direction'], flow['evidence_class']), ('input', 'scenario'))
     def test_unit_mismatch_and_wrong_factor_rejected(self):
         for key, value in [('foreground_unit', 'kg'), ('conversion_factor', '1000')]:
             with self.subTest(key=key):

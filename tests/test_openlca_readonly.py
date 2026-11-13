@@ -35,9 +35,9 @@ class Handler(BaseHTTPRequestHandler):
                 self.server.states += 1
                 result={'@id':'result-synthetic','isReady':self.server.fail != 'never-ready'}
                 if self.server.fail == 'state-error': result['error']='synthetic calculation failed'
-            elif method == 'result/total-impacts': result=[] if self.server.fail == 'empty-impacts' else [{'impactCategory':CAT,'amount':3.2}]
+            elif method == 'result/total-impacts': result=[] if self.server.fail == 'empty-impacts' else [{'impactCategory':CAT,'amount':1e-13 if self.server.fail == 'tiny-mismatch' else 3.2}]
             elif method == 'result/impact-contributions-of':
-                result=[] if self.server.fail == 'empty-contributions' else [{'techFlow':{'provider':{'name':'A'}},'amount':1.2}, {'techFlow':{'provider':{'name':'B'}},'amount':1.0 if self.server.fail == 'mismatch' else 2.0}]
+                result=[] if self.server.fail == 'empty-contributions' else [{'techFlow':{'provider':{'name':'A'}},'amount':0.0 if self.server.fail == 'tiny-mismatch' else 1.2}, {'techFlow':{'provider':{'name':'B'}},'amount':0.0 if self.server.fail == 'tiny-mismatch' else (1.0 if self.server.fail == 'mismatch' else 2.0)}]
             elif method == 'result/dispose': result='ok'
             else: raise AssertionError(method)
             response={'jsonrpc':'2.0','id':req['id'],'result':result}
@@ -89,6 +89,10 @@ class ReadOnlyTests(unittest.TestCase):
         result=json.loads(r.stdout)
         self.assertFalse(result['impacts'][0]['reconciliation']['within_tolerance'])
         self.assertTrue(any('do not reconcile' in x for x in result['warnings']))
+    def test_small_impact_is_not_reconciled_to_zero(self):
+        self.server.fail='tiny-mismatch';r=self.calc();self.assertEqual(r.returncode,0,r.stderr)
+        result=json.loads(r.stdout)
+        self.assertFalse(result['impacts'][0]['reconciliation']['within_tolerance'])
     def test_timeout_disposes_result(self):
         self.server.fail='never-ready'
         r=self.invoke('calculate','--system-id',SYSTEM,'--method-id',METHOD,'--amount','1',

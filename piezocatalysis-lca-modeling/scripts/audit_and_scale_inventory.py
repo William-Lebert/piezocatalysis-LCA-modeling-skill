@@ -152,6 +152,8 @@ def audit(inventory_path: Path, mapping_path: Path, parameters_path: Path, syste
     for r in rows:
         label = f'inventory row {r["_row"]}'
         require(r, {'system', 'stage', 'flow_name', 'unit', 'direction', 'evidence_class', 'source', 'included'}, label)
+        r['direction'] = r['direction'].lower()
+        r['evidence_class'] = r['evidence_class'].lower()
         if r['direction'] not in DIRECTIONS or r['evidence_class'] not in EVIDENCE:
             raise ValueError(f'{label}: invalid direction or evidence_class')
         flag = r['included'].lower()

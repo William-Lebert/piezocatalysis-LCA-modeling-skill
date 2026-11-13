@@ -110,11 +110,11 @@ def get_impacts(client: Client, result_id: str) -> tuple[list, list]:
                 raise IPCError('invalid contribution entry')
             numeric(item.get('amount'), 'contribution')
         reconciliation = {'sum': None, 'difference': None, 'within_tolerance': None,
-                          'relative_tolerance': 1e-6, 'absolute_tolerance': 1e-12}
+                          'relative_tolerance': 1e-6, 'absolute_tolerance': 0.0}
         if contributions:
             total = numeric(math.fsum(numeric(item['amount'], 'contribution') for item in contributions), 'contribution sum')
             reconciliation.update({'sum': total, 'difference': total - amount,
-                                   'within_tolerance': math.isclose(total, amount, rel_tol=1e-6, abs_tol=1e-12)})
+                                   'within_tolerance': math.isclose(total, amount, rel_tol=1e-6, abs_tol=0.0)})
             if not reconciliation['within_tolerance']:
                 warnings.append(f'contributions do not reconcile for category {category["@id"]}')
         else:

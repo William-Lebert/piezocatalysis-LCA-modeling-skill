@@ -18,18 +18,27 @@ def _result(value: float) -> float:
     return value
 
 
+def _nonzero_result(value: float, *inputs: float) -> float:
+    value = _result(value)
+    if value == 0 and all(item != 0 for item in inputs):
+        raise ValueError("result is too small to calculate without underflow")
+    return value
+
+
 def removal_fraction(kobs_min_inv: float, time_min: float) -> float:
     _finite(kobs_min_inv, time_min)
     if kobs_min_inv <= 0 or time_min < 0:
         raise ValueError("kobs must be positive and time must be non-negative")
-    return -math.expm1(-kobs_min_inv * time_min)
+    return _nonzero_result(-math.expm1(-kobs_min_inv * time_min), kobs_min_inv, time_min)
 
 
 def removed_mass_mg(c0_mg_l: float, volume_l: float, fraction: float) -> float:
     _finite(c0_mg_l, volume_l, fraction)
     if c0_mg_l < 0 or volume_l <= 0 or not 0 <= fraction <= 1:
         raise ValueError("invalid concentration, volume, or removal fraction")
-    return _result(c0_mg_l * volume_l * fraction)
+    if c0_mg_l == 0 or fraction == 0:
+        return 0.0
+    return _nonzero_result(c0_mg_l * volume_l * fraction, c0_mg_l, volume_l, fraction)
 
 
 def eeo_kwh_m3_order(power_kw: float, volume_l: float, kobs_min_inv: float) -> float:
@@ -53,21 +62,21 @@ def batch_energy_kwh(power_kw: float, time_h: float) -> float:
     _finite(power_kw, time_h)
     if power_kw < 0 or time_h < 0:
         raise ValueError("power and time must be non-negative")
-    return _result(power_kw * time_h)
+    return _nonzero_result(power_kw * time_h, power_kw, time_h)
 
 
 def preparation_share(catalyst_dose_g: float, dry_batch_yield_g: float) -> float:
     _finite(catalyst_dose_g, dry_batch_yield_g)
     if catalyst_dose_g < 0 or dry_batch_yield_g <= 0:
         raise ValueError("dose must be non-negative and dry yield must be positive")
-    return _result(catalyst_dose_g / dry_batch_yield_g)
+    return _nonzero_result(catalyst_dose_g / dry_batch_yield_g, catalyst_dose_g)
 
 
 def treatment_scale(target_removed_mg: float, removed_per_run_mg: float) -> float:
     _finite(target_removed_mg, removed_per_run_mg)
     if target_removed_mg <= 0 or removed_per_run_mg <= 0:
         raise ValueError("removed masses must be positive")
-    return _result(target_removed_mg / removed_per_run_mg)
+    return _nonzero_result(target_removed_mg / removed_per_run_mg, target_removed_mg)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -111,7 +120,7 @@ def main() -> int:
     else:
         runs = treatment_scale(args.target_removed_mg, args.removed_per_run_mg)
         share = preparation_share(args.catalyst_dose_g, args.dry_batch_yield_g)
-        total_share = _result(runs * share)
+        total_share = _nonzero_result(runs * share, runs, share)
         print(f"runs_per_FU={runs:.12g}")
         print(f"batch_share_per_run={share:.12g}")
         print(f"batch_share_per_FU={total_share:.12g}")

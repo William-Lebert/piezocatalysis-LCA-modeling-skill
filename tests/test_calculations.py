@@ -23,10 +23,23 @@ class CalculationTests(unittest.TestCase):
     def test_small_rate_is_not_rounded_to_zero(self):
         self.assertGreater(calc.removal_fraction(1e-20, 1), 0)
 
+    def test_positive_inputs_do_not_silently_underflow_to_zero(self):
+        cases = [(calc.removal_fraction, (1e-300, 1e-300)),
+                 (calc.removed_mass_mg, (1e-300, 1e-40, 1)),
+                 (calc.batch_energy_kwh, (1e-300, 1e-40)),
+                 (calc.preparation_share, (1e-300, 1e40)),
+                 (calc.treatment_scale, (1e-300, 1e40))]
+        for fn, args in cases:
+            with self.subTest(fn=fn.__name__):
+                with self.assertRaisesRegex(ValueError, 'small|underflow'):
+                    fn(*args)
+        self.assertGreater(calc.batch_energy_kwh(1e-300, 1e-20), 0)
+
     def test_zero_boundaries(self):
         self.assertEqual(calc.removal_fraction(1, 0), 0)
         self.assertEqual(calc.batch_energy_kwh(0, 0), 0)
         self.assertEqual(calc.removed_mass_mg(0, 1, 0), 0)
+        self.assertEqual(calc.removed_mass_mg(1e308, 1e308, 0), 0)
 
     def test_nonfinite_inputs_rejected_at_every_position(self):
         cases = [(calc.removal_fraction, [1, 1]), (calc.removed_mass_mg, [1, 1, 0.5]),
@@ -64,6 +77,13 @@ class CalculationTests(unittest.TestCase):
     def test_cli_scale_overflow_does_not_print_partial_result(self):
         p = subprocess.run([sys.executable, str(SCRIPT), 'scale', '--target-removed-mg', '1e200',
                             '--removed-per-run-mg', '1', '--catalyst-dose-g', '1e200',
+                            '--dry-batch-yield-g', '1'], capture_output=True, text=True)
+        self.assertNotEqual(p.returncode, 0)
+        self.assertEqual(p.stdout, '')
+
+    def test_cli_scale_underflow_does_not_print_partial_result(self):
+        p = subprocess.run([sys.executable, str(SCRIPT), 'scale', '--target-removed-mg', '1e-150',
+                            '--removed-per-run-mg', '1', '--catalyst-dose-g', '1e-200',
                             '--dry-batch-yield-g', '1'], capture_output=True, text=True)
         self.assertNotEqual(p.returncode, 0)
         self.assertEqual(p.stdout, '')

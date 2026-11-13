@@ -40,7 +40,9 @@ def validate(path: Path) -> tuple[list[str], list[str]]:
         if missing:
             return [f"missing required columns: {', '.join(sorted(missing))}"], []
 
+        row_count = 0
         for row_no, row in enumerate(reader, start=2):
+            row_count += 1
             if None in row or any(value is None for value in row.values()):
                 errors.append(f"row {row_no}: incorrect number of columns")
                 continue
@@ -72,6 +74,9 @@ def validate(path: Path) -> tuple[list[str], list[str]]:
                 errors.append(f"{label}: proxy value requires dataset_mapping")
             if row["included"].strip().lower() in {"false", "0", "no"} and not row["note"].strip():
                 warnings.append(f"{label}: excluded flow has no rationale in note")
+
+        if row_count == 0:
+            errors.append("no inventory rows")
 
     return errors, warnings
 
