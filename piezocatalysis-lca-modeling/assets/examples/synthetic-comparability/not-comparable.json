@@ -1,0 +1,36 @@
+{
+  "cases": [
+    {
+      "functional_unit": "100 mg synthetic apparent removal",
+      "system_boundary": "synthetic synthesis and treatment",
+      "geography": "fictional region",
+      "reference_period": "fictional 2025",
+      "database": "synthetic database",
+      "database_version": "1",
+      "system_model": "synthetic",
+      "lcia_method_uuid": "11111111-1111-4111-8111-111111111111",
+      "lcia_method_version": "1",
+      "mapping_scope": "fictional consistent mappings",
+      "id": "base",
+      "allocation": "as defined in processes",
+      "recycling_approach": "synthetic equal performance reuse",
+      "electricity_scenario": "synthetic grid"
+    },
+    {
+      "functional_unit": "150 mg synthetic apparent removal",
+      "system_boundary": "synthetic synthesis and treatment",
+      "geography": "fictional region",
+      "reference_period": "fictional 2025",
+      "database": "synthetic database",
+      "database_version": "1",
+      "system_model": "synthetic",
+      "lcia_method_uuid": "11111111-1111-4111-8111-111111111111",
+      "lcia_method_version": "1",
+      "mapping_scope": "fictional consistent mappings",
+      "id": "different",
+      "allocation": "as defined in processes",
+      "recycling_approach": "synthetic equal performance reuse",
+      "electricity_scenario": "synthetic grid"
+    }
+  ]
+}

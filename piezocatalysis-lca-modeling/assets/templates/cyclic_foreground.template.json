@@ -1,0 +1,232 @@
+{
+  "system": "replace-me",
+  "boundary": "replace-me: document campaign boundaries and allocation",
+  "dry_yield": {
+    "value": null,
+    "unit": "g",
+    "evidence_class": "scenario",
+    "source": "replace-me"
+  },
+  "treatment_target": {
+    "value": 100,
+    "unit": "mg",
+    "evidence_class": "scenario",
+    "source": "example functional unit; replace"
+  },
+  "initial_catalyst": {
+    "value": null,
+    "unit": "g",
+    "evidence_class": "scenario",
+    "source": "replace-me"
+  },
+  "final_recovered_destination": "unknown",
+  "preparation_activities": [
+    {
+      "activity_id": "precursor",
+      "flow_name": "fictional precursor",
+      "kind": "material",
+      "direction": "input",
+      "quantity": {
+        "value": null,
+        "unit": "g",
+        "evidence_class": "scenario",
+        "source": "replace-me"
+      }
+    },
+    {
+      "activity_id": "prep-electricity",
+      "flow_name": "preparation electricity",
+      "kind": "energy",
+      "direction": "input",
+      "quantity": {
+        "value": null,
+        "unit": "kWh",
+        "evidence_class": "scenario",
+        "source": "replace-me"
+      }
+    }
+  ],
+  "cycles": [
+    {
+      "cycle_id": "1",
+      "catalyst_added": {
+        "value": null,
+        "unit": "g",
+        "evidence_class": "scenario",
+        "source": "replace-me"
+      },
+      "catalyst_loaded": {
+        "value": null,
+        "unit": "g",
+        "evidence_class": "scenario",
+        "source": "replace-me"
+      },
+      "catalyst_recovered": {
+        "value": null,
+        "unit": "g",
+        "evidence_class": "scenario",
+        "source": "replace-me"
+      },
+      "influent_volume": {
+        "value": null,
+        "unit": "L",
+        "evidence_class": "scenario",
+        "source": "replace-me"
+      },
+      "influent_concentration": {
+        "value": null,
+        "unit": "mg/L",
+        "evidence_class": "scenario",
+        "source": "replace-me"
+      },
+      "effluent_volume": {
+        "value": null,
+        "unit": "L",
+        "evidence_class": "scenario",
+        "source": "replace-me"
+      },
+      "effluent_concentration": {
+        "value": null,
+        "unit": "mg/L",
+        "evidence_class": "scenario",
+        "source": "replace-me",
+        "qualifier": "exact"
+      },
+      "activities": [
+        {
+          "activity_id": "ultrasound-1",
+          "flow_name": "ultrasound electricity",
+          "kind": "energy",
+          "direction": "input",
+          "power": {
+            "value": null,
+            "unit": "W",
+            "evidence_class": "scenario",
+            "source": "replace-me"
+          },
+          "duration": {
+            "value": null,
+            "unit": "min",
+            "evidence_class": "scenario",
+            "source": "replace-me"
+          }
+        },
+        {
+          "activity_id": "clean-water-1",
+          "flow_name": "cleaning water",
+          "kind": "material",
+          "direction": "input",
+          "quantity": {
+            "value": null,
+            "unit": "L",
+            "evidence_class": "scenario",
+            "source": "replace-me"
+          }
+        },
+        {
+          "activity_id": "clean-waste-1",
+          "flow_name": "cleaning wastewater",
+          "kind": "waste",
+          "direction": "output",
+          "quantity": {
+            "value": null,
+            "unit": "L",
+            "evidence_class": "scenario",
+            "source": "replace-me"
+          }
+        }
+      ]
+    },
+    {
+      "cycle_id": "2",
+      "catalyst_added": {
+        "value": null,
+        "unit": "g",
+        "evidence_class": "scenario",
+        "source": "replace-me"
+      },
+      "catalyst_loaded": {
+        "value": null,
+        "unit": "g",
+        "evidence_class": "scenario",
+        "source": "replace-me"
+      },
+      "catalyst_recovered": {
+        "value": null,
+        "unit": "g",
+        "evidence_class": "scenario",
+        "source": "replace-me"
+      },
+      "influent_volume": {
+        "value": null,
+        "unit": "L",
+        "evidence_class": "scenario",
+        "source": "replace-me"
+      },
+      "influent_concentration": {
+        "value": null,
+        "unit": "mg/L",
+        "evidence_class": "scenario",
+        "source": "replace-me"
+      },
+      "effluent_volume": {
+        "value": null,
+        "unit": "L",
+        "evidence_class": "scenario",
+        "source": "replace-me"
+      },
+      "effluent_concentration": {
+        "value": null,
+        "unit": "mg/L",
+        "evidence_class": "scenario",
+        "source": "replace-me",
+        "qualifier": "exact"
+      },
+      "activities": [
+        {
+          "activity_id": "ultrasound-2",
+          "flow_name": "ultrasound electricity",
+          "kind": "energy",
+          "direction": "input",
+          "power": {
+            "value": null,
+            "unit": "W",
+            "evidence_class": "scenario",
+            "source": "replace-me"
+          },
+          "duration": {
+            "value": null,
+            "unit": "min",
+            "evidence_class": "scenario",
+            "source": "replace-me"
+          }
+        },
+        {
+          "activity_id": "clean-water-2",
+          "flow_name": "cleaning water",
+          "kind": "material",
+          "direction": "input",
+          "quantity": {
+            "value": null,
+            "unit": "L",
+            "evidence_class": "scenario",
+            "source": "replace-me"
+          }
+        },
+        {
+          "activity_id": "clean-waste-2",
+          "flow_name": "cleaning wastewater",
+          "kind": "waste",
+          "direction": "output",
+          "quantity": {
+            "value": null,
+            "unit": "L",
+            "evidence_class": "scenario",
+            "source": "replace-me"
+          }
+        }
+      ]
+    }
+  ],
+  "catalyst_mass_basis": "unknown"
+}

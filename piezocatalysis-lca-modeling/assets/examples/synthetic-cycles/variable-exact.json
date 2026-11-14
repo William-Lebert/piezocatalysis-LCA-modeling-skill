@@ -1,0 +1,352 @@
+{
+  "system": "synthetic variable exact",
+  "boundary": "fictional synthesis, treatment and cleaning; no measured data",
+  "dry_yield": {
+    "value": 5,
+    "unit": "g",
+    "evidence_class": "scenario",
+    "source": "synthetic scenario"
+  },
+  "treatment_target": {
+    "value": 54,
+    "unit": "mg",
+    "evidence_class": "scenario",
+    "source": "synthetic scenario"
+  },
+  "initial_catalyst": {
+    "value": 1,
+    "unit": "g",
+    "evidence_class": "scenario",
+    "source": "synthetic scenario"
+  },
+  "final_recovered_destination": "disposed",
+  "preparation_activities": [
+    {
+      "activity_id": "precursor",
+      "flow_name": "fictional precursor",
+      "kind": "material",
+      "direction": "input",
+      "quantity": {
+        "value": 10,
+        "unit": "g",
+        "evidence_class": "scenario",
+        "source": "synthetic scenario"
+      }
+    },
+    {
+      "activity_id": "prep-electricity",
+      "flow_name": "preparation electricity",
+      "kind": "energy",
+      "direction": "input",
+      "quantity": {
+        "value": 2,
+        "unit": "kWh",
+        "evidence_class": "scenario",
+        "source": "synthetic scenario"
+      }
+    }
+  ],
+  "cycles": [
+    {
+      "cycle_id": "1",
+      "catalyst_added": {
+        "value": 0,
+        "unit": "g",
+        "evidence_class": "scenario",
+        "source": "synthetic scenario"
+      },
+      "catalyst_loaded": {
+        "value": 1,
+        "unit": "g",
+        "evidence_class": "scenario",
+        "source": "synthetic scenario"
+      },
+      "catalyst_recovered": {
+        "value": 0.9,
+        "unit": "g",
+        "evidence_class": "scenario",
+        "source": "synthetic scenario"
+      },
+      "influent_volume": {
+        "value": 1,
+        "unit": "L",
+        "evidence_class": "scenario",
+        "source": "synthetic scenario"
+      },
+      "influent_concentration": {
+        "value": 20,
+        "unit": "mg/L",
+        "evidence_class": "scenario",
+        "source": "synthetic scenario"
+      },
+      "effluent_volume": {
+        "value": 1,
+        "unit": "L",
+        "evidence_class": "scenario",
+        "source": "synthetic scenario"
+      },
+      "effluent_concentration": {
+        "value": 10,
+        "unit": "mg/L",
+        "evidence_class": "scenario",
+        "source": "synthetic scenario",
+        "qualifier": "exact"
+      },
+      "activities": [
+        {
+          "activity_id": "ultrasound-1",
+          "flow_name": "ultrasound electricity",
+          "kind": "energy",
+          "direction": "input",
+          "power": {
+            "value": 100,
+            "unit": "W",
+            "evidence_class": "scenario",
+            "source": "synthetic scenario"
+          },
+          "duration": {
+            "value": 60,
+            "unit": "min",
+            "evidence_class": "scenario",
+            "source": "synthetic scenario"
+          }
+        },
+        {
+          "activity_id": "clean-water-1",
+          "flow_name": "cleaning water",
+          "kind": "material",
+          "direction": "input",
+          "quantity": {
+            "value": 0.2,
+            "unit": "L",
+            "evidence_class": "scenario",
+            "source": "synthetic scenario"
+          }
+        },
+        {
+          "activity_id": "clean-waste-1",
+          "flow_name": "cleaning wastewater",
+          "kind": "waste",
+          "direction": "output",
+          "quantity": {
+            "value": 0.2,
+            "unit": "L",
+            "evidence_class": "scenario",
+            "source": "synthetic scenario"
+          }
+        }
+      ]
+    },
+    {
+      "cycle_id": "2",
+      "catalyst_added": {
+        "value": 100,
+        "unit": "mg",
+        "evidence_class": "scenario",
+        "source": "synthetic scenario"
+      },
+      "catalyst_loaded": {
+        "value": 1,
+        "unit": "g",
+        "evidence_class": "scenario",
+        "source": "synthetic scenario"
+      },
+      "catalyst_recovered": {
+        "value": 0.7,
+        "unit": "g",
+        "evidence_class": "scenario",
+        "source": "synthetic scenario"
+      },
+      "influent_volume": {
+        "value": 1,
+        "unit": "L",
+        "evidence_class": "scenario",
+        "source": "synthetic scenario"
+      },
+      "influent_concentration": {
+        "value": 20,
+        "unit": "mg/L",
+        "evidence_class": "scenario",
+        "source": "synthetic scenario"
+      },
+      "effluent_volume": {
+        "value": 2000,
+        "unit": "mL",
+        "evidence_class": "scenario",
+        "source": "synthetic scenario"
+      },
+      "effluent_concentration": {
+        "value": 6,
+        "unit": "mg/L",
+        "evidence_class": "scenario",
+        "source": "synthetic scenario",
+        "qualifier": "exact"
+      },
+      "activities": [
+        {
+          "activity_id": "ultrasound-2",
+          "flow_name": "ultrasound electricity",
+          "kind": "energy",
+          "direction": "input",
+          "power": {
+            "value": 100,
+            "unit": "W",
+            "evidence_class": "scenario",
+            "source": "synthetic scenario"
+          },
+          "duration": {
+            "value": 1,
+            "unit": "h",
+            "evidence_class": "scenario",
+            "source": "synthetic scenario"
+          }
+        },
+        {
+          "activity_id": "clean-water-2",
+          "flow_name": "cleaning water",
+          "kind": "material",
+          "direction": "input",
+          "quantity": {
+            "value": 0.2,
+            "unit": "L",
+            "evidence_class": "scenario",
+            "source": "synthetic scenario"
+          }
+        },
+        {
+          "activity_id": "clean-waste-2",
+          "flow_name": "cleaning wastewater",
+          "kind": "waste",
+          "direction": "output",
+          "quantity": {
+            "value": 0.2,
+            "unit": "L",
+            "evidence_class": "scenario",
+            "source": "synthetic scenario"
+          }
+        },
+        {
+          "activity_id": "regen-reagent-2",
+          "flow_name": "regeneration reagent",
+          "kind": "material",
+          "direction": "input",
+          "quantity": {
+            "value": 0.05,
+            "unit": "g",
+            "evidence_class": "scenario",
+            "source": "synthetic scenario"
+          }
+        },
+        {
+          "activity_id": "regen-energy-2",
+          "flow_name": "regeneration electricity",
+          "kind": "energy",
+          "direction": "input",
+          "power": {
+            "value": 50,
+            "unit": "W",
+            "evidence_class": "scenario",
+            "source": "synthetic regeneration power"
+          },
+          "duration": {
+            "value": 1,
+            "unit": "h",
+            "evidence_class": "scenario",
+            "source": "synthetic regeneration duration"
+          }
+        }
+      ]
+    },
+    {
+      "cycle_id": "3",
+      "catalyst_added": {
+        "value": 0.2,
+        "unit": "g",
+        "evidence_class": "scenario",
+        "source": "synthetic scenario"
+      },
+      "catalyst_loaded": {
+        "value": 900,
+        "unit": "mg",
+        "evidence_class": "scenario",
+        "source": "synthetic scenario"
+      },
+      "catalyst_recovered": {
+        "value": 0.5,
+        "unit": "g",
+        "evidence_class": "scenario",
+        "source": "synthetic scenario"
+      },
+      "influent_volume": {
+        "value": 1,
+        "unit": "L",
+        "evidence_class": "scenario",
+        "source": "synthetic scenario"
+      },
+      "influent_concentration": {
+        "value": 12,
+        "unit": "mg/L",
+        "evidence_class": "scenario",
+        "source": "synthetic scenario"
+      },
+      "effluent_volume": {
+        "value": 1,
+        "unit": "L",
+        "evidence_class": "scenario",
+        "source": "synthetic scenario"
+      },
+      "effluent_concentration": {
+        "value": 3,
+        "unit": "mg/L",
+        "evidence_class": "scenario",
+        "source": "synthetic scenario",
+        "qualifier": "exact"
+      },
+      "activities": [
+        {
+          "activity_id": "ultrasound-3",
+          "flow_name": "ultrasound electricity",
+          "kind": "energy",
+          "direction": "input",
+          "power": {
+            "value": 100,
+            "unit": "W",
+            "evidence_class": "scenario",
+            "source": "synthetic scenario"
+          },
+          "duration": {
+            "value": 60,
+            "unit": "min",
+            "evidence_class": "scenario",
+            "source": "synthetic scenario"
+          }
+        },
+        {
+          "activity_id": "clean-water-3",
+          "flow_name": "cleaning water",
+          "kind": "material",
+          "direction": "input",
+          "quantity": {
+            "value": 0.2,
+            "unit": "L",
+            "evidence_class": "scenario",
+            "source": "synthetic scenario"
+          }
+        },
+        {
+          "activity_id": "clean-waste-3",
+          "flow_name": "cleaning wastewater",
+          "kind": "waste",
+          "direction": "output",
+          "quantity": {
+            "value": 0.2,
+            "unit": "L",
+            "evidence_class": "scenario",
+            "source": "synthetic scenario"
+          }
+        }
+      ]
+    }
+  ],
+  "catalyst_mass_basis": "dry"
+}

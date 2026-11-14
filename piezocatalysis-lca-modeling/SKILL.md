@@ -55,7 +55,11 @@ Build transparent and reproducible LCA models for piezocatalytic materials and w
 
 - Prefer exact substance and technology matches, then stoichiometric construction, then transparent functional proxies.
 - Record dataset name, database version, system model, geography, unit, provider, proxy rationale, and expected bias.
+- Before uncertainty simulation, use `scripts/uncertainty_readiness.py` to inventory declarations, missing distributions, censoring and dependencies; distinguish review from represented background uncertainty. `scripts/synthetic_joint_uncertainty.py` is only a seeded finite-state synthetic demonstration, not a general or native openLCA Monte Carlo engine.
+- Before interpreting scenarios from separate contexts, run `scripts/scenario_comparability.py` and resolve missing or differing declarations; a text match is not proof of scientific equivalence.
+- For varying catalyst reuse cycles, use `scripts/cyclic_foreground.py`; see `assets/examples/synthetic-cycles/README.md`. The CSV is already scaled to the treatment functional unit. Keep missing quantities, censoring, catalyst loss and final recovery destination explicit.
 - Use `scripts/dataset_candidates.py` for read-only candidate discovery and review; see `assets/examples/synthetic-mapping/README.md`. Confirm reference flows, units and IDs before updating the mapping table.
+- Use `scripts/mapping_coverage.py` to inspect a selected process reference exchange, a specified product-system link and selected elementary-flow factors in specified LCIA categories; see `assets/examples/synthetic-coverage/README.md`. Record the review separately: a matching reference is not automatic approval, and selected factors do not prove full model coverage.
 - Do not silently omit unmatched chemicals. Flag them for sensitivity analysis.
 - Validate unit conversion and reference-product direction before linking providers.
 

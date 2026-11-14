@@ -138,3 +138,17 @@ Use one calculation setup per LCIA method if the API or database package require
 - **Empty impacts:** no LCIA method, elementary-flow mismatch, or disconnected product system.
 - **Implausibly identical routes:** shared foreground process, wrong reference process, identical provider links, or normalization performed on already normalized values.
 - **Startup failure after workspace changes:** preserve database folders, reset only Eclipse/UI metadata after reading the log, and avoid placing the workspace inside the program installation.
+
+## Selected mapping and LCIA coverage review
+
+After candidate search, copy `assets/examples/synthetic-coverage/request.json` to a private working file and replace every fictional identifier and value with the selected process, reference exchange, method, category and elementary flows. Run:
+
+```sh
+python3 piezocatalysis-lca-modeling/scripts/mapping_coverage.py \
+  --request /path/to/review.json --start-local \
+  --workspace "$HOME/openLCA-data-1.4" --database ecoinvent_391_cutoff_lci
+```
+
+The process and category UUIDs must be taken from the active database. Compare the exact process reference exchange (including direction), flow property and unit UUID, not only the descriptor's reference unit. `conversion_factor` converts one foreground unit into the process exchange unit (1 MJ = 1/3.6 kWh). Location in a full process may be a name such as `China` even where a descriptor uses `CN`; inspect the returned value. The optional `link` specifies the product system, consuming process, exchange internal ID, flow and direction; omit it when no product system exists. An absent link is reported as `not_checked`, and a reference match still requires human approval. Retain the filled request, result and reviewer decision with the study.
+
+LCIA checks only the named flow UUIDs in the named categories; a missing factor is not set to zero. A present zero-valued factor is distinct from no factor. Multiple matches, absent/different factor units or properties, missing numeric values, and formula-based factors require review. This is not a check of all model emissions, a calculation, or proof of complete method coverage. Database version and system model are user assertions, not verified by IPC. A zero calculated impact cannot by itself identify the cause. The `data/get` endpoint also makes other individual database entities readable by local clients while the guarded service runs; writes remain disabled and no whole-database export is implemented. Keep commercial data and review reports subject to your licence.

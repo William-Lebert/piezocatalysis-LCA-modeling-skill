@@ -1,0 +1,10 @@
+{
+  "purpose": "synthetic_validation_only",
+  "source": "Fictional paired states; response = power * duration + power; not experimental data or LCIA",
+  "seed": 37,
+  "iterations": 10000,
+  "joint_states": [
+    {"id": "low_power_long_time", "probability": 0.5, "paired_inputs": {"power": 1, "duration": 2}, "response": 3},
+    {"id": "high_power_short_time", "probability": 0.5, "paired_inputs": {"power": 2, "duration": 1}, "response": 4}
+  ]
+}

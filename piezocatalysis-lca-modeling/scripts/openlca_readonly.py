@@ -18,7 +18,7 @@ import uuid
 from pathlib import Path
 
 
-ALLOWED_METHODS = frozenset({'data/get/descriptors', 'data/get/parameters', 'result/calculate', 'result/state',
+ALLOWED_METHODS = frozenset({'data/get', 'data/get/descriptors', 'data/get/parameters', 'result/calculate', 'result/state',
                              'result/total-impacts', 'result/impact-contributions-of', 'result/dispose'})
 KINDS = ('ProductSystem', 'ImpactMethod', 'Process', 'Flow', 'FlowProperty')
 MAX_RESPONSE = 32 * 1024 * 1024

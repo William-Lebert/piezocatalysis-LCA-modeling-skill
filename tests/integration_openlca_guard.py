@@ -63,6 +63,29 @@ def main():
         before = fingerprint(database)
         with launch(APP, workspace, 'synthetic_case') as port:
             assert discover_local((port,)).port == port
+            from mapping_coverage import audit
+            from openlca_readonly import descriptors
+            client = Client(port, timeout=30)
+            proc_ref = next(x for x in descriptors(client, 'Process') if x['name'] == 'Synthetic treatment process')
+            proc = client.call('data/get', {'@type':'Process', '@id':proc_ref['@id']})
+            ref = next(x for x in proc['exchanges'] if x.get('isQuantitativeReference'))
+            meth = client.call('data/get', {'@type':'ImpactMethod', '@id':ids['METHOD']})
+            cat = client.call('data/get', {'@type':'ImpactCategory', '@id':meth['impactCategories'][0]['@id']})
+            factor = cat['impactFactors'][0]
+            request = {'database': {'name':'synthetic_case'}, 'process': {'process_uuid':proc['@id'], 'name':proc['name'],
+                'process_version':proc.get('version'), 'reference_flow_uuid':ref['flow']['@id'], 'reference_product':ref['flow']['name'],
+                'flow_property_uuid':ref['flowProperty']['@id'], 'unit_uuid':ref['unit']['@id'], 'reference_is_input':ref['isInput'],
+                'foreground_unit':'kg', 'conversion_factor':1},
+                'method': {'method_uuid':meth['@id'], 'method_name':meth['name'], 'method_version':meth.get('version'),
+                 'categories':[{'category_uuid':cat['@id'], 'category_name':cat['name'], 'category_version':cat.get('version'),
+                 'flows':[{'flow_uuid':factor['flow']['@id'], 'unit_uuid':factor['unit']['@id'],
+                           'flow_property_uuid':factor['flowProperty']['@id']},
+                          {'flow_uuid':'00000000-0000-4000-8000-000000000099'}]}]}}
+            check = audit(client, request)
+            assert check['process']['actual_reference']['reference_flow_uuid'] == ref['flow']['@id']
+            flows = check['method']['categories'][0]['flows']
+            assert [f['status'] for f in flows] == ['factor_present', 'no_characterization_factor']
+            assert abs(flows[0]['factor_value'] - 1.6) < 1e-10
             for method, data in [('data/put', {'@type': 'Flow', 'name': 'forbidden synthetic write'}),
                                  ('data/delete', {'@type': 'Flow', '@id': '00000000-0000-4000-8000-000000000001'}),
                                  ('data/get/all', {'@type': 'Flow'})]:

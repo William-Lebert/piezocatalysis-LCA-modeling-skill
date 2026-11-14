@@ -1,0 +1,50 @@
+{
+  "study": "fictional mathematical verification",
+  "parameters": [
+    {
+      "id": "power",
+      "unit": "fictional power",
+      "source": "synthetic paired states only",
+      "geography": "synthetic",
+      "time_scope": "synthetic",
+      "evidence_class": "scenario",
+      "sample_count": null,
+      "censoring": "none",
+      "distribution": {
+        "type": "empirical_joint",
+        "basis": "two fictional paired states with equal probabilities"
+      }
+    },
+    {
+      "id": "duration",
+      "unit": "fictional duration",
+      "source": "synthetic paired states only",
+      "geography": "synthetic",
+      "time_scope": "synthetic",
+      "evidence_class": "scenario",
+      "sample_count": null,
+      "censoring": "none",
+      "distribution": {
+        "type": "empirical_joint",
+        "basis": "two fictional paired states with equal probabilities"
+      }
+    }
+  ],
+  "dependencies_reviewed": true,
+  "dependencies": [
+    {
+      "parameters": [
+        "power",
+        "duration"
+      ],
+      "relation": "joint",
+      "basis": "explicit fictional pair table in joint-demo.json"
+    }
+  ],
+  "coverage": {
+    "system_boundary_complete": true,
+    "background_uncertainty_reviewed": true,
+    "impact_method_reviewed": true,
+    "background_uncertainty_represented": true
+  }
+}

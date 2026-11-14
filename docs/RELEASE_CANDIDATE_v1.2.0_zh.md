@@ -1,5 +1,7 @@
 # v1.2.0 发布候选与回滚方案
 
+> 历史记录：v1.2.0 已发布并归档；本文保留当时的候选和发布前状态。当前候选请参见 `RELEASE_CANDIDATE_v1.3.0_zh.md`。
+
 状态：候选，尚未发布。正式仓库 `William-Lebert/piezocatalysis-LCA-modeling-skill`；本次检查时远端 main 为 `9e877b48a4b393d89773bc00d7ebc4eb82328fbd`，已发布 `v1.1.1` 标签为 `b63e095ecb24ac45f5ddbe09c4d6efc165389354`，远端未发现 `v1.2.0` 标签。发布时重新核对远端状态。
 
 ## 主要变化

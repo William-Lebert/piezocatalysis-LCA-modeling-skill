@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.3.0 — 2026-11-15
+
+- Review selected openLCA process reference exchanges, product-system links and LCIA factor coverage, including missing units and formula-based factors.
+- Build functional-unit inventories from cycle-by-cycle catalyst reuse records, preserving missing values, detection limits, dry/wet basis and unreconciled catalyst losses.
+- Check declared scenario comparability and uncertainty evidence; add a seeded joint-state synthetic example rather than claiming a native Monte Carlo implementation.
+- Verify the cycle inventory through a fictional linked openLCA model and actual parameter recalculation; document tests, scientific boundaries and rollback.
+- Extend the guarded localhost service to permit single-entity `data/get` reads; local clients can access individual entities while the service runs.
+
 ## 1.2.0 — 2026-11-14
 
 - Add reviewed process-candidate searches, optional openLCA IDs and source metadata for inventory mappings; preserve existing mapping files.

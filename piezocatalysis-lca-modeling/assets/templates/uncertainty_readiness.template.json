@@ -1,0 +1,29 @@
+{
+  "study": "replace-me",
+  "parameters": [
+    {
+      "id": "replace-me",
+      "unit": "replace-me",
+      "source": "replace-me",
+      "geography": "replace-me",
+      "time_scope": "replace-me",
+      "evidence_class": "scenario",
+      "sample_count": null,
+      "censoring": "unknown",
+      "detection_limit": null,
+      "censoring_treatment": "",
+      "distribution": {
+        "type": "unknown",
+        "basis": ""
+      }
+    }
+  ],
+  "dependencies_reviewed": false,
+  "dependencies": [],
+  "coverage": {
+    "system_boundary_complete": false,
+    "background_uncertainty_reviewed": false,
+    "impact_method_reviewed": false,
+    "background_uncertainty_represented": false
+  }
+}
