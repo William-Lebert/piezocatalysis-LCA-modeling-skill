@@ -48,6 +48,11 @@ class SyntheticJointTests(unittest.TestCase):
         d=self.example();a=run(d);self.assertEqual(a,run(d));self.assertEqual(a['analytical_mean'],3.5)
         self.assertEqual(a['analytical_population_standard_deviation'],.5);self.assertAlmostEqual(a['sample_mean'],3.5,delta=.03)
         self.assertEqual(sum(a['state_counts'].values()),10000)
+    def test_convergence_diagnostics_use_exact_finite_state_variance(self):
+        result=run(self.example()); self.assertEqual(result['analytical_standard_error_of_mean'],0.005)
+        self.assertEqual([x['iterations'] for x in result['prefix_convergence_diagnostics']],[2500,5000,10000])
+        self.assertAlmostEqual(result['prefix_convergence_diagnostics'][-1]['sample_mean'],result['sample_mean'])
+
     def test_independence_changes_joint_distribution(self):
         d=self.example();d['joint_states']=[{'id':str(i),'probability':.25,'paired_inputs':{'p':p,'t':t},'response':p*t+p} for i,(p,t) in enumerate([(1,1),(1,2),(2,1),(2,2)])]
         self.assertEqual(run(d)['analytical_mean'],3.75)

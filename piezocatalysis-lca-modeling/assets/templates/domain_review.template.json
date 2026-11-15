@@ -1,0 +1,86 @@
+{
+  "service": {
+    "kind": "apparent_pollutant_removal",
+    "functional_unit": {
+      "value": 100,
+      "unit": "mg"
+    },
+    "definition": "replace-me",
+    "source": "replace-me",
+    "evidence_class": "scenario"
+  },
+  "fields": {
+    "system_boundary": {
+      "status": "missing"
+    },
+    "reaction_mode": {
+      "status": "missing"
+    },
+    "energy_metering": {
+      "status": "missing"
+    },
+    "electricity_geography": {
+      "status": "missing"
+    },
+    "external_oxidants": {
+      "status": "missing"
+    },
+    "catalyst_fresh": {
+      "status": "missing"
+    },
+    "catalyst_recovered": {
+      "status": "missing"
+    },
+    "catalyst_loss": {
+      "status": "missing"
+    },
+    "catalyst_destination": {
+      "status": "missing"
+    },
+    "catalyst_mass_balance": {
+      "status": "missing"
+    },
+    "wastewater_destination": {
+      "status": "missing"
+    },
+    "background_mapping": {
+      "status": "missing"
+    },
+    "coproduct_allocation": {
+      "status": "missing"
+    },
+    "sampling_protocol": {
+      "status": "missing"
+    },
+    "calibration": {
+      "status": "missing"
+    },
+    "pollutant_identity": {
+      "status": "missing"
+    },
+    "influent_volume": {
+      "status": "missing"
+    },
+    "influent_concentration": {
+      "status": "missing"
+    },
+    "effluent_volume": {
+      "status": "missing"
+    },
+    "effluent_concentration": {
+      "status": "missing"
+    },
+    "sampling_losses": {
+      "status": "missing"
+    },
+    "performance_criteria": {
+      "status": "missing"
+    },
+    "external_oxidant_dose": {
+      "status": "missing"
+    },
+    "replication_design": {
+      "status": "missing"
+    }
+  }
+}

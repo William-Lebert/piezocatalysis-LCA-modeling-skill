@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
+import io
 import json
 import math
 from pathlib import Path
@@ -208,16 +210,42 @@ def main():
     args = parser.parse_args()
     try:
         def bad(value): raise ValueError('invalid JSON number: ' + value)
-        result = build(json.loads(args.input.read_text(encoding='utf-8'), parse_constant=bad))
+        raw = args.input.read_bytes()
+        result = build(json.loads(raw, parse_constant=bad))
         if args.inventory_csv:
-            with args.inventory_csv.open('x', encoding='utf-8', newline='') as f:
-                writer = csv.DictWriter(f, fieldnames=CSV_FIELDS); writer.writeheader()
+            manifest_path = args.inventory_csv.with_name(args.inventory_csv.name + '.manifest.json')
+            if args.inventory_csv.exists() or manifest_path.exists():
+                raise FileExistsError('inventory or associated manifest already exists')
+            with io.StringIO(newline='') as f:
+                writer = csv.DictWriter(f, fieldnames=CSV_FIELDS + ['cycle_id', 'inventory_schema_version', 'amount_basis']); writer.writeheader()
                 for flow in result['functional_unit_flows']:
                     writer.writerow({'system': result['system'], 'stage': flow['stage'], 'flow_name': flow['flow_name'],
                         'amount': flow['amount'], 'unit': flow['unit'], 'direction': flow['direction'],
                         'evidence_class': flow['evidence_class'], 'source': flow['source'],
                         'dataset_mapping': flow['dataset_mapping'], 'included': str(flow['included']).lower(),
-                        'note': flow['note'], 'activity_id': flow['activity_id'], 'overlap_group': flow['overlap_group']})
+                        'note': flow['note'], 'activity_id': flow['activity_id'], 'overlap_group': flow['overlap_group'], 'cycle_id': flow['cycle'] or '',
+                        'inventory_schema_version': 'piezolca.inventory/2', 'amount_basis': 'per_functional_unit'})
+                csv_bytes = f.getvalue().encode('utf-8')
+            scripts = Path(__file__).resolve().parent
+            manifest = {'schema_version': 'piezolca.inventory-manifest/1',
+                        'inventory_schema_version': 'piezolca.inventory/2', 'amount_basis': 'per_functional_unit',
+                        'inventory_sha256': hashlib.sha256(csv_bytes).hexdigest(),
+                        'input_sha256': hashlib.sha256(raw).hexdigest(), 'input_name': args.input.name,
+                        'generator': 'cyclic_foreground', 'generator_version': '1.0.0',
+                        'code_sha256': {name: hashlib.sha256((scripts / name).read_bytes()).hexdigest() for name in
+                                        ('cyclic_foreground.py', 'experimental_foreground.py', 'audit_and_scale_inventory.py', 'validate_inventory.py')},
+                        'system': result['system'], 'boundary': result['boundary'],
+                        'functional_unit_type': 'apparent_pollutant_removal', 'functional_unit': result['functional_unit'],
+                        'scaling': {'campaigns_per_functional_unit': result['campaign']['campaigns_per_functional_unit'],
+                                    'allocation_note': result['campaign']['allocation_note']},
+                        'campaign': {'catalyst_mass_basis': result['campaign']['catalyst_mass_basis'],
+                                     'final_recovered_destination': result['campaign']['final_recovered_destination'],
+                                     'loss_g_by_cycle': [{'cycle_id': c['cycle_id'], 'loss_g': c['catalyst_unaccounted_g']} for c in result['cycles']]},
+                        'warnings': result['warnings']}
+            with args.inventory_csv.open('xb') as f:
+                f.write(csv_bytes)
+            with manifest_path.open('x', encoding='utf-8') as f:
+                json.dump(manifest, f, ensure_ascii=False, indent=2, allow_nan=False); f.write('\n')
         print(json.dumps(result, ensure_ascii=False, indent=2, allow_nan=False)); return 0
     except (OSError, UnicodeError, ValueError, TypeError, KeyError, OverflowError, ZeroDivisionError) as exc:
         print('ERROR:', exc, file=sys.stderr); return 1

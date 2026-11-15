@@ -19,7 +19,7 @@ from pathlib import Path
 
 
 ALLOWED_METHODS = frozenset({'data/get', 'data/get/descriptors', 'data/get/parameters', 'result/calculate', 'result/state',
-                             'result/total-impacts', 'result/impact-contributions-of', 'result/dispose'})
+                             'result/total-impacts', 'result/impact-contributions-of', 'result/total-flows', 'result/dispose'})
 KINDS = ('ProductSystem', 'ImpactMethod', 'Process', 'Flow', 'FlowProperty')
 MAX_RESPONSE = 32 * 1024 * 1024
 DEFAULT_CANDIDATE_PORTS = (8080, 18808)
@@ -184,6 +184,15 @@ def calculate(client: Client, args) -> dict:
             if not isinstance(state, dict) or state.get('@id') != result_id:
                 raise IPCError('result/state: invalid or mismatched result ID')
         impacts, warnings = get_impacts(client, result_id)
+        total_flows = None
+        if getattr(args, 'include_total_flows', False):
+            total_flows = client.call('result/total-flows', {'@id': result_id})
+            if not isinstance(total_flows, list):
+                raise IPCError('result/total-flows: invalid inventory list')
+            for row in total_flows:
+                if not isinstance(row, dict) or not isinstance(row.get('enviFlow'), dict):
+                    raise IPCError('result/total-flows: invalid inventory entry')
+                numeric(row.get('amount'), 'inventory amount')
         warnings.append('Database identity, software and unit labels are user supplied and not independently verified by IPC.')
         report = {'calculated_at_utc': datetime.now(timezone.utc).isoformat(),
                   'software': {'name': 'openLCA', 'version_user_asserted': args.software_version},
@@ -193,6 +202,8 @@ def calculate(client: Client, args) -> dict:
                   'target': system, 'impact_method': method, 'setup': setup,
                   'unit_label_user_asserted': args.unit_label, 'result_id': result_id,
                   'impacts': impacts, 'warnings': warnings}
+        if total_flows is not None:
+            report['total_flows'] = total_flows
     except (IPCError, ValueError, OverflowError) as exc:
         failure = exc
     try:
@@ -248,6 +259,7 @@ def main() -> int:
         run.add_argument('--' + arg, type=nonempty, required=True)
     run.add_argument('--amount', type=positive, required=True)
     run.add_argument('--wait-seconds', type=positive, default=30)
+    run.add_argument('--include-total-flows', action='store_true', help='include inventory; may contain unconnected product or waste flows')
     args = parser.parse_args()
     if args.start_local and (args.workspace is None or not args.database):
         parser.error('--start-local requires --workspace and --database')

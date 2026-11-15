@@ -116,8 +116,21 @@ def load_parameters(path: Path) -> dict:
 
 
 def audit(inventory_path: Path, mapping_path: Path, parameters_path: Path, system: str, reference: str) -> dict:
-    parameters = load_parameters(parameters_path)
     inventory = csv_rows(inventory_path, REQUIRED)
+    # Legacy inventories have neither field and retain their original behaviour.
+    # A declared functional-unit inventory must never be scaled a second time.
+    for row in inventory:
+        if row['system'] != system:
+            continue
+        schema = row.get('inventory_schema_version')
+        basis = row.get('amount_basis')
+        if schema is None and basis is None:
+            continue
+        if schema != 'piezolca.inventory/2' or basis not in {'per_functional_unit', 'per_batch_or_run'}:
+            raise ValueError(f'inventory row {row["_row"]}: invalid or incomplete inventory basis declaration')
+        if basis == 'per_functional_unit':
+            raise ValueError('inventory is already scaled per functional unit; do not scale it again')
+    parameters = load_parameters(parameters_path)
     mapping_rows = csv_rows(mapping_path, MAPPING_FIELDS)
     warnings = []
     for key in (*PARAMETER_UNITS, 'service_definition'):

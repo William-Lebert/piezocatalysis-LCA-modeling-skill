@@ -1,0 +1,62 @@
+{
+  "schema_version": "piezolca.piezo-boundary/1",
+  "foreground_sha256": "replace-me",
+  "reactor_configuration": {
+    "value": "replace-me",
+    "source": "replace-me"
+  },
+  "mechanical_coupling": {
+    "value": "replace-me",
+    "source": "replace-me"
+  },
+  "pollutant_identity": {
+    "value": "replace-me",
+    "source": "replace-me"
+  },
+  "service_performance": {
+    "value": "replace-me",
+    "source": "replace-me"
+  },
+  "sampling_and_losses": {
+    "value": "replace-me",
+    "source": "replace-me"
+  },
+  "ultrasound": {
+    "energy_basis": "unknown",
+    "source": "replace-me",
+    "activity_ids": []
+  },
+  "auxiliary_energy": {
+    "status": "unknown",
+    "source": "replace-me",
+    "activity_ids": []
+  },
+  "external_oxidant": {
+    "status": "unknown",
+    "source": "replace-me",
+    "activity_ids": []
+  },
+  "catalyst_destination": {
+    "status": "unknown",
+    "source": "replace-me",
+    "treatment_mapping": ""
+  },
+  "mineralization": {
+    "claim": "unknown"
+  },
+  "domain_sample_cycle_id": "replace-me",
+  "ph_adjustment": {
+    "status": "unknown",
+    "source": "replace-me",
+    "activity_ids": []
+  },
+  "illumination": {
+    "mode": "unknown",
+    "source": "replace-me",
+    "activity_ids": []
+  },
+  "byproducts_and_toxicity": {
+    "value": "replace-me",
+    "source": "replace-me"
+  }
+}

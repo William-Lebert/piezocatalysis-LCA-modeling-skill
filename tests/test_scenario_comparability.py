@@ -18,6 +18,11 @@ class ComparabilityTests(unittest.TestCase):
     def test_missing_or_placeholder_is_not_a_match(self):
         a=self.make_case();b=copy.deepcopy(a);a['id']='one';b.update(id='two',geography='replace-me',database_version='')
         r=assess({'cases':[a,b]});self.assertFalse(r['ranking_permitted_by_context_check']);self.assertEqual(len(r['issues']),2)
+    def test_h2o2_product_basis_mismatch_and_missing_are_blocked(self):
+        a=self.make_case();b=copy.deepcopy(a);a.update(id='one',product_basis='net_accumulated');b.update(id='two',product_basis='recovered_product')
+        self.assertFalse(assess({'cases':[a,b]})['ranking_permitted_by_context_check'])
+        b.pop('product_basis');self.assertFalse(assess({'cases':[a,b]})['ranking_permitted_by_context_check'])
+
     def test_duplicate_ids_rejected(self):
         a=self.make_case();a['id']='same'
         with self.assertRaisesRegex(ValueError,'case IDs'):assess({'cases':[a,dict(a)]})

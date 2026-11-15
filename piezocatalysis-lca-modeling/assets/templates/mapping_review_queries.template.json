@@ -1,0 +1,5 @@
+{
+  "queries": [
+    {"activity_id": "replace-me", "name_contains": "replace-me", "geography": ""}
+  ]
+}

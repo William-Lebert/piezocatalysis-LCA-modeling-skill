@@ -1,0 +1,11 @@
+{
+  "schema_version": "piezolca.research-delivery/1",
+  "title": "Synthetic cyclic foreground delivery",
+  "license_note": "Fictional example only; no background database results included.",
+  "artifacts": {
+    "foreground": "../synthetic-evidence/foreground.json",
+    "inventory": "/tmp/piezo-delivery-inventory.csv",
+    "inventory_manifest": "/tmp/piezo-delivery-inventory.csv.manifest.json"
+  },
+  "evidence_sources": {}
+}

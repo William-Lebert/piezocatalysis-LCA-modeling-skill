@@ -1,5 +1,34 @@
 # Changelog
 
+## 1.4.0 — 2026-11-16
+
+- Cross-check pollutant and service declarations against the cyclic foreground; retain existing mapping IDs and stop when an ID is shared across activities.
+
+- Assemble and verify local research deliveries from linked foreground, evidence, mapping, openLCA and plot artifacts; include an explicit methods draft, gaps and replay specification.
+
+- Record read-only openLCA mapping alternatives, geography and reference details, reviewer decisions and proxy rationale; export selected candidates as pending mappings.
+
+- Link synthetic or user-prepared evidence CSV records to cyclic foreground quantities and checked per-functional-unit inventory; review piezocatalysis energy, oxidant, catalyst and water-sample declarations.
+
+- Add agent-callable engineering scenario reporting, including explicit measurement ranges and background changes.
+- Do not infer a censored interval from a missing or contradictory observation; require independent review before ranking scenarios.
+
+- Add versioned plot-data preparation and editable SVG/PNG/CSV figures for cyclic performance, traceable stage contributions, comparable scenarios and one-at-a-time sensitivity.
+
+- Add domain service and evidence review for water treatment, apparent pollutant removal, H2O2 products and dry catalyst production, with censored-sample intervals and explicit comparability limits.
+
+- Add a literature-informed piezocatalytic H2O2 product foreground with explicit net-accumulation versus recovered-product bases, catalyst allocation and functional-unit inventory handoff.
+
+- Audit batch and cycle data quality, missing and censored values, paired settings, catalyst destinations and selected openLCA uncertainty fields; extend finite-state synthetic convergence diagnostics.
+
+- Compare independently calculated cycle scenarios against rebuilt per-functional-unit inventories, declared study contexts and a labeled linear contribution estimate.
+
+- Add read-only cycle mapping preflight and result interpretation for intervention flows, system link records, selected LCIA factors and signed contributions.
+- Extend the guarded openLCA 2.7.0 service with total inventory retrieval; distinguish technical flows from elementary flows and dispose temporary results.
+
+- Declare cycle inventory functional-unit basis, generate a paired provenance manifest and reject a second scaling by the existing batch/run scaler.
+- Add a traceable, user-reviewed dataset mapping handoff with explicit missing amounts, unit and direction issues, and catalyst loss warnings.
+
 ## 1.3.0 — 2026-11-15
 
 - Review selected openLCA process reference exchanges, product-system links and LCIA factor coverage, including missing units and formula-based factors.

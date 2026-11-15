@@ -1,0 +1,8 @@
+{
+  "queries": [
+    {"activity_id": "ultrasound-1", "name_contains": "electricity", "geography": ""},
+    {"activity_id": "clean-water-1", "name_contains": "water", "geography": ""},
+    {"activity_id": "clean-waste-1", "name_contains": "wastewater", "geography": ""},
+    {"activity_id": "final-recovered-catalyst", "name_contains": "fictional-catalyst-no-match", "geography": ""}
+  ]
+}

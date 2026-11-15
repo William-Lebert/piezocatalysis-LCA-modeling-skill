@@ -1,0 +1,101 @@
+{
+  "service": {
+    "kind": "h2o2_product",
+    "functional_unit": {
+      "value": 1,
+      "unit": "kg"
+    },
+    "definition": "Fictional net accumulation per campaign after subtracting any added H2O2; not recovered product or gross generation.",
+    "source": "fictional test only",
+    "evidence_class": "scenario",
+    "product_basis": "net_accumulated"
+  },
+  "fields": {
+    "system_boundary": {
+      "status": "provided",
+      "value": "synthetic preparation, electricity, water and unresolved disposal",
+      "source": "fictional test scenario",
+      "evidence_class": "scenario"
+    },
+    "reaction_mode": {
+      "status": "provided",
+      "value": "fictional ultrasound-driven piezocatalysis",
+      "source": "fictional test scenario",
+      "evidence_class": "scenario"
+    },
+    "energy_metering": {
+      "status": "provided",
+      "value": "fictional equipment input; estimated from rated power and run time, no wattmeter measurement",
+      "source": "fictional test scenario",
+      "evidence_class": "scenario"
+    },
+    "electricity_geography": {
+      "status": "provided",
+      "value": "CN electricity proxy for synthetic test",
+      "source": "fictional test scenario",
+      "evidence_class": "scenario"
+    },
+    "external_oxidants": {
+      "status": "missing"
+    },
+    "catalyst_fresh": {
+      "status": "provided",
+      "value": 0.01,
+      "source": "fictional test scenario",
+      "evidence_class": "scenario",
+      "unit": "g",
+      "basis": "per campaign, fictional"
+    },
+    "catalyst_recovered": {
+      "status": "missing"
+    },
+    "catalyst_loss": {
+      "status": "missing"
+    },
+    "catalyst_destination": {
+      "status": "missing"
+    },
+    "catalyst_mass_balance": {
+      "status": "missing"
+    },
+    "wastewater_destination": {
+      "status": "missing"
+    },
+    "background_mapping": {
+      "status": "provided",
+      "value": "synthetic mapping: CN electricity; RoW tap water/wastewater; GLO NaCl precursor proxy; suitability not established",
+      "source": "fictional test scenario",
+      "evidence_class": "scenario"
+    },
+    "coproduct_allocation": {
+      "status": "missing"
+    },
+    "sampling_protocol": {
+      "status": "missing"
+    },
+    "calibration": {
+      "status": "missing"
+    },
+    "product_measurement": {
+      "status": "provided",
+      "value": "synthetic net accumulation, not measured",
+      "source": "fictional test scenario",
+      "evidence_class": "scenario"
+    },
+    "external_product_adjustment": {
+      "status": "missing"
+    },
+    "in_situ_consumption": {
+      "status": "missing"
+    },
+    "product_quality": {
+      "status": "missing"
+    },
+    "external_oxidant_dose": {
+      "status": "missing"
+    },
+    "replication_design": {
+      "status": "missing"
+    }
+  }
+}

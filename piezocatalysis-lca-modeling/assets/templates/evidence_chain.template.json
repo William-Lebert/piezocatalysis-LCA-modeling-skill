@@ -1,0 +1,19 @@
+{
+  "schema_version": "piezolca.evidence-chain/1",
+  "foreground_sha256": "replace-me",
+  "sources": [
+    {
+      "id": "replace-me",
+      "path": "replace-me.csv",
+      "sha256": "replace-me"
+    }
+  ],
+  "links": [
+    {
+      "target": "/cycles/0/influent_concentration",
+      "source": "replace-me",
+      "record": 1,
+      "basis": "replace-me"
+    }
+  ]
+}

@@ -13,7 +13,7 @@ python3 piezocatalysis-lca-modeling/scripts/cyclic_foreground.py \
   piezocatalysis-lca-modeling/assets/examples/synthetic-cycles/variable-censored.json
 ```
 
-导出路径必须不存在。CSV 中数值是**每个处理功能单位**的清单，不能当作每批或每次处理清单再用旧脚本重复缩放。检测限、缺失值或净去除不为正时，不生成精确缩放；CSV 如包含空金额不会通过现有清单校验。
+导出路径和同名 `.manifest.json` 必须不存在。CSV 每行标注**每个处理功能单位**基准，配套元数据记录功能单位、缩放方式和哈希；新旧文件的映射交接方式见 `assets/examples/synthetic-handoff/README.md`。本开发版的批次／单次缩放入口会拒绝带有该标记的清单；v1.3.0 及以前的已安装缩放器不具备此检查。检测限、缺失值或净去除不为正时，不生成精确缩放；CSV 如包含空金额不会通过现有清单校验。
 
 恒定案例每轮表观去除 10 mg，两轮共 20 mg，初装 1 g、不补加、干产率每批 5 g。目标 100 mg 需 5 组、总计 1 批制备、2 kWh 制备电和 1 kWh 超声电，与旧模型在相同边界及均匀复用条件下相同。这里整组结束时回收的催化剂均送处置，明确分配完整初装量；不是每次处理后都处置。
 

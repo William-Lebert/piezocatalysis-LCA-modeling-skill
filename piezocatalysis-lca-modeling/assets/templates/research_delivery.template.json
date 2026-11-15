@@ -1,0 +1,11 @@
+{
+  "schema_version": "piezolca.research-delivery/1",
+  "title": "replace-me",
+  "license_note": "replace-me",
+  "artifacts": {
+    "foreground": "replace-me.json",
+    "inventory": "replace-me.csv",
+    "inventory_manifest": "replace-me.manifest.json"
+  },
+  "evidence_sources": {}
+}

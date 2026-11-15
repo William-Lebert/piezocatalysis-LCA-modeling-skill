@@ -2,13 +2,15 @@
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23813629.svg)](https://doi.org/10.5281/zenodo.23813629)
 
-Version 1.3.0, 2026-11-15.
+Version 1.4.0, 2026-11-16.
 
-版本：1.3.0，2026-11-15。
+版本：1.4.0，2026-11-16。
 
-This release contains a Codex Skill for research-grade life-cycle assessment of piezocatalysis, photocatalysis, and piezo-photocatalysis systems. It supports software-neutral model design plus implementation routes for openLCA and SimaPro.
+本版更新与回滚方法见 [v1.4.0 版本说明](docs/RELEASE_v1.4.0_zh.md)。
 
-本发布包面向压电催化、光催化和压电光催化体系的科研级生命周期评价，包含软件中立的建模规范，以及 openLCA 与 SimaPro 两条实施路径。
+This repository provides a research Skill for agents performing life-cycle assessment of piezocatalysis, photocatalysis, and piezo-photocatalysis systems. Its scripts, templates, and references support software-neutral modeling and openLCA or SimaPro workflows.
+
+本项目是供科研 Agent 使用的 Skill 包，面向压电催化、光催化和压电光催化体系的生命周期评价。Agent 可按任务调用建模脚本、模板和参考文档，并结合 openLCA 或 SimaPro 工作。
 
 The optional openLCA adapter can discover an existing local service. On the verified macOS openLCA 2.7.0 distribution it can also start a guarded temporary local server using a clone of an existing database; see the [openLCA workflow](piezocatalysis-lca-modeling/references/openlca-workflow.md) for setup and limitations.
 
@@ -38,6 +40,10 @@ Check declared scenario boundaries and functional units with the [scenario compa
 
 比较情景前可使用[情景可比性检查](piezocatalysis-lca-modeling/assets/examples/synthetic-comparability/README.md)核对功能单位和研究边界。
 
+Cycle inventories can be labeled and reviewed for dataset mapping; see the [synthetic handoff](piezocatalysis-lca-modeling/assets/examples/synthetic-handoff/README.md).
+
+逐循环清单基准标记、映射和审核交接见[合成案例](piezocatalysis-lca-modeling/assets/examples/synthetic-handoff/README.md)。
+
 For cycle-by-cycle catalyst reuse, see the [synthetic cycle examples](piezocatalysis-lca-modeling/assets/examples/synthetic-cycles/README.md).
 
 逐循环催化剂回收、补加及处理清单请参见[逐循环合成案例](piezocatalysis-lca-modeling/assets/examples/synthetic-cycles/README.md)。
@@ -45,6 +51,12 @@ For cycle-by-cycle catalyst reuse, see the [synthetic cycle examples](piezocatal
 Selected ecoinvent process references, product-system links and selected LCIA flow factors can be reviewed using `mapping_coverage.py`; see the [openLCA workflow](piezocatalysis-lca-modeling/references/openlca-workflow.md#selected-mapping-and-lcia-coverage-review).
 
 可使用 `mapping_coverage.py` 核对选定数据集的参考交换、产品系统连接及指定基本流的 LCIA 表征因子；具体方法见 [openLCA 工作流](piezocatalysis-lca-modeling/references/openlca-workflow.md#selected-mapping-and-lcia-coverage-review)。
+
+## Agent usage / Agent 使用
+
+Install or load the `piezocatalysis-lca-modeling/` Skill in the agent environment, then request the relevant LCA task. The agent starts from [`SKILL.md`](piezocatalysis-lca-modeling/SKILL.md) and selects the appropriate scripts and references; for example: “审查两组压电催化实验的功能单位和数据缺口，再用合成数据演示清单与图表。” Outputs and software access depend on the data, environment and task.
+
+将 `piezocatalysis-lca-modeling/` 安装或加载到 Agent 环境后，直接提出科研任务。Agent 从 [`SKILL.md`](piezocatalysis-lca-modeling/SKILL.md) 选择对应流程、脚本和参考资料；实际输出及软件连接取决于任务、可用数据和环境。
 
 ## Contents / 内容
 
@@ -62,6 +74,10 @@ The source DOCX and licensed LCA databases are intentionally not included.
 If you use this software in research, please cite the specific version used.
 
 如果您在科研工作中使用本软件，请引用实际使用的具体版本。
+
+### Version v1.4.0
+
+The version DOI will be added after the Zenodo archive is available. / 版本 DOI 将在 Zenodo 归档完成后补充。
 
 ### Version v1.3.0
 
@@ -96,6 +112,34 @@ For machine-readable citation metadata, see [`CITATION.cff`](CITATION.cff).
 A synthetic Brightway example and the limits on parameterization, uncertainty analysis, and prospective scenarios are documented in [the feasibility record](piezocatalysis-lca-modeling/assets/examples/synthetic-brightway/README.md). These engines are not core dependencies.
 
 合成 Brightway 案例及参数化、不确定性分析和前瞻情景的限制见[可行性记录](piezocatalysis-lca-modeling/assets/examples/synthetic-brightway/README.md)；高级引擎不属于核心依赖。
+
+### 逐循环清单与 openLCA 交接
+
+开发中的逐循环清单交接支持标注每功能单位基准、记录密度换算依据，并通过只读预检核对映射与数据库参考交换。预检不会创建产品系统；映射代理和缺项仍需研究者判断。操作示例见 [逐循环交接说明](piezocatalysis-lca-modeling/assets/examples/synthetic-handoff/README.md)。
+
+Agent 可用 `scripts/mapping_review.py` 只读记录多个候选的地域、参考产品、单位、参考方向、代理理由和选用／拒绝记录；导出映射保持待审核。详见[合成映射审查说明](piezocatalysis-lca-modeling/assets/examples/synthetic-mapping-review/README.md)。
+
+逐循环结果可用 `scripts/result_coverage.py` 检查技术流连接、所选影响类别、基本流因子及正负贡献；完整报告可能包含受许可约束的数据。详见 [openLCA 工作流](piezocatalysis-lca-modeling/references/openlca-workflow.md#result-interpretation-and-selected-coverage)。
+
+逐循环情景比较可由 `scripts/cycle_scenario_compare.py` 根据两份循环记录重建每功能单位清单，检查声明的功能单位与边界等条件，并将独立 openLCA 结果与贡献量近似并列。背景数据、场景与模型交换仍需核对，自动检查不授权排名，须独立核对服务和模型。详见 [逐循环情景工作流](piezocatalysis-lca-modeling/references/openlca-workflow.md#cycle-scenario-comparison)。
+
+实验数据质量可先用 `scripts/experimental_quality.py` 核对逐批、逐循环记录、检测限和功率／时间配对，再结合 `uncertainty_readiness.py` 评估分布与关联依据。示例见[合成数据质量检查](piezocatalysis-lca-modeling/assets/examples/synthetic-quality/README.md)。
+
+压电催化应用还支持以过氧化氢为产品的功能单位：见 [合成 H2O2 前景示例](piezocatalysis-lca-modeling/assets/examples/synthetic-h2o2/README.md)和[领域文献与建模启示](piezocatalysis-lca-modeling/references/domain-literature.md)。过氧化氢净积累量、回收产品和污染物去除是不同的功能，需分别说明边界。
+
+实验数据证据链可用 `scripts/evidence_chain.py` 将前景输入与 CSV 记录、单位、数据基准及每功能单位清单逐项核对；`scripts/piezocatalysis_checks.py` 可检查超声及光照能耗、氧化剂、pH 调节和催化剂去向。原始 Excel／文献页码目前仍须人工核对。参见[合成证据链示例](piezocatalysis-lca-modeling/assets/examples/synthetic-evidence/README.md)。
+
+压电催化服务、实验边界与证据可使用 `scripts/domain_review.py` 汇总检查：处理水量、表观污染物去除、H₂O₂ 产品和干催化剂制备分别声明；缺失值和检测限不会自动补零。参见[合成领域检查示例](piezocatalysis-lca-modeling/assets/examples/synthetic-domain-review/README.md)及[研究检查表](piezocatalysis-lca-modeling/references/domain-quality-checklist.md)。
+
+绘图接口可将逐循环、单类别阶段贡献、可比情景和单因素敏感性报告导出为 CSV、可编辑 SVG 和 PNG；详见[合成绘图示例与依赖](piezocatalysis-lca-modeling/assets/examples/synthetic-plotting/README.md)。阶段分配有明确的固定背景条件，部分模型及数据许可提示会随图保留。
+
+### Agent 科研交付（开发中）
+
+Agent 可用 `scripts/research_delivery.py` 整理已有清单、证据、映射、计算、图表和方法草稿，并核对来源哈希与缺口。见[合成交付示例](piezocatalysis-lca-modeling/assets/examples/synthetic-delivery/README.md)；该整理流程不代替软件重算或科研审查。
+
+### 压电催化情景与工程放大（开发中）
+
+可按相同服务比较逐循环清单、记录测量范围和工程假设，并关联独立核验的 openLCA 比较；见 [合成情景说明](piezocatalysis-lca-modeling/assets/examples/synthetic-engineering/README.md)。
 
 ## Related projects / 参考项目
 

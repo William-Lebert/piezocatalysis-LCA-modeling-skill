@@ -1,0 +1,214 @@
+{
+  "schema_version": "piezolca.engineering-scenarios/1",
+  "baseline_input": "baseline.json",
+  "scenarios": [
+    {
+      "id": "higher-power",
+      "label": "第二轮高功率",
+      "input": "higher-power.json",
+      "parameters": [
+        {
+          "name": "第二轮功率",
+          "category": "ultrasound_power",
+          "value": 150,
+          "unit": "W",
+          "basis": "synthetic_test",
+          "source": "fictional example",
+          "input_pointer": "/cycles/1/activities/0/power",
+          "measured_range": {
+            "min": 80,
+            "max": 120,
+            "unit": "W",
+            "source": "fictional measurement range, not real data"
+          }
+        }
+      ]
+    },
+    {
+      "id": "lower-performance",
+      "label": "第二轮性能下降",
+      "input": "lower-performance.json",
+      "parameters": [
+        {
+          "name": "第二轮出水浓度",
+          "category": "other",
+          "value": 15,
+          "unit": "mg/L",
+          "basis": "synthetic_test",
+          "source": "fictional example",
+          "input_pointer": "/cycles/1/effluent_concentration",
+          "measured_range": {
+            "min": 8,
+            "max": 12,
+            "unit": "mg/L",
+            "source": "fictional measurement range, not real data"
+          }
+        }
+      ]
+    },
+    {
+      "id": "longer-time",
+      "label": "延长处理时间",
+      "input": "longer-time.json",
+      "parameters": [
+        {
+          "name": "第二轮时间",
+          "category": "treatment_time",
+          "value": 90,
+          "unit": "min",
+          "basis": "synthetic_test",
+          "source": "fictional example",
+          "input_pointer": "/cycles/1/activities/0/duration",
+          "measured_range": {
+            "min": 45,
+            "max": 75,
+            "unit": "min",
+            "source": "fictional measurement range, not real data"
+          }
+        }
+      ]
+    },
+    {
+      "id": "more-washing",
+      "label": "增加清洗换水",
+      "input": "more-washing.json",
+      "parameters": [
+        {
+          "name": "清洗用水",
+          "category": "cleaning_regeneration",
+          "value": 0.4,
+          "unit": "L",
+          "basis": "synthetic_test",
+          "source": "fictional example",
+          "input_pointer": "/cycles/1/activities/1/quantity",
+          "measured_range": {
+            "min": 0.1,
+            "max": 0.3,
+            "unit": "L",
+            "source": "fictional measurement range, not real data"
+          }
+        },
+        {
+          "name": "清洗废水",
+          "category": "water_exchange",
+          "value": 0.4,
+          "unit": "L",
+          "basis": "synthetic_test",
+          "source": "fictional example",
+          "input_pointer": "/cycles/1/activities/2/quantity",
+          "measured_range": {
+            "min": 0.1,
+            "max": 0.3,
+            "unit": "L",
+            "source": "fictional measurement range, not real data"
+          }
+        }
+      ]
+    },
+    {
+      "id": "add-oxidant",
+      "label": "添加氧化剂",
+      "input": "add-oxidant.json",
+      "parameters": [
+        {
+          "name": "氧化剂量",
+          "category": "oxidant",
+          "value": 0.1,
+          "unit": "g",
+          "basis": "synthetic_test",
+          "source": "fictional example",
+          "input_pointer": "/cycles/1/activities/3/quantity",
+          "measured_range": {
+            "min": 0,
+            "max": 0.05,
+            "unit": "g",
+            "source": "fictional measurement range, not real data"
+          }
+        }
+      ]
+    },
+    {
+      "id": "longer-life",
+      "label": "增加催化剂循环寿命",
+      "input": "longer-life.json",
+      "parameters": [
+        {
+          "name": "循环数",
+          "category": "catalyst_lifetime",
+          "value": 3,
+          "unit": "cycles",
+          "basis": "synthetic_test",
+          "source": "fictional example",
+          "input_pointer": "/cycles",
+          "measured_range": {
+            "min": 1,
+            "max": 2,
+            "unit": "cycles",
+            "source": "fictional measurement range, not real data"
+          }
+        }
+      ]
+    },
+    {
+      "id": "grid-study",
+      "label": "替换电网方案（仅声明）",
+      "input": "grid-study.json",
+      "parameters": [
+        {
+          "name": "电网情景编号",
+          "category": "electricity_grid",
+          "value": 2,
+          "unit": "scenario",
+          "basis": "engineering_assumption",
+          "source": "fictional example",
+          "input_pointer": null
+        }
+      ],
+      "background_electricity": {
+        "database": "fictional database",
+        "dataset_id": "fictional-grid-B",
+        "geography": "fictional-B",
+        "reference_unit": "kWh",
+        "source": "synthetic scenario"
+      }
+    },
+    {
+      "id": "scale-study",
+      "label": "工程容量与功率假设",
+      "input": "scale-study.json",
+      "parameters": [
+        {
+          "name": "设备额定处理量",
+          "category": "engineering_scale",
+          "value": 100,
+          "unit": "L/h",
+          "basis": "engineering_assumption",
+          "source": "fictional example",
+          "input_pointer": null
+        },
+        {
+          "name": "第二轮功率",
+          "category": "ultrasound_power",
+          "value": 300,
+          "unit": "W",
+          "basis": "engineering_assumption",
+          "source": "fictional example",
+          "input_pointer": "/cycles/1/activities/0/power",
+          "measured_range": {
+            "min": 80,
+            "max": 120,
+            "unit": "W",
+            "source": "fictional measurement range, not real data"
+          }
+        }
+      ]
+    }
+  ],
+  "background_electricity": {
+    "database": "fictional database",
+    "dataset_id": "fictional-grid-A",
+    "geography": "fictional-A",
+    "reference_unit": "kWh",
+    "source": "synthetic scenario"
+  }
+}

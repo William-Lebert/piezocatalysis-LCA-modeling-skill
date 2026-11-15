@@ -1,0 +1,2 @@
+# Optional figure renderer; core modeling and plot-data preparation use the standard library.
+matplotlib==3.9.4

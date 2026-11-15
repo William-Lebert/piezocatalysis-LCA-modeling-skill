@@ -1,0 +1,7 @@
+activity_id,mapping_id
+precursor,map-precursor
+prep-electricity,map-prep-power
+ultrasound-1,map-ultrasound
+clean-waste-1,map-waste
+ultrasound-2,map-ultrasound
+clean-waste-2,map-waste

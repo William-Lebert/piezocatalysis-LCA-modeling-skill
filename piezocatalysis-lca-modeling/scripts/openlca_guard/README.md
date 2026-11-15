@@ -16,4 +16,4 @@ python3 piezocatalysis-lca-modeling/scripts/openlca_guard/build_agent.py \
   --output /tmp/localhost-agent-rebuilt.jar
 ```
 
-Expected JAR SHA-256: `52cd8e498b30677f33b3752648a011650c60de72a4c619982ab0386f6c9732b8`. Verify with `shasum -a 256 /tmp/localhost-agent-rebuilt.jar`. The script refuses to overwrite an existing output. Runtime hash verification rejects a different agent binary; after changing source, review the generated binary and update the pinned hash deliberately.
+Expected JAR SHA-256: `6ebc13b648081c0718dd20a5e17fcb773c7c692cbcfa5d5135e1d9fbc0c92f20`. Verify with `shasum -a 256 /tmp/localhost-agent-rebuilt.jar`. The script refuses to overwrite an existing output. Runtime hash verification rejects a different agent binary; after changing source, review the generated binary and update the pinned hash deliberately.

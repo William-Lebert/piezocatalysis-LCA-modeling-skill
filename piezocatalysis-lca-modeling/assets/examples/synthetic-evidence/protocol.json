@@ -1,0 +1,65 @@
+{
+  "schema_version": "piezolca.piezo-boundary/1",
+  "foreground_sha256": "dd2d110b3f4786b675cdbf918c39a1317348b80d4b367aec0548de5c0d50c499",
+  "reactor_configuration": {
+    "value": "fictional reactor",
+    "source": "synthetic test scenario"
+  },
+  "mechanical_coupling": {
+    "value": "fictional ultrasound bath",
+    "source": "synthetic test scenario"
+  },
+  "pollutant_identity": {
+    "value": "fictional pollutant",
+    "source": "synthetic test scenario"
+  },
+  "service_performance": {
+    "value": "fictional apparent removal 100 mg",
+    "source": "synthetic test scenario"
+  },
+  "sampling_and_losses": {
+    "value": "fictional test samples",
+    "source": "synthetic test scenario"
+  },
+  "ultrasound": {
+    "energy_basis": "rated_power_estimate",
+    "source": "synthetic equipment rating",
+    "activity_ids": [
+      "ultrasound-1",
+      "ultrasound-2"
+    ]
+  },
+  "auxiliary_energy": {
+    "status": "unknown",
+    "source": "synthetic missing record",
+    "activity_ids": []
+  },
+  "external_oxidant": {
+    "status": "unknown",
+    "source": "synthetic missing record",
+    "activity_ids": []
+  },
+  "catalyst_destination": {
+    "status": "disposed",
+    "source": "synthetic assumption",
+    "treatment_mapping": ""
+  },
+  "mineralization": {
+    "claim": "not_claimed"
+  },
+  "domain_sample_cycle_id": "1",
+  "ph_adjustment": {
+    "status": "unknown",
+    "source": "synthetic missing record",
+    "activity_ids": []
+  },
+  "illumination": {
+    "mode": "dark",
+    "source": "synthetic test scenario",
+    "activity_ids": []
+  },
+  "byproducts_and_toxicity": {
+    "value": "",
+    "source": ""
+  }
+}

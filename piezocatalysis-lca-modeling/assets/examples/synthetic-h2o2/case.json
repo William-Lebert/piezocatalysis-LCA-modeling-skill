@@ -1,0 +1,102 @@
+{
+  "system": "fictional piezocatalytic H2O2",
+  "boundary": "synthetic preparation, electricity, water and unresolved disposal",
+  "functional_unit": {
+    "value": 1,
+    "unit": "kg",
+    "evidence_class": "scenario",
+    "source": "fictional integration example"
+  },
+  "product_basis": "net_accumulated",
+  "product_definition": "Fictional net accumulation per campaign after subtracting any added H2O2; not recovered product or gross generation.",
+  "net_product_per_campaign": {
+    "value": 0.1,
+    "unit": "g",
+    "evidence_class": "scenario",
+    "source": "fictional integration example"
+  },
+  "dry_yield": {
+    "value": 5,
+    "unit": "g",
+    "evidence_class": "scenario",
+    "source": "fictional integration example"
+  },
+  "fresh_catalyst_per_campaign": {
+    "value": 0.01,
+    "unit": "g",
+    "evidence_class": "scenario",
+    "source": "fictional integration example"
+  },
+  "catalyst_mass_basis": "dry",
+  "catalyst_destination": "unknown",
+  "preparation_activities": [
+    {
+      "activity_id": "prep-electricity",
+      "flow_name": "synthetic preparation electricity",
+      "kind": "energy",
+      "direction": "input",
+      "quantity": {
+        "value": 2,
+        "unit": "kWh",
+        "evidence_class": "scenario",
+        "source": "fictional integration example"
+      }
+    },
+    {
+      "activity_id": "precursor",
+      "flow_name": "synthetic precursor",
+      "kind": "material",
+      "direction": "input",
+      "quantity": {
+        "value": 10,
+        "unit": "g",
+        "evidence_class": "scenario",
+        "source": "fictional integration example"
+      }
+    }
+  ],
+  "campaign_activities": [
+    {
+      "activity_id": "ultrasound",
+      "flow_name": "synthetic ultrasound electricity",
+      "kind": "energy",
+      "direction": "input",
+      "power": {
+        "value": 40,
+        "unit": "W",
+        "evidence_class": "scenario",
+        "source": "fictional integration example"
+      },
+      "duration": {
+        "value": 6,
+        "unit": "min",
+        "evidence_class": "scenario",
+        "source": "fictional integration example"
+      }
+    },
+    {
+      "activity_id": "water",
+      "flow_name": "synthetic water",
+      "kind": "material",
+      "direction": "input",
+      "quantity": {
+        "value": 5,
+        "unit": "mL",
+        "evidence_class": "scenario",
+        "source": "fictional integration example"
+      }
+    },
+    {
+      "activity_id": "wastewater",
+      "flow_name": "synthetic wastewater",
+      "kind": "waste",
+      "direction": "output",
+      "quantity": {
+        "value": 5,
+        "unit": "mL",
+        "evidence_class": "scenario",
+        "source": "fictional integration example"
+      }
+    }
+  ]
+}

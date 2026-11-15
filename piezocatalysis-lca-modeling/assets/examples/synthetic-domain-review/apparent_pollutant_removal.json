@@ -1,0 +1,129 @@
+{
+  "service": {
+    "kind": "apparent_pollutant_removal",
+    "functional_unit": {
+      "value": 100,
+      "unit": "mg"
+    },
+    "definition": "fictional apparent_pollutant_removal service",
+    "source": "fictional test only",
+    "evidence_class": "scenario"
+  },
+  "fields": {
+    "system_boundary": {
+      "status": "provided",
+      "value": "fictional synthesis, treatment and cleaning; no measured data",
+      "source": "fictional test scenario",
+      "evidence_class": "scenario"
+    },
+    "reaction_mode": {
+      "status": "provided",
+      "value": "fictional ultrasound-driven piezocatalysis",
+      "source": "fictional test scenario",
+      "evidence_class": "scenario"
+    },
+    "energy_metering": {
+      "status": "provided",
+      "value": "fictional equipment input; estimated from rated power and run time, no wattmeter measurement",
+      "source": "fictional test scenario",
+      "evidence_class": "scenario"
+    },
+    "electricity_geography": {
+      "status": "provided",
+      "value": "CN electricity proxy for synthetic test",
+      "source": "fictional test scenario",
+      "evidence_class": "scenario"
+    },
+    "external_oxidants": {
+      "status": "missing"
+    },
+    "catalyst_fresh": {
+      "status": "provided",
+      "value": 1,
+      "source": "fictional test scenario",
+      "evidence_class": "scenario",
+      "unit": "g",
+      "basis": "per campaign, fictional"
+    },
+    "catalyst_recovered": {
+      "status": "missing"
+    },
+    "catalyst_loss": {
+      "status": "missing"
+    },
+    "catalyst_destination": {
+      "status": "missing"
+    },
+    "catalyst_mass_balance": {
+      "status": "missing"
+    },
+    "wastewater_destination": {
+      "status": "missing"
+    },
+    "background_mapping": {
+      "status": "provided",
+      "value": "synthetic mapping: CN electricity; RoW tap water/wastewater; GLO NaCl precursor proxy; suitability not established",
+      "source": "fictional test scenario",
+      "evidence_class": "scenario"
+    },
+    "coproduct_allocation": {
+      "status": "missing"
+    },
+    "sampling_protocol": {
+      "status": "missing"
+    },
+    "calibration": {
+      "status": "missing"
+    },
+    "pollutant_identity": {
+      "status": "provided",
+      "value": "fictional pollutant",
+      "source": "fictional test scenario",
+      "evidence_class": "scenario"
+    },
+    "influent_volume": {
+      "status": "provided",
+      "value": 1,
+      "source": "fictional test scenario",
+      "evidence_class": "scenario",
+      "unit": "L",
+      "basis": "cycle 1 sample, fictional"
+    },
+    "influent_concentration": {
+      "status": "provided",
+      "value": 20,
+      "source": "fictional test scenario",
+      "evidence_class": "scenario",
+      "unit": "mg/L",
+      "basis": "cycle 1 sample, fictional"
+    },
+    "effluent_volume": {
+      "status": "provided",
+      "value": 1,
+      "source": "fictional test scenario",
+      "evidence_class": "scenario",
+      "unit": "L",
+      "basis": "cycle 1 sample, fictional"
+    },
+    "effluent_concentration": {
+      "status": "provided",
+      "value": 10,
+      "source": "fictional test scenario",
+      "evidence_class": "scenario",
+      "unit": "mg/L",
+      "basis": "cycle 1 sample, fictional"
+    },
+    "sampling_losses": {
+      "status": "missing"
+    },
+    "performance_criteria": {
+      "status": "missing"
+    },
+    "external_oxidant_dose": {
+      "status": "missing"
+    },
+    "replication_design": {
+      "status": "missing"
+    }
+  }
+}

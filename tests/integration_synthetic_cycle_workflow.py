@@ -13,6 +13,8 @@ import tempfile
 ROOT=Path(__file__).resolve().parents[1];SKILL=ROOT/'piezocatalysis-lca-modeling';SCRIPTS=SKILL/'scripts'
 sys.path.insert(0,str(SCRIPTS))
 from cyclic_foreground import build
+from inventory_handoff import load_handoff
+from audit_and_scale_inventory import audit as legacy_audit
 from integration_openlca_guard import fingerprint
 from mapping_coverage import audit
 from openlca_local_launch import launch
@@ -34,6 +36,13 @@ def main():
         if proc.returncode:raise RuntimeError(proc.stderr)
         validation=subprocess.run([sys.executable,str(SCRIPTS/'validate_inventory.py'),str(inventory)],capture_output=True,text=True)
         if validation.returncode:raise RuntimeError(validation.stdout+validation.stderr)
+        handoff=load_handoff(inventory,inventory.with_name(inventory.name+'.manifest.json'))
+        assert handoff['amount_basis']=='per_functional_unit' and handoff['summary']['status']=='needs_review'
+        try:
+            legacy_audit(inventory,folder/'unused_mapping.csv',folder/'unused_parameters.json',source['system'],'dry catalyst')
+            raise AssertionError('already scaled inventory was accepted for a second scaling')
+        except ValueError as exc:
+            assert 'already scaled per functional unit' in str(exc)
         p=subprocess.run([str(java),'-Xmx1024M','-cp',str(libs/'*'),'org.python.util.jython',str(ROOT/'tests/fixtures/create_cycle_workflow.py'),str(db),str(inventory)],capture_output=True,text=True,timeout=90)
         if p.returncode:raise RuntimeError('fixture creation failed: '+p.stderr[-1500:])
         ids=json.loads(next(x[len('RESULT_JSON='):] for x in p.stdout.splitlines() if x.startswith('RESULT_JSON=')))

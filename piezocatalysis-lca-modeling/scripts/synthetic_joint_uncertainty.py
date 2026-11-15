@@ -46,6 +46,10 @@ def run(data):
             if draw<cumulative: idx=i;break
         counts[idx]+=1;samples.append(values[idx])
     ordered=sorted(samples)
+    stderr=math.sqrt(variance/n)
+    checkpoints=sorted({max(1,n//4),max(1,n//2),n})
+    convergence=[{'iterations':k,'sample_mean':statistics.fmean(samples[:k]),
+                  'analytical_standard_error':math.sqrt(variance/k)} for k in checkpoints]
     def quantile(p):
         x=(n-1)*p;lo=math.floor(x);hi=math.ceil(x)
         return ordered[lo]+(ordered[hi]-ordered[lo])*(x-lo)
@@ -53,11 +57,14 @@ def run(data):
             'random_generator':'Python random.Random; record Python version for reproduction',
             'analytical_mean':mean,'analytical_population_standard_deviation':math.sqrt(variance),
             'sample_mean':statistics.fmean(samples),'sample_standard_deviation':statistics.stdev(samples),
+            'analytical_standard_error_of_mean':stderr,
+            'mean_error_in_analytical_standard_errors':(statistics.fmean(samples)-mean)/stderr if stderr else None,
+            'prefix_convergence_diagnostics':convergence,
             'prefix_half_mean':statistics.fmean(samples[:n//2]),
             'quantile_method':'linear interpolation at (n-1)*p',
             'sample_quantiles':{'0.025':quantile(.025),'0.5':quantile(.5),'0.975':quantile(.975)},
             'state_counts':{s['id']:counts[i] for i,s in enumerate(states)},
-            'note':'Synthetic joint states are sampled together; half/full comparison is only a diagnostic, not proof of convergence. Model quantiles are not experimental confidence intervals.'}
+            'note':'Synthetic joint states are sampled together; Prefix means and analytical standard errors diagnose this finite synthetic model only, not proof of convergence. Model quantiles are not experimental confidence intervals.'}
 
 
 def main():

@@ -1,13 +1,13 @@
 ---
 name: piezocatalysis-lca-modeling
-description: Research-grade life-cycle assessment workflows for piezocatalysis, photocatalysis, and piezo-photocatalysis studies. Use when Codex must define a functional unit and system boundary, convert laboratory catalyst-synthesis and pollutant-treatment data into a traceable LCI, calculate EE/O from kinetics, map foreground inputs to licensed background databases, build or audit models in openLCA or SimaPro, compare PZC/PC/PPC routes or catalysts, run sensitivity and uncertainty analyses, troubleshoot IPC/COM/Excel-link workflows, or prepare SCI-quality LCA methods, tables, figures, and supporting information.
+description: Help research agents build, audit, calculate, and report life-cycle assessments of piezocatalysis, photocatalysis, and piezo-photocatalysis systems using experimental evidence and LCA software.
 ---
 
 # Piezocatalysis LCA Modeling
 
 ## Purpose
 
-Build transparent and reproducible LCA models for piezocatalytic materials and water-treatment systems. Support both openLCA and SimaPro while keeping the scientific model independent of either software.
+Help the agent carry out the requested part of a transparent, reproducible piezocatalysis LCA. Use the scripts, templates and references as needed; keep the research model independent of openLCA and SimaPro. This is an agent skill package.
 
 ## Non-negotiable rules
 
@@ -26,10 +26,15 @@ Build transparent and reproducible LCA models for piezocatalytic materials and w
 
 ### 1. Intake and evidence audit
 
+Choose the relevant stages for the user’s request; do not require a complete LCA for a narrower task.
+
 - Collect experimental recipes, yields, washing and separation steps, equipment power, run time, catalyst dose, pollutant concentration and volume, kinetic constants, reuse data, and end-of-life assumptions.
 - Create an assumptions log and dataset-mapping table from `assets/templates/`.
 - Run `scripts/validate_inventory.py` before software import.
 - Read `references/evidence-and-data-quality.md` whenever data are incomplete, literature-derived, or represented by a proxy.
+- Use `scripts/domain_review.py` for service, experimental boundary, sampling, catalyst and waste evidence declarations; verify scientific suitability using `references/domain-quality-checklist.md`.
+- For auditable numeric evidence, link a normalized local CSV to cyclic foreground quantities with `scripts/evidence_chain.py`; compare the generated inventory when available. Verify original spreadsheet cells or document pages separately; hashes and declared locators alone do not verify them. See `assets/examples/synthetic-evidence/README.md`.
+- Use `scripts/piezocatalysis_checks.py` to review ultrasound energy basis, auxiliary and illumination energy, oxidants, pH adjustment, catalyst destination, byproducts and mineralization claims, and reconcile the specified cycle’s water measurements with the domain declaration. Missing evidence stays visible.
 
 ### 2. Define the comparison
 
@@ -48,6 +53,7 @@ Build transparent and reproducible LCA models for piezocatalytic materials and w
 - Build treatment processes separately from catalyst preparation.
 - Scale preparation burden through catalyst demand and lifetime; scale treatment burden through pollutant removal or treated-water service.
 - Use `scripts/piezocatalysis_calculations.py` for kinetic removal, EE/O, batch energy, and functional-unit scaling checks.
+- For a piezocatalytic H2O2 product function, use `scripts/h2o2_foreground.py` and document product basis, catalyst allocation and product consumption; see `references/domain-literature.md`.
 - For a pollutant-removal service with equal performance per run and a justified effective-use assumption, `scripts/audit_and_scale_inventory.py` can audit and scale the foreground inventory; see `assets/examples/synthetic-treatment/README.md`. Treat warnings and unmapped flows as unresolved, and use cycle-by-cycle modeling when those assumptions do not hold.
 - For traceable experiment records, two functional-unit families, below-quantification limits and inventory CSV export, use `scripts/experimental_foreground.py`; see `assets/examples/synthetic-foreground/README.md`. The concentration difference is an apparent aqueous removal, not proof of mineralization.
 
@@ -57,8 +63,14 @@ Build transparent and reproducible LCA models for piezocatalytic materials and w
 - Record dataset name, database version, system model, geography, unit, provider, proxy rationale, and expected bias.
 - Before uncertainty simulation, use `scripts/uncertainty_readiness.py` to inventory declarations, missing distributions, censoring and dependencies; distinguish review from represented background uncertainty. `scripts/synthetic_joint_uncertainty.py` is only a seeded finite-state synthetic demonstration, not a general or native openLCA Monte Carlo engine.
 - Before interpreting scenarios from separate contexts, run `scripts/scenario_comparability.py` and resolve missing or differing declarations; a text match is not proof of scientific equivalence.
+- For newly exported cycle inventories use `scripts/inventory_handoff.py` and the paired manifest to review per-functional-unit basis, mappings, missing amounts and unaccounted catalyst losses; see `assets/examples/synthetic-handoff/README.md`. Unmarked legacy CSV basis cannot be inferred.
+- Use `scripts/cycle_model_plan.py` for read-only openLCA verification of cycle mappings and per-functional-unit quantities; unresolved items and proxies require review.
+- Use `scripts/result_coverage.py` to inspect intervention-flow types, technical link records, selected LCIA factors and contribution offsets; restrict sharing according to database licenses.
+- Compare cycle-level scenario inputs with `scripts/cycle_scenario_compare.py`, independently verify each calculated model exchange, and review comparability before interpreting results.
+- Use `scripts/experimental_quality.py` to review cyclic observations, censoring and paired measurements, and `scripts/openlca_uncertainty_inventory.py` for scoped read-only background field counts before uncertainty analysis.
 - For varying catalyst reuse cycles, use `scripts/cyclic_foreground.py`; see `assets/examples/synthetic-cycles/README.md`. The CSV is already scaled to the treatment functional unit. Keep missing quantities, censoring, catalyst loss and final recovery destination explicit.
 - Use `scripts/dataset_candidates.py` for read-only candidate discovery and review; see `assets/examples/synthetic-mapping/README.md`. Confirm reference flows, units and IDs before updating the mapping table.
+- For multi-candidate openLCA mapping review, use `scripts/mapping_review.py` and `assets/examples/synthetic-mapping-review/README.md` to record geography, reference product, unit, competing choices and proxy rationale. It exports selected mappings as pending; review and verify provider links before use.
 - Use `scripts/mapping_coverage.py` to inspect a selected process reference exchange, a specified product-system link and selected elementary-flow factors in specified LCIA categories; see `assets/examples/synthetic-coverage/README.md`. Record the review separately: a matching reference is not automatic approval, and selected factors do not prove full model coverage.
 - Do not silently omit unmatched chemicals. Flag them for sensitivity analysis.
 - Validate unit conversion and reference-product direction before linking providers.
@@ -77,6 +89,7 @@ Build transparent and reproducible LCA models for piezocatalytic materials and w
 - Verify reference flows, target units, provider links, signs, scaling factors, mass balance, energy balance, and contribution totals.
 - Compare at least one manually calculated anchor against the software result.
 - Run sensitivity cases for dominant equipment energy, catalyst lifetime, yield, electricity mix, solvent recovery, proxy choice, and scale-up assumptions.
+- For cycle scenarios and engineering assumptions, use `scripts/engineering_scenarios.py` and `assets/examples/synthetic-engineering/README.md`; retain sources, measurement ranges and missing impact results. Do not infer engineering performance or ranking from declarations.
 - For a documented additive approximation based on existing absolute impact results, use `scripts/sensitivity_report.py`; follow its scope checks and require complete, non-overlapping contributions. Use separate LCA recalculation when scaling assumptions are not justified.
 - For actual one-at-a-time parameter recalculation of an existing openLCA product system, use `scripts/parameter_sensitivity.py` and check `assets/examples/synthetic-parametric/README.md`; keep its results distinct from additive approximations.
 - Read `references/calculation-and-qa.md` for formulas and stop conditions.
@@ -86,6 +99,8 @@ Build transparent and reproducible LCA models for piezocatalytic materials and w
 - Separate observed results from mechanistic hypotheses about piezoelectric response, charge separation, kinetics, or electronic structure.
 - Report hotspots, trade-offs, uncertainty, limitations, and conditions under which route rankings change.
 - Read `references/reporting-and-figures.md` before producing manuscripts, SI tables, or figures.
+- For an auditable local delivery, use `scripts/research_delivery.py` with the applicable existing foreground, evidence, mapping, calculation and figure artifacts; see `assets/examples/synthetic-delivery/README.md`. It checks and organizes supplied artifacts, reports gaps and provides a replay specification; it does not run openLCA or prove scientific validity.
+- Use `scripts/plot_data.py` and `scripts/plot_report.py` for traceable cycle, stage, scenario and one-at-a-time sensitivity figures; preserve units, partial-model warnings and database license notes.
 
 ## Software routing
 
@@ -100,7 +115,7 @@ Build transparent and reproducible LCA models for piezocatalytic materials and w
 
 ## Required deliverables
 
-Produce these artifacts unless the user narrows the scope:
+For a complete LCA, produce the applicable artifacts below. For a narrower request, provide only relevant outputs and identify missing prerequisites; never invent results:
 
 1. model specification with version, scope, functional unit, and exclusions;
 2. foreground LCI table;
@@ -126,7 +141,7 @@ Produce these artifacts unless the user narrows the scope:
 
 ## Completion gate
 
-Do not declare completion until:
+For the requested scope, check the applicable items below. When a prerequisite is missing, report it and avoid presenting the corresponding result as complete:
 
 - all required flows have evidence classes and units;
 - the model reproduces after a fresh run;

@@ -11,7 +11,7 @@ import org.objectweb.asm.*;
 public final class LocalhostAgent {
   private static final Set<String> ALLOWED = new HashSet<>(Arrays.asList(
       "data/get", "data/get/descriptors", "data/get/parameters", "result/calculate", "result/state", "result/total-impacts",
-      "result/impact-contributions-of", "result/dispose"));
+      "result/impact-contributions-of", "result/total-flows", "result/dispose"));
 
   public static void restrictMethods(Object server) {
     try {

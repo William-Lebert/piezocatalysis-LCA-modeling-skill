@@ -41,6 +41,7 @@ class Handler(BaseHTTPRequestHandler):
             elif method == 'result/total-impacts': result=[] if self.server.fail == 'empty-impacts' else [{'impactCategory':CAT,'amount':1e-13 if self.server.fail == 'tiny-mismatch' else 3.2}]
             elif method == 'result/impact-contributions-of':
                 result=[] if self.server.fail == 'empty-contributions' else [{'techFlow':{'provider':{'name':'A'}},'amount':0.0 if self.server.fail == 'tiny-mismatch' else 1.2}, {'techFlow':{'provider':{'name':'B'}},'amount':0.0 if self.server.fail == 'tiny-mismatch' else (1.0 if self.server.fail == 'mismatch' else 2.0)}]
+            elif method == 'result/total-flows': result=[{'enviFlow':{'flow':{'flowType':'WASTE_FLOW'},'isInput':False},'amount':0.5}]
             elif method == 'result/dispose': result='ok'
             else: raise AssertionError(method)
             response={'jsonrpc':'2.0','id':req['id'],'result':result}
@@ -55,11 +56,11 @@ class ReadOnlyTests(unittest.TestCase):
     def setUp(self): self.server.calls=[];self.server.fail='';self.server.states=0
     def invoke(self, *args):
         return subprocess.run([sys.executable, str(SCRIPT), '--port', str(self.server.server_port), *args],text=True,capture_output=True)
-    def calc(self):
+    def calc(self, *extra):
         return self.invoke('calculate','--system-id',SYSTEM,'--method-id',METHOD,'--amount','1',
             '--unit-id',UNIT,'--flow-property-id',PROPERTY,'--unit-label','kg', '--database-label','synthetic DB',
             '--database-version','synthetic 1','--system-model','synthetic','--software-version','synthetic 2.7',
-            '--functional-unit','1 kg synthetic service')
+            '--functional-unit','1 kg synthetic service', *extra)
     def test_list_is_only_read_descriptor(self):
         r=self.invoke('list','--type','ProductSystem');self.assertEqual(r.returncode,0,r.stderr)
         self.assertEqual(json.loads(r.stdout)['descriptors'][0]['@id'], SYSTEM)
@@ -70,6 +71,13 @@ class ReadOnlyTests(unittest.TestCase):
         self.assertEqual(x['database']['identity_verification'], 'user_asserted_not_verified')
         self.assertEqual([c['method'] for c in self.server.calls],['data/get/descriptors','data/get/descriptors','result/calculate','result/state','result/total-impacts','result/impact-contributions-of','result/dispose'])
         setup=self.server.calls[2]['params'];self.assertEqual(setup['unit']['@id'],UNIT);self.assertEqual(setup['flowProperty']['@id'],PROPERTY)
+    def test_inventory_read_and_failure_both_dispose(self):
+        r=self.calc('--include-total-flows'); self.assertEqual(r.returncode,0,r.stderr)
+        self.assertEqual(json.loads(r.stdout)['total_flows'][0]['enviFlow']['flow']['flowType'],'WASTE_FLOW')
+        self.assertEqual(self.server.calls[-1]['method'],'result/dispose')
+        self.server.fail='result/total-flows'; r=self.calc('--include-total-flows')
+        self.assertNotEqual(r.returncode,0); self.assertEqual(self.server.calls[-1]['method'],'result/dispose')
+
     def test_rpc_failure_is_error_and_disposes(self):
         self.server.fail='result/total-impacts'; r=self.calc()
         self.assertNotEqual(r.returncode,0);self.assertEqual(r.stdout,'');self.assertIn('synthetic error',r.stderr)
