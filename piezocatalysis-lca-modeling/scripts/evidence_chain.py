@@ -85,6 +85,12 @@ def audit(spec,root,foreground,foreground_hash,inventory=None,manifest=None):
         if not isinstance(q,dict) or not {'value','unit','evidence_class'}.issubset(q):raise ValueError(target+': not a quantity object')
         basis=text(link.get('basis'),'link basis')
         if basis!=text(row['basis'],'CSV basis'):raise ValueError(target+': basis mismatch')
+        parts=target.split('/')
+        cycles=foreground.get('cycles',[])
+        if len(parts)>2 and parts[1]=='cycles' and parts[2].isdigit() and isinstance(cycles,list) and int(parts[2])<len(cycles):
+            known={'cycle-'+str(c['cycle_id']) for c in cycles if isinstance(c,dict) and 'cycle_id' in c}
+            expected='cycle-'+str(cycles[int(parts[2])].get('cycle_id')) if isinstance(cycles[int(parts[2])],dict) else None
+            if basis in known and basis!=expected:raise ValueError(target+': cycle basis differs from target cycle')
         oid=(row.get('original_id') or '').strip();locator=(row.get('original_locator') or '').strip();origin=None
         if oid or locator:
             if oid not in originals or not locator:raise ValueError(target+': original id or locator is invalid')
@@ -129,6 +135,8 @@ def audit(spec,root,foreground,foreground_hash,inventory=None,manifest=None):
             r=rows[aid];x=e['amount'];y=r['amount_per_functional_unit']
             if e['unit']!=r['unit'] or e['direction']!=r['direction'] or e['stage']!=r['stage'] or e['cycle']!=r['cycle_id'] or e['included']!=r['included'] or e['flow_name']!=r['flow_name'] or (x is None)!=(y is None) or (x is not None and not math.isclose(x,y,rel_tol=1e-10,abs_tol=0)):
                 raise ValueError(aid+': inventory differs from rebuilt per-functional-unit foreground')
+            if e['evidence_class']!=r['evidence_class'] or e['source'].strip()!=r['source']:
+                raise ValueError(aid+': inventory evidence class or source differs from rebuilt foreground')
         handoff={'inventory_sha256':handoff['inventory_sha256'],'manifest_sha256':handoff['manifest_sha256'],'amount_basis':handoff['amount_basis'],'activity_count':len(rows)}
     # Separate direct activity inputs from allocation dependencies; quantities are already per FU.
     scaling=['/treatment_target']

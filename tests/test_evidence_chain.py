@@ -30,10 +30,14 @@ class EvidenceChainTests(unittest.TestCase):
   s=copy.deepcopy(self.spec);s['links'].pop();r=audit(s,EX,self.fg,self.fh);self.assertEqual(r['coverage']['unlinked_count'],1);self.assertEqual(r['status'],'evidence_gaps')
  def test_reused_source_record_is_flagged(self):
   s=copy.deepcopy(self.spec)
-  a=next(x for x in s['links'] if x['target']=='/cycles/0/influent_concentration')
-  b=next(x for x in s['links'] if x['target']=='/cycles/1/influent_concentration')
+  a=next(x for x in s['links'] if x['target']=='/cycles/0/influent_volume')
+  b=next(x for x in s['links'] if x['target']=='/cycles/0/effluent_volume')
   b['record']=a['record'];b['basis']=a['basis']
   self.assertIn('source_record_reused_review_required',{x['status'] for x in audit(s,EX,self.fg,self.fh)['issues']})
+ def test_equal_values_from_another_cycle_do_not_match_target_basis(self):
+  s=copy.deepcopy(self.spec);a=next(x for x in s['links'] if x['target']=='/cycles/0/influent_concentration');b=next(x for x in s['links'] if x['target']=='/cycles/1/influent_concentration')
+  a['record']=b['record'];a['basis']=b['basis']
+  with self.assertRaisesRegex(ValueError,'cycle basis differs from target cycle'):audit(s,EX,self.fg,self.fh)
  def test_censored_limit_and_missing_never_imputed(self):
   with tempfile.TemporaryDirectory() as tmp:
    p=Path(tmp);s=copy.deepcopy(self.spec);f=copy.deepcopy(self.fg);target='/cycles/0/effluent_concentration';link=next(x for x in s['links'] if x['target']==target);q=f['cycles'][0]['effluent_concentration'];q.update(value=None,qualifier='below_loq',limit=3)
@@ -69,6 +73,16 @@ class EvidenceChainTests(unittest.TestCase):
    buf=io.StringIO(newline='');w=csv.DictWriter(buf,fieldnames=rows[0].keys());w.writeheader();w.writerows(rows);raw=buf.getvalue().encode();inv.write_bytes(raw)
    m=json.loads(manifest.read_text());m['inventory_sha256']=hashlib.sha256(raw).hexdigest();manifest.write_text(json.dumps(m))
    with self.assertRaisesRegex(ValueError,'inventory differs'):audit(self.spec,EX,self.fg,self.fh,inv,manifest)
+ def test_rehashed_inventory_evidence_class_or_source_cannot_change(self):
+  with tempfile.TemporaryDirectory() as tmp:
+   p=Path(tmp);inv=p/'inventory.csv';manifest=Path(str(inv)+'.manifest.json')
+   run=subprocess.run([sys.executable,str(ROOT/'piezocatalysis-lca-modeling/scripts/cyclic_foreground.py'),str(EX/'foreground.json'),'--inventory-csv',str(inv)],capture_output=True,text=True);self.assertEqual(run.returncode,0,run.stderr)
+   original=inv.read_bytes();original_manifest=manifest.read_bytes()
+   for field,value in (('evidence_class','measured'),('source','fabricated lab record')):
+    rows=list(csv.DictReader(io.StringIO(original.decode())));rows[0][field]=value
+    buf=io.StringIO(newline='');w=csv.DictWriter(buf,fieldnames=rows[0].keys());w.writeheader();w.writerows(rows);raw=buf.getvalue().encode();inv.write_bytes(raw)
+    m=json.loads(original_manifest);m['inventory_sha256']=hashlib.sha256(raw).hexdigest();manifest.write_text(json.dumps(m))
+    with self.subTest(field=field),self.assertRaisesRegex(ValueError,'evidence class or source differs'):audit(self.spec,EX,self.fg,self.fh,inv,manifest)
  def test_domain_service_pollutant_and_boundary_are_cross_checked(self):
   r=audit(self.spec,EX,self.fg,self.fh);d=copy.deepcopy(self.domain);d['fields']['pollutant_identity']['value']='different pollutant';d['fields']['system_boundary']['value']='different boundary';d['service']['functional_unit']['value']=999
   review=domain_audit(self.protocol,self.fg,self.fh,r,d);issues={(x['field'],x['status']) for x in review['issues']}

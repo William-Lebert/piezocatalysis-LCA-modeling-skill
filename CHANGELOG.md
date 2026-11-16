@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.5.0 — 2026-11-16
+
+- Reject evidence links that use a known cycle's basis for a different foreground cycle, even if the values match.
+- Check cyclic inventory evidence class and source against the rebuilt foreground during evidence auditing and research delivery.
+- Add task routing and optional file-hash stage records for resuming declared workflows; scientific review remains separate.
+
 ## 1.4.0 — 2026-11-16
 
 - Cross-check pollutant and service declarations against the cyclic foreground; retain existing mapping IDs and stop when an ID is shared across activities.

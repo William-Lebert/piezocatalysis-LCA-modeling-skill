@@ -77,6 +77,7 @@ def assemble(spec,root,outdir,spec_raw=None):
  for aid,x in invrows.items():
   f=flows[aid];a=x['amount_per_functional_unit'];b=f['amount']
   if x['unit']!=f['unit'] or x['direction']!=f['direction'] or x['stage']!=f['stage'] or x['cycle_id']!=f['cycle'] or x['flow_name']!=f['flow_name'] or x['included']!=f['included'] or (a is None)!=(b is None) or (a is not None and not math.isclose(a,b,rel_tol=1e-10,abs_tol=0)):raise ValueError('inventory differs from rebuilt foreground: '+aid)
+  if x['evidence_class']!=f['evidence_class'] or x['source']!=f['source'].strip():raise ValueError('inventory evidence class or source differs from rebuilt foreground: '+aid)
  warnings=[];checks=[]
  if handoff['summary']['included_needing_review']:warnings.append('Inventory mappings or exchanges require review: '+str(handoff['summary']['included_needing_review']))
  for row in handoff['rows']:

@@ -27,6 +27,24 @@ class DeliveryTests(unittest.TestCase):
   self.inv.write_text(self.inv.read_text()+'changed')
   with self.assertRaisesRegex(ValueError,'inventory does not match'):assemble(self.spec,self.dir,self.dir/'bundle')
   self.assertFalse((self.dir/'bundle').exists())
+ def test_rehashed_inventory_cannot_relabel_evidence_or_source(self):
+  for field,value in (('evidence_class','measured'),('source','fabricated lab record')):
+   with self.subTest(field=field):
+    raw=self.inv.read_bytes();manifest=self.man.read_bytes()
+    with self.inv.open(newline='') as f:
+     reader=csv.DictReader(f);fields=reader.fieldnames;rows=list(reader)
+    rows[0][field]=value
+    with self.inv.open('w',newline='') as f:
+     writer=csv.DictWriter(f,fieldnames=fields);writer.writeheader();writer.writerows(rows)
+    m=json.loads(manifest);m['inventory_sha256']=hashlib.sha256(self.inv.read_bytes()).hexdigest();self.man.write_text(json.dumps(m))
+    with self.assertRaisesRegex(ValueError,'evidence class or source differs'):assemble(self.spec,self.dir,self.dir/('bad-'+field))
+    self.inv.write_bytes(raw);self.man.write_bytes(manifest)
+ def test_source_outer_whitespace_matches_csv_normalization(self):
+  fg=json.loads(self.fg.read_text());fg['preparation_activities'][0]['quantity']['source']='  synthetic scenario  '
+  foreground=self.dir/'foreground-spaced.json';foreground.write_text(json.dumps(fg));inv=self.dir/'spaced.csv'
+  p=subprocess.run([sys.executable,str(SCRIPTS/'cyclic_foreground.py'),str(foreground),'--inventory-csv',str(inv)],capture_output=True,text=True);self.assertEqual(p.returncode,0,p.stderr)
+  spec=copy.deepcopy(self.spec);spec['artifacts'].update(foreground=str(foreground),inventory=str(inv),inventory_manifest=str(inv)+'.manifest.json')
+  self.assertEqual(assemble(spec,self.dir,self.dir/'spaced-bundle')['status'],'review_required')
  def test_incomplete_pairs_fail(self):
   for role in ('mapping','evidence_spec','domain_report','coverage','plot_data','cycle_plot_data','candidate_review'):
    with self.subTest(role=role):

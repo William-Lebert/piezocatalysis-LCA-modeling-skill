@@ -22,6 +22,17 @@ Help the agent carry out the requested part of a transparent, reproducible piezo
 9. Back up processes and record stable identifiers before automated software writes.
 10. Do not modify proprietary database files directly or redistribute licensed databases.
 
+## Task routing
+
+| Request | Route |
+| --- | --- |
+| Check available experiment data or LCA readiness | Quick Audit: use only applicable evidence, inventory, domain and uncertainty checks; report unexamined inputs as `NOT_EVALUATED`. |
+| Build or calculate an LCA, or compare PZC/PC/PPC | Guided LCA: define service and boundaries, validate inputs and mapping, then use an authorized software path; check comparability before interpreting results. |
+| Organize existing results and methods | Research Delivery: assemble existing artifacts; do not rerun openLCA unless expressly requested. |
+| One specific calculation or ambiguous request | Use the relevant existing tool or the smallest non-destructive check, and state missing prerequisites. |
+
+For stage inputs, output gates, human review and optional dependency-aware records, read `references/task-routing.md`. Its `PASS` covers only the specified automatic check; scientific approval is separate.
+
 ## Workflow
 
 ### 1. Intake and evidence audit
@@ -68,7 +79,7 @@ Choose the relevant stages for the user’s request; do not require a complete L
 - Use `scripts/result_coverage.py` to inspect intervention-flow types, technical link records, selected LCIA factors and contribution offsets; restrict sharing according to database licenses.
 - Compare cycle-level scenario inputs with `scripts/cycle_scenario_compare.py`, independently verify each calculated model exchange, and review comparability before interpreting results.
 - Use `scripts/experimental_quality.py` to review cyclic observations, censoring and paired measurements, and `scripts/openlca_uncertainty_inventory.py` for scoped read-only background field counts before uncertainty analysis.
-- For varying catalyst reuse cycles, use `scripts/cyclic_foreground.py`; see `assets/examples/synthetic-cycles/README.md`. The CSV is already scaled to the treatment functional unit. Keep missing quantities, censoring, catalyst loss and final recovery destination explicit.
+- For varying catalyst reuse cycles, use `scripts/cyclic_foreground.py`; see `assets/examples/synthetic-cycles/README.md`. The CSV is already scaled to the treatment functional unit. Its evidence class describes the underlying activity input; the per-functional-unit amount itself is calculated and also depends on the FU and other allocation inputs. Keep missing quantities, censoring, catalyst loss and final recovery destination explicit.
 - Use `scripts/dataset_candidates.py` for read-only candidate discovery and review; see `assets/examples/synthetic-mapping/README.md`. Confirm reference flows, units and IDs before updating the mapping table.
 - For multi-candidate openLCA mapping review, use `scripts/mapping_review.py` and `assets/examples/synthetic-mapping-review/README.md` to record geography, reference product, unit, competing choices and proxy rationale. It exports selected mappings as pending; review and verify provider links before use.
 - Use `scripts/mapping_coverage.py` to inspect a selected process reference exchange, a specified product-system link and selected elementary-flow factors in specified LCIA categories; see `assets/examples/synthetic-coverage/README.md`. Record the review separately: a matching reference is not automatic approval, and selected factors do not prove full model coverage.

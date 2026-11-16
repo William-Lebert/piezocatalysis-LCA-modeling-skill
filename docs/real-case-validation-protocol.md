@@ -1,0 +1,12 @@
+# Real-case validation protocol / 真实案例验证方案
+
+No real experimental dataset is supplied in this repository. The synthetic examples and the locally licensed ecoinvent-backed integration run check software behavior, not the environmental performance of a real catalyst.
+
+1. Obtain permission and preserve original instrument records, experiment notebooks and their metadata. Provide catalyst recipe and measured dry yield; per-cycle loading, replenishment, recovery and fate; water influent/effluent volume and concentration, sampling basis, detection limits and treatment conditions; equipment power, measurement method and operating time; washing, chemicals, regeneration and wastes. Identify missing, censored and proxy values explicitly.
+2. A researcher defines the study question, functional unit, pollutant identity, service quality, system boundary, time and geography, allocation, and declared evidence. Concentration decline supports apparent aqueous removal only; separately measured TOC or products are needed for stronger endpoint claims.
+3. Independently check original source locations against the normalized CSV and its evidence links. Reconcile catalyst and water mass balances, distinguish observed cycles from assumed lifetime, and identify unmeasured energy or excluded operations. Agree on data quality and proxy acceptance before conclusions.
+4. Record openLCA version, method and database version/system model, reference flows, units, parameters and provider links; confirm licensing and work on a separate authorized database copy. Review method-factor and result coverage, not just server connectivity.
+5. Calculate an independently hand-checkable mass/unit and energy anchor, plus at least one documented independent LCIA or software comparison using the same model and method. Preserve absolute results, inputs, assumptions, uncertainty and hashes. Compare with predeclared tolerances suited to the quantities; investigate all material differences.
+6. A domain researcher and an independent LCA reviewer approve or reject data provenance, proxy appropriateness, model completeness and interpretation separately. Report unresolved factors and sensitivity to boundaries and lifetime. No fixed numeric acceptance criterion is claimed without an actual model and measurement context.
+
+Deliver the evidence log, model and inventory, mapping rationale, calculation context, absolute LCIA and QA, independent anchors, sensitivity and limitations. File integrity, computational reproducibility, model review and scientific conclusion are separate decisions.

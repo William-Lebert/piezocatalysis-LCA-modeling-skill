@@ -22,3 +22,5 @@ python3 piezocatalysis-lca-modeling/scripts/cyclic_foreground.py \
 用 `catalyst_mass_basis` 声明全部初装、补加、装载和回收数据采用同一 `dry`、`wet` 或 `unknown` 基准；只有 `dry` 可直接与干产率计算制备批次。湿基或未知基准需要先获得依据并转换，程序不会把它们当成干质量。允许明确的水量变化但不能据此认定污染物矿化。未解释的催化剂损失只作为待查质量差，不自动生成废物流。最终回收去向为 `disposed` 时单独输出回收物处置清单；`retained` 不输出处置、也不自动给予回收抵扣；`unknown` 给出待核提示。整组分配初装及所有补加量，并允许按功能单位比例重复整组，是清晰的分摊假设。过程、清洗和处置活动来源及代理映射需另行审核。
 
 `activity_id` 跨制备和各循环必须唯一；同一个 `overlap_group` 只能有一个纳入项。初装、补加和最终回收物必须使用专门字段，已标为 `is_catalyst` 的普通活动会被拒绝；同一循环的重复流名会警告，但程序无法识别所有不同名称或未标注的重复测量。填报者应避免同时录入总表电量和分项、催化剂补加及其重复清单。每项测量记录单位、来源和证据类别；未知值填写 `null`，不能填零替代。模板在 `assets/templates/cyclic_foreground.template.json`。
+
+The inventory `evidence_class` describes the underlying activity input, not an assertion that the per-functional-unit amount was measured directly. The exported amount is calculated using the functional-unit allocation and can depend on other recorded inputs. / 清单中的 `evidence_class` 描述原活动输入的证据类别，并不表示每功能单位数量为直接实测；导出数量经过功能单位分配计算，还依赖其他记录的输入。

@@ -2,11 +2,11 @@
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23813629.svg)](https://doi.org/10.5281/zenodo.23813629)
 
-Version 1.4.0, 2026-11-16.
+Version 1.5.0, 2026-11-16.
 
-版本：1.4.0，2026-11-16。
+版本：1.5.0，2026-11-16。
 
-本版更新与回滚方法见 [v1.4.0 版本说明](docs/RELEASE_v1.4.0_zh.md)。
+本版更新与回滚方法见 [v1.5.0 版本说明](docs/RELEASE_v1.5.0_zh.md)。
 
 This repository provides a research Skill for agents performing life-cycle assessment of piezocatalysis, photocatalysis, and piezo-photocatalysis systems. Its scripts, templates, and references support software-neutral modeling and openLCA or SimaPro workflows.
 
@@ -74,6 +74,10 @@ The source DOCX and licensed LCA databases are intentionally not included.
 If you use this software in research, please cite the specific version used.
 
 如果您在科研工作中使用本软件，请引用实际使用的具体版本。
+
+### Version v1.5.0
+
+The version DOI will be added after the Zenodo archive is available. / 版本 DOI 将在 Zenodo 归档完成后补充。
 
 ### Version v1.4.0
 
@@ -152,3 +156,9 @@ The following projects informed the evaluation of LCA engines and integration ap
 - [openLCA IPC Python client](https://github.com/GreenDelta/olca-ipc.py) and [openLCA Python examples](https://github.com/GreenDelta/openlca-python-examples): openLCA integration.
 - [lca_algebraic](https://github.com/oie-mines-paristech/lca_algebraic): parametric modeling and sensitivity analysis.
 - [premise](https://github.com/polca/premise): prospective background scenarios.
+
+## Task routes / 任务入口
+
+For a quick check of supplied data, choose **Quick Audit**; for building or calculating a study, choose **Guided LCA**; to organize existing results, choose **Research Delivery**. Single-purpose tasks can call the appropriate existing tool directly. See [task routing and optional stage records](piezocatalysis-lca-modeling/references/task-routing.md). A file-integrity `PASS` is not a scientific approval.
+
+检查现有数据可选择**快速审查**；建立或计算模型选择**引导建模**；整理已有结果选择**科研交付**。单项任务可直接调用相应工具。阶段输入、人工复核点与可选状态记录见[任务路由](piezocatalysis-lca-modeling/references/task-routing.md)；文件完整性通过不代表科研审核通过。

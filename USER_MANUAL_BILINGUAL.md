@@ -181,3 +181,17 @@ For the isolated synthetic Brightway experiment and conditions for further param
 Replacement sensitivity contributions must state their own `replacement_source` and `replacement_evidence_class`; the scenario and baseline evidence remain separately traceable. Older `replace` inputs must add this field.
 
 敏感性分析中的替代贡献必须单独填写 `replacement_source` 和 `replacement_evidence_class`，以便分别追溯情景与基准证据；旧版 `replace` 输入需要补充该字段。
+
+## 11. Task modes and recovery / 任务模式与恢复
+
+- **Quick Audit / 快速审查**: inspect only the supplied experiment, inventory, model, or mapping. Identify missing units, evidence, functional unit, boundary, energy, catalyst fate and uncertainty; do not fabricate impacts.
+- **Guided LCA / 引导建模**: define scope, audit evidence, build the foreground, review mapping, check the existing software model and calculate only when prerequisites are met. Scientific and provider decisions need human review.
+- **Research Delivery / 科研交付**: organize existing records with `research_delivery.py`. Replay reassembles saved files; it does not rerun openLCA. File hashes do not validate the science.
+
+- **快速审查**：只检查现有实验、清单、模型或映射，指出单位、来源、功能单位、边界、能耗、催化剂去向与不确定性的缺口，不虚构环境影响结果。
+- **引导建模**：明确范围、检查证据、建立前景、审查映射，在满足条件后核查并计算已有软件模型；数据集和科学适用性仍需人工确认。
+- **科研交付**：用 `research_delivery.py` 整理已有记录；重建只重新整理文件，不重跑 openLCA，哈希不能证明科研结论正确。
+
+For stage inputs and optional dependency records, see `piezocatalysis-lca-modeling/references/task-routing.md`. `workflow_state.py` checks only explicitly listed files, not undeclared dependencies or scientific validity; use new filenames when rerunning.
+
+各阶段的输入及可选依赖记录见 `piezocatalysis-lca-modeling/references/task-routing.md`。`workflow_state.py` 只检查明确登记的文件，不证明未登记依赖完整或科学结论有效；重跑时使用新的输出路径。
