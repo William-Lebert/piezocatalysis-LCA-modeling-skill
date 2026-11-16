@@ -77,7 +77,7 @@ If you use this software in research, please cite the specific version used.
 
 ### Version v1.5.0
 
-The version DOI will be added after the Zenodo archive is available. / 版本 DOI 将在 Zenodo 归档完成后补充。
+Pu, X. (2026). *Piezocatalysis LCA Modeling Skill (Version v1.5.0)* [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.24269146
 
 ### Version v1.4.0
 
