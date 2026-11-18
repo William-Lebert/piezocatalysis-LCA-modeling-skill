@@ -27,7 +27,7 @@ Use the stages that the question needs. Reuse a prior artifact only after its re
 
 ## Research Delivery / 科研交付
 
-For organizing existing records use `research_delivery.py assemble` and `verify`; see `assets/examples/synthetic-delivery/README.md`. It does not calculate or connect to openLCA. It can include supported cyclic and stage figures, but scenario and sensitivity figures currently need separate delivery. Preserve absent materials as gaps. Replay reassembles the saved inputs; it does not reproduce a new LCIA calculation.
+For organizing existing records use `research_delivery.py assemble` and `verify`; see `assets/examples/synthetic-delivery/README.md`. It does not calculate or connect to openLCA. It can include supported cyclic, stage, bound-scenario and additive-sensitivity figures when the full source groups are supplied. Preserve absent materials as gaps. Replay reassembles the saved inputs; it does not reproduce a new LCIA calculation.
 
 ## Optional stage state / 可选阶段状态
 
@@ -42,4 +42,4 @@ python3 piezocatalysis-lca-modeling/scripts/workflow_state.py record \
 python3 piezocatalysis-lca-modeling/scripts/workflow_state.py check /path/to/new-foreground-state.json
 ```
 
-For a downstream stage add `--depends-on /path/to/new-foreground-state.json` and list its own input and output files. A failed downstream check preserves previous files. Restore the original upstream inputs or rerun affected stages to **new** output and state paths; do not edit a prior state to conceal a change. Independently inspect the state record before relying on a claimed dependency list.
+Use `--require-input /path/to/file` for each critical input and also provide it with `--input`; missing declarations fail, while unlisted dependencies cannot be discovered automatically. For a downstream stage add `--depends-on /path/to/new-foreground-state.json` and list its own input and output files. A failed downstream check preserves previous files. Restore the original upstream inputs or rerun affected stages to **new** output and state paths; do not edit a prior state to conceal a change. Independently inspect the state record before relying on a claimed dependency list.

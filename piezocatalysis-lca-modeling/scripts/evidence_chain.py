@@ -50,6 +50,12 @@ def quantities(obj,path=''):
     elif isinstance(obj,list):
         for i,v in enumerate(obj):yield from quantities(v,path+'/'+str(i))
 
+def build_foreground(foreground):
+    if isinstance(foreground,dict) and 'product_basis' in foreground:
+        from h2o2_foreground import build as build_h2o2
+        return build_h2o2(foreground), 'h2o2_product'
+    return build(foreground), 'apparent_pollutant_removal'
+
 def audit(spec,root,foreground,foreground_hash,inventory=None,manifest=None):
     if spec.get('schema_version')!='piezolca.evidence-chain/1':raise ValueError('unsupported evidence schema')
     declared=text(spec.get('foreground_sha256'),'foreground_sha256')
@@ -91,6 +97,16 @@ def audit(spec,root,foreground,foreground_hash,inventory=None,manifest=None):
             known={'cycle-'+str(c['cycle_id']) for c in cycles if isinstance(c,dict) and 'cycle_id' in c}
             expected='cycle-'+str(cycles[int(parts[2])].get('cycle_id')) if isinstance(cycles[int(parts[2])],dict) else None
             if basis in known and basis!=expected:raise ValueError(target+': cycle basis differs from target cycle')
+        sample=link.get('sample')
+        if sample is not None:
+            if not isinstance(sample,dict):raise ValueError(target+': sample must be an object')
+            keys=('campaign_id','sample_id','cycle_id','sample_role')
+            declared={k:text(sample.get(k),'sample '+k) for k in keys}
+            if any(text(row.get(k),'CSV '+k)!=declared[k] for k in keys):raise ValueError(target+': sample declaration differs from CSV')
+            if len(parts)<4 or parts[1]!='cycles' or not parts[2].isdigit() or int(parts[2])>=len(cycles):raise ValueError(target+': sample requires a cycle observation')
+            if declared['cycle_id']!=str(cycles[int(parts[2])]['cycle_id']):raise ValueError(target+': sample cycle differs from target cycle')
+            role='influent' if parts[3].startswith('influent_') else 'effluent' if parts[3].startswith('effluent_') else None
+            if role is None or declared['sample_role']!=role:raise ValueError(target+': sample role differs from target observation')
         oid=(row.get('original_id') or '').strip();locator=(row.get('original_locator') or '').strip();origin=None
         if oid or locator:
             if oid not in originals or not locator:raise ValueError(target+': original id or locator is invalid')
@@ -117,17 +133,20 @@ def audit(spec,root,foreground,foreground_hash,inventory=None,manifest=None):
         result.append({'target':target,'source_id':sid,'record':index,'value_column':column,'source_cell_text':row[column] if column else None,
                        'source_value':measured,'source_unit':row['unit'],'target_unit':q['unit'],'conversion_factor':factor,
                        'target_value_or_limit':converted,'qualifier':source_qualifier,'evidence_class':source_class,'basis':basis,'original':origin,'status':'source_matches_declaration'})
+        if sample is not None:result[-1]['sample_user_asserted']=declared
     all_quantities=dict(quantities(foreground))
     if any(target not in all_quantities for target in seen):raise ValueError('link target is not an enumerated quantity')
     for path,q in all_quantities.items():
         if path not in seen:issues.append({'target':path,'status':'source_not_linked','evidence_class':q.get('evidence_class')})
-    model=build(foreground);handoff=None
+    model,service=build_foreground(foreground);handoff=None
     if bool(inventory)!=bool(manifest):raise ValueError('inventory and manifest must be provided together')
     if inventory:
         handoff=load_handoff(inventory,manifest)
         if handoff.get('input_sha256')!=foreground_hash:raise ValueError('inventory manifest references a different foreground')
-        if handoff.get('functional_unit')!=model['functional_unit'] or handoff.get('boundary')!=model['boundary'] or handoff.get('functional_unit_type')!='apparent_pollutant_removal':
+        if handoff.get('functional_unit')!=model['functional_unit'] or handoff.get('boundary')!=model['boundary'] or handoff.get('functional_unit_type')!=service:
             raise ValueError('inventory manifest service or boundary differs from foreground')
+        if service=='h2o2_product' and any(handoff.get(k)!=model[k] for k in ('product_basis','product_definition')):
+            raise ValueError('inventory manifest product basis or definition differs from foreground')
         expected={r['activity_id']:r for r in model['functional_unit_flows']}
         rows={r['activity_id']:r for r in handoff['rows']}
         if rows.keys()!=expected.keys():raise ValueError('inventory activity IDs differ from rebuilt foreground')
@@ -138,15 +157,20 @@ def audit(spec,root,foreground,foreground_hash,inventory=None,manifest=None):
             if e['evidence_class']!=r['evidence_class'] or e['source'].strip()!=r['source']:
                 raise ValueError(aid+': inventory evidence class or source differs from rebuilt foreground')
         handoff={'inventory_sha256':handoff['inventory_sha256'],'manifest_sha256':handoff['manifest_sha256'],'amount_basis':handoff['amount_basis'],'activity_count':len(rows)}
-    # Separate direct activity inputs from allocation dependencies; quantities are already per FU.
-    scaling=['/treatment_target']
-    for i,_ in enumerate(foreground['cycles']):
-        scaling.extend('/cycles/'+str(i)+'/'+k for k in ('influent_volume','influent_concentration','effluent_volume','effluent_concentration'))
-    prep_scaling=scaling+['/dry_yield','/initial_catalyst']+['/cycles/'+str(i)+'/catalyst_added' for i in range(len(foreground['cycles']))]
+    # Direct activity inputs and functional-unit allocation dependencies are distinct.
     activity_paths={}
     for i,entry in enumerate(foreground['preparation_activities']):activity_paths[entry['activity_id']]='/preparation_activities/'+str(i)
-    for i,cycle in enumerate(foreground['cycles']):
-        for j,entry in enumerate(cycle['activities']):activity_paths[entry['activity_id']]='/cycles/'+str(i)+'/activities/'+str(j)
+    if service=='h2o2_product':
+        scaling=['/functional_unit','/net_product_per_campaign']
+        prep_scaling=scaling+['/fresh_catalyst_per_campaign','/dry_yield']
+        for i,entry in enumerate(foreground['campaign_activities']):activity_paths[entry['activity_id']]='/campaign_activities/'+str(i)
+    else:
+        scaling=['/treatment_target']
+        for i,_ in enumerate(foreground['cycles']):
+            scaling.extend('/cycles/'+str(i)+'/'+k for k in ('influent_volume','influent_concentration','effluent_volume','effluent_concentration'))
+        prep_scaling=scaling+['/dry_yield','/initial_catalyst']+['/cycles/'+str(i)+'/catalyst_added' for i in range(len(foreground['cycles']))]
+        for i,cycle in enumerate(foreground['cycles']):
+            for j,entry in enumerate(cycle['activities']):activity_paths[entry['activity_id']]='/cycles/'+str(i)+'/activities/'+str(j)
     traces=[]
     for flow in model['functional_unit_flows']:
         aid=flow['activity_id'];base=activity_paths.get(aid)
@@ -155,16 +179,21 @@ def audit(spec,root,foreground,foreground_hash,inventory=None,manifest=None):
         else:
             direct=['/cycles/'+str(len(foreground['cycles'])-1)+'/catalyst_recovered']
         dependencies=list(dict.fromkeys(direct+(prep_scaling if flow['stage']=='preparation' else scaling)))
-        campaigns=model['campaign']['campaigns_per_functional_unit'];prep_batches=model['campaign']['preparation_batches']
-        factor=campaigns if flow['stage']!='preparation' else (campaigns*prep_batches if campaigns is not None and prep_batches is not None else None)
-        formula=('power converted to kW × duration converted to h' if base and 'power' in item else 'declared quantity converted to inventory unit')
-        formula+=(' × preparation batches per campaign × campaigns per functional unit' if flow['stage']=='preparation' else ' × campaigns per functional unit')
+        campaigns=model['campaign']['campaigns_per_functional_unit']
+        if service=='h2o2_product':
+            factor=model['campaign']['preparation_batches_per_functional_unit'] if flow['stage']=='preparation' else campaigns
+            allocation=' × preparation batches per functional unit' if flow['stage']=='preparation' else ' × campaigns per functional unit'
+        else:
+            prep_batches=model['campaign']['preparation_batches']
+            factor=campaigns if flow['stage']!='preparation' else (campaigns*prep_batches if campaigns is not None and prep_batches is not None else None)
+            allocation=' × preparation batches per campaign × campaigns per functional unit' if flow['stage']=='preparation' else ' × campaigns per functional unit'
+        formula=('power converted to kW × duration converted to h' if base and 'power' in item else 'declared quantity converted to inventory unit')+allocation
         traces.append({'activity_id':aid,'amount_per_functional_unit':flow['amount'],'unit':flow['unit'],
                        'campaign_amount':flow['campaign_value'],'campaign_unit':flow['campaign_unit'],
                        'functional_unit_allocation_factor':factor,'formula':formula,
                        'direct_input_pointers':direct,'allocation_input_pointers':[x for x in dependencies if x not in direct],
                        'unlinked_input_pointers':[x for x in dependencies if x not in seen]})
-    return {'schema_version':'piezolca.evidence-audit/1','foreground_sha256':foreground_hash,'sources':sources,'links':result,
+    report={'schema_version':'piezolca.evidence-audit/1','foreground_sha256':foreground_hash,'sources':sources,'links':result,
             'coverage':{'quantity_count':len(all_quantities),'linked_count':len(seen),'unlinked_count':len(all_quantities)-len(seen)},
             'inventory_rebuilt_and_verified':handoff,'campaign':model['campaign'],
             'functional_unit_flows':model['functional_unit_flows'],'inventory_traces':traces,'issues':issues,'status':'evidence_gaps' if issues else 'links_match_review_still_required',
@@ -172,13 +201,17 @@ def audit(spec,root,foreground,foreground_hash,inventory=None,manifest=None):
              'Basis and evidence classes are user declarations; CSV record number counts data records, not physical file lines.',
              'Only direct CSV numeric/unit or detection-limit links are checked. Optional original files are hash-checked, but their cited cell/page is not automatically verified.',
              'Derived formulas require their inputs and calculation to be reviewed.',
-             'Cyclic model generates per-functional-unit amounts; matching the inventory does not validate its database mapping or LCIA results.']}
+             'Foreground model generates per-functional-unit amounts; matching the inventory does not validate its database mapping or LCIA results.']}
+    if service=='h2o2_product':
+        report.update(functional_unit_type=service,product_basis=model['product_basis'],product_definition_user_asserted=model['product_definition'])
+        report['limitations'].append('Product definition, measurement and external H2O2 corrections are user declarations requiring independent review.')
+    return report
 
 def main():
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('spec',type=Path);p.add_argument('--foreground',type=Path,required=True);p.add_argument('--inventory',type=Path);p.add_argument('--manifest',type=Path);a=p.parse_args()
     try:
         spec,sh=read_json(a.spec);foreground,fh=read_json(a.foreground);r=audit(spec,a.spec.resolve().parent,foreground,fh,a.inventory,a.manifest)
-        r['spec_sha256']=sh;r['code_sha256']={n:digest(Path(__file__).with_name(n).read_bytes()) for n in ('evidence_chain.py','cyclic_foreground.py','experimental_foreground.py','inventory_handoff.py')}
+        r['spec_sha256']=sh;r['code_sha256']={n:digest(Path(__file__).with_name(n).read_bytes()) for n in ('evidence_chain.py','cyclic_foreground.py','h2o2_foreground.py','experimental_foreground.py','inventory_handoff.py')}
         print(json.dumps(r,ensure_ascii=False,indent=2,allow_nan=False));return 0
     except (OSError,UnicodeError,ValueError,TypeError,KeyError,IndexError,OverflowError,csv.Error) as exc:print('ERROR:',exc,file=sys.stderr);return 1
 if __name__=='__main__':sys.exit(main())

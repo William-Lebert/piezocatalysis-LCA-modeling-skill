@@ -54,6 +54,12 @@ def check(path, visiting=None):
                         issues.extend(upstream['issues'])
                 except (OSError, ValueError, TypeError, json.JSONDecodeError) as exc:
                     issues.append(key + ' unavailable or invalid: ' + str(target) + ' (' + str(exc) + ')')
+        required=state.get('required_inputs',[])
+        if not isinstance(required,list) or any(not isinstance(x,str) or not x for x in required) or len(required)!=len(set(required)):
+            raise ValueError('invalid required inputs in '+str(path))
+        listed={x['path'] for x in state['inputs']}
+        for target in required:
+            if target not in listed:issues.append('required input not declared: '+target)
         return {'stage': state['stage'], 'file_integrity': 'BLOCKED' if issues else 'PASS',
                 'scientific_review': 'NOT_EVALUATED', 'issues': issues,
                 'note': 'Only declared files and dependencies were checked; this does not verify scientific validity or completeness.'}
@@ -61,10 +67,12 @@ def check(path, visiting=None):
         visiting.remove(path)
 
 
-def record(stage, inputs, outputs, dependencies, destination):
+def record(stage, inputs, outputs, dependencies, destination, required_inputs=()):
     if stage not in STAGES:
         raise ValueError('unknown stage: ' + str(stage))
     ins, outs, deps = snapshot(inputs), snapshot(outputs), snapshot(dependencies)
+    required=[x['path'] for x in snapshot(required_inputs)]
+    if not set(required).issubset({x['path'] for x in ins}):raise ValueError('required input must also be listed as an input')
     if not outs:
         raise ValueError('at least one existing output file is required')
     for dependency in deps:
@@ -73,6 +81,7 @@ def record(stage, inputs, outputs, dependencies, destination):
             raise ValueError('upstream state is stale or unavailable: ' + dependency['path'])
     state = {'schema_version': SCHEMA, 'stage': stage, 'inputs': ins, 'outputs': outs,
              'dependencies': deps, 'scientific_review': 'NOT_EVALUATED'}
+    if required:state['required_inputs']=required
     with Path(destination).open('x', encoding='utf-8') as stream:
         json.dump(state, stream, ensure_ascii=False, indent=2)
         stream.write('\n')
@@ -87,13 +96,14 @@ def main():
     p.add_argument('--input', action='append', default=[])
     p.add_argument('--output', action='append', default=[])
     p.add_argument('--depends-on', action='append', default=[])
+    p.add_argument('--require-input', action='append', default=[], help='declare a critical file that must also be supplied with --input')
     p.add_argument('--state', type=Path, required=True)
     p = sub.add_parser('check')
     p.add_argument('state', type=Path)
     args = parser.parse_args()
     try:
         if args.command == 'record':
-            record(args.stage, args.input, args.output, args.depends_on, args.state)
+            record(args.stage, args.input, args.output, args.depends_on, args.state, args.require_input)
             result = check(args.state)
         else:
             result = check(args.state)

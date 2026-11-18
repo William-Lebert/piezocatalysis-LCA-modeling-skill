@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.6.0 — 2026-11-18
+
+- Check the actual product-system reference process, reference exchange and unit during scenario capture, and repeat mapping preflight after calculation. Bound records now use version 2; older captures need to be recreated.
+
+- Rebuild and verify bound scenario figures and additive sensitivity figures within research deliveries; add explicit required stage inputs and a real-case intake checklist.
+
+- Capture scenario-specific openLCA model, linked exchanges, background provider and parameter snapshots around calculation; bind comparisons to both scenario plans and disable unsupported linear estimates.
+
+- Add explicit campaign/sample/cycle evidence links and provisional per-cycle service threshold checks, retaining the existing apparent-removal inventory basis.
+
+- Extend evidence-chain and research-delivery checks to H2O2 product foregrounds, preserving product basis, declared definition, source links and allocation trace.
+
 ## 1.5.0 — 2026-11-16
 
 - Reject evidence links that use a known cycle's basis for a different foreground cycle, even if the values match.

@@ -45,6 +45,7 @@ Choose the relevant stages for the user’s request; do not require a complete L
 - Read `references/evidence-and-data-quality.md` whenever data are incomplete, literature-derived, or represented by a proxy.
 - Use `scripts/domain_review.py` for service, experimental boundary, sampling, catalyst and waste evidence declarations; verify scientific suitability using `references/domain-quality-checklist.md`.
 - For auditable numeric evidence, link a normalized local CSV to cyclic foreground quantities with `scripts/evidence_chain.py`; compare the generated inventory when available. Verify original spreadsheet cells or document pages separately; hashes and declared locators alone do not verify them. See `assets/examples/synthetic-evidence/README.md`.
+- For cycle-level declared removal or treated-water threshold checks, use `scripts/cycle_service_review.py` with the optional sample/campaign links described in `assets/examples/synthetic-cycle-service/README.md`. Numeric thresholds and sample IDs are user assertions; this does not rescale the existing apparent-removal inventory or establish regulatory compliance or comparability.
 - Use `scripts/piezocatalysis_checks.py` to review ultrasound energy basis, auxiliary and illumination energy, oxidants, pH adjustment, catalyst destination, byproducts and mineralization claims, and reconcile the specified cycle’s water measurements with the domain declaration. Missing evidence stays visible.
 
 ### 2. Define the comparison
@@ -64,7 +65,7 @@ Choose the relevant stages for the user’s request; do not require a complete L
 - Build treatment processes separately from catalyst preparation.
 - Scale preparation burden through catalyst demand and lifetime; scale treatment burden through pollutant removal or treated-water service.
 - Use `scripts/piezocatalysis_calculations.py` for kinetic removal, EE/O, batch energy, and functional-unit scaling checks.
-- For a piezocatalytic H2O2 product function, use `scripts/h2o2_foreground.py` and document product basis, catalyst allocation and product consumption; see `references/domain-literature.md`.
+- For a piezocatalytic H2O2 product function, use `scripts/h2o2_foreground.py` and document product basis, catalyst allocation and product consumption; use `scripts/evidence_chain.py` and `scripts/research_delivery.py` for supported evidence and delivery checks. Product definitions, external-addition corrections and model exchange bindings still need independent review. See `assets/examples/synthetic-h2o2/README.md` and `references/domain-literature.md`.
 - For a pollutant-removal service with equal performance per run and a justified effective-use assumption, `scripts/audit_and_scale_inventory.py` can audit and scale the foreground inventory; see `assets/examples/synthetic-treatment/README.md`. Treat warnings and unmapped flows as unresolved, and use cycle-by-cycle modeling when those assumptions do not hold.
 - For traceable experiment records, two functional-unit families, below-quantification limits and inventory CSV export, use `scripts/experimental_foreground.py`; see `assets/examples/synthetic-foreground/README.md`. The concentration difference is an apparent aqueous removal, not proof of mineralization.
 
@@ -77,6 +78,7 @@ Choose the relevant stages for the user’s request; do not require a complete L
 - For newly exported cycle inventories use `scripts/inventory_handoff.py` and the paired manifest to review per-functional-unit basis, mappings, missing amounts and unaccounted catalyst losses; see `assets/examples/synthetic-handoff/README.md`. Unmarked legacy CSV basis cannot be inferred.
 - Use `scripts/cycle_model_plan.py` for read-only openLCA verification of cycle mappings and per-functional-unit quantities; unresolved items and proxies require review.
 - Use `scripts/result_coverage.py` to inspect intervention-flow types, technical link records, selected LCIA factors and contribution offsets; restrict sharing according to database licenses.
+- For separately captured cyclic scenarios, use `scripts/scenario_binding.py` and `assets/examples/synthetic-bound-scenarios/README.md` to check the actual model exchanges, providers, source plans and parameter snapshots around each calculation; unresolved or parameterized cases do not receive a linear estimate. All model and database labels require human review.
 - Compare cycle-level scenario inputs with `scripts/cycle_scenario_compare.py`, independently verify each calculated model exchange, and review comparability before interpreting results.
 - Use `scripts/experimental_quality.py` to review cyclic observations, censoring and paired measurements, and `scripts/openlca_uncertainty_inventory.py` for scoped read-only background field counts before uncertainty analysis.
 - For varying catalyst reuse cycles, use `scripts/cyclic_foreground.py`; see `assets/examples/synthetic-cycles/README.md`. The CSV is already scaled to the treatment functional unit. Its evidence class describes the underlying activity input; the per-functional-unit amount itself is calculated and also depends on the FU and other allocation inputs. Keep missing quantities, censoring, catalyst loss and final recovery destination explicit.
@@ -110,7 +112,7 @@ Choose the relevant stages for the user’s request; do not require a complete L
 - Separate observed results from mechanistic hypotheses about piezoelectric response, charge separation, kinetics, or electronic structure.
 - Report hotspots, trade-offs, uncertainty, limitations, and conditions under which route rankings change.
 - Read `references/reporting-and-figures.md` before producing manuscripts, SI tables, or figures.
-- For an auditable local delivery, use `scripts/research_delivery.py` with the applicable existing foreground, evidence, mapping, calculation and figure artifacts; see `assets/examples/synthetic-delivery/README.md`. It checks and organizes supplied artifacts, reports gaps and provides a replay specification; it does not run openLCA or prove scientific validity.
+- For an auditable local delivery of a cyclic apparent-removal or H2O2 product foreground, use `scripts/research_delivery.py` with the applicable existing foreground, evidence, mapping, calculation and figure artifacts; see `assets/examples/synthetic-delivery/README.md`. It checks and organizes supplied artifacts, reports gaps and provides a replay specification; it does not run openLCA or prove scientific validity.
 - Use `scripts/plot_data.py` and `scripts/plot_report.py` for traceable cycle, stage, scenario and one-at-a-time sensitivity figures; preserve units, partial-model warnings and database license notes.
 
 ## Software routing

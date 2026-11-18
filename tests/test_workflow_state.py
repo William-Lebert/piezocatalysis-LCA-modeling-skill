@@ -11,6 +11,14 @@ from workflow_state import check, record
 
 
 class WorkflowStateTests(unittest.TestCase):
+    def test_required_inputs_must_be_declared_and_stale_inputs_block(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);source=root/'source';output=root/'result';state=root/'state.json';source.write_text('source');output.write_text('result')
+            with self.assertRaisesRegex(ValueError,'must also be listed'):
+                record('foreground',[],[output],[],state,[source])
+            self.assertFalse(state.exists());record('foreground',[source],[output],[],state,[source])
+            self.assertEqual(check(state)['file_integrity'],'PASS');source.write_text('changed')
+            self.assertEqual(check(state)['file_integrity'],'BLOCKED')
     def test_upstream_input_change_blocks_downstream_reuse(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

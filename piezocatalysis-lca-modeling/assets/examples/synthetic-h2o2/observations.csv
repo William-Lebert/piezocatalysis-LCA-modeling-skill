@@ -1,0 +1,11 @@
+value,unit,qualifier,limit,evidence_class,basis
+1,kg,exact,,scenario,campaign
+0.1,g,exact,,scenario,campaign
+5,g,exact,,scenario,campaign
+0.01,g,exact,,scenario,campaign
+2,kWh,exact,,scenario,campaign
+10,g,exact,,scenario,campaign
+40,W,exact,,scenario,campaign
+6,min,exact,,scenario,campaign
+5,mL,exact,,scenario,campaign
+5,mL,exact,,scenario,campaign

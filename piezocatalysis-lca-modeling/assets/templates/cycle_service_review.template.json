@@ -1,0 +1,24 @@
+{
+  "schema_version": "piezolca.cycle-service-review/1",
+  "foreground_sha256": "replace-me",
+  "campaign_id": "replace-me",
+  "pollutant": "replace-me",
+  "source": "replace-me",
+  "service": {
+    "kind": "treated_water_to_threshold",
+    "source": "replace-me",
+    "evidence_class": "scenario",
+    "criterion": {
+      "value": null,
+      "unit": "mg/L",
+      "source": "replace-me",
+      "evidence_class": "scenario"
+    }
+  },
+  "lifetime": {
+    "kind": "observed",
+    "cycles": null,
+    "source": "replace-me",
+    "evidence_class": "scenario"
+  }
+}

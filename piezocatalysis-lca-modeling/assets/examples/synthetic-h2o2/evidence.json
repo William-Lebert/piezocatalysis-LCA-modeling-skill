@@ -1,0 +1,73 @@
+{
+  "schema_version": "piezolca.evidence-chain/1",
+  "foreground_sha256": "ece61b6c2b35fe49d59ef7964c6ca9fdd6be55898a678527b5d1a83c9496fea3",
+  "sources": [
+    {
+      "id": "synthetic-h2o2",
+      "path": "observations.csv",
+      "sha256": "bfcdab71522870c608cdd2e0ae9cbfa2b73fb36eaef0c4a92ec5e303bc25c863"
+    }
+  ],
+  "links": [
+    {
+      "target": "/functional_unit",
+      "source": "synthetic-h2o2",
+      "record": 1,
+      "basis": "campaign"
+    },
+    {
+      "target": "/net_product_per_campaign",
+      "source": "synthetic-h2o2",
+      "record": 2,
+      "basis": "campaign"
+    },
+    {
+      "target": "/dry_yield",
+      "source": "synthetic-h2o2",
+      "record": 3,
+      "basis": "campaign"
+    },
+    {
+      "target": "/fresh_catalyst_per_campaign",
+      "source": "synthetic-h2o2",
+      "record": 4,
+      "basis": "campaign"
+    },
+    {
+      "target": "/preparation_activities/0/quantity",
+      "source": "synthetic-h2o2",
+      "record": 5,
+      "basis": "campaign"
+    },
+    {
+      "target": "/preparation_activities/1/quantity",
+      "source": "synthetic-h2o2",
+      "record": 6,
+      "basis": "campaign"
+    },
+    {
+      "target": "/campaign_activities/0/power",
+      "source": "synthetic-h2o2",
+      "record": 7,
+      "basis": "campaign"
+    },
+    {
+      "target": "/campaign_activities/0/duration",
+      "source": "synthetic-h2o2",
+      "record": 8,
+      "basis": "campaign"
+    },
+    {
+      "target": "/campaign_activities/1/quantity",
+      "source": "synthetic-h2o2",
+      "record": 9,
+      "basis": "campaign"
+    },
+    {
+      "target": "/campaign_activities/2/quantity",
+      "source": "synthetic-h2o2",
+      "record": 10,
+      "basis": "campaign"
+    }
+  ]
+}

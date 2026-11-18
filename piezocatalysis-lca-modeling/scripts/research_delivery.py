@@ -4,12 +4,12 @@ import argparse,copy,csv,hashlib,io,json,math,sys
 from pathlib import Path
 from inventory_handoff import load_handoff
 from mapping_review import finalize,DECISION_FIELDS
-from plot_data import stage_contributions,cycles
+from plot_data import stage_contributions,cycles,scenarios,sensitivity
 from result_coverage import contribution_summary
 
 SCHEMA='piezolca.research-delivery/1'
 ROLES={'foreground','evidence_spec','evidence_report','domain_protocol','domain_input','domain_report','inventory','inventory_manifest','mapping','assignments',
-       'candidate_review','candidate_decisions','candidate_record','model_plan','calculation','coverage','binding','plot_data','plot_dir','cycle_plot_data','cycle_plot_dir'}
+       'candidate_review','candidate_decisions','candidate_record','model_plan','calculation','coverage','binding','plot_data','plot_dir','cycle_plot_data','cycle_plot_dir','cycle_service_spec','cycle_service_report','scenario_baseline_bound','scenario_bound','scenario_source','scenario_contexts','scenario_comparison','scenario_plot_data','scenario_plot_dir','sensitivity_spec','sensitivity_report','sensitivity_plot_data','sensitivity_plot_dir'}
 REQUIRED=('foreground','inventory','inventory_manifest')
 
 def sha(raw):return hashlib.sha256(raw).hexdigest()
@@ -56,7 +56,7 @@ def assemble(spec,root,outdir,spec_raw=None):
  for role in REQUIRED:
   if role not in paths:raise ValueError('required artifact missing: '+role)
  for k,p in paths.items():
-  if k in ('plot_dir','cycle_plot_dir'):
+  if k in ('plot_dir','cycle_plot_dir','scenario_plot_dir','sensitivity_plot_dir'):
    if not p.is_dir():raise ValueError('plot_dir must be a directory')
   elif not p.is_file():raise ValueError(k+' must be a file')
  if ('mapping' in paths)!=('assignments' in paths):raise ValueError('mapping and assignments must be supplied together')
@@ -66,12 +66,17 @@ def assemble(spec,root,outdir,spec_raw=None):
  if any(k in paths for k in ('plot_data','plot_dir','binding')) and not all(k in paths for k in ('plot_data','plot_dir','binding','coverage','model_plan')):
   raise ValueError('stage plot requires plot_data, plot_dir, binding, coverage and model_plan')
  if ('cycle_plot_data' in paths)!=('cycle_plot_dir' in paths):raise ValueError('cycle plot data and directory must be supplied together')
+ for group in (('scenario_baseline_bound','scenario_bound','scenario_source','scenario_contexts','scenario_comparison','scenario_plot_data','scenario_plot_dir'),('sensitivity_spec','sensitivity_report','sensitivity_plot_data','sensitivity_plot_dir')):
+  if any(k in paths for k in group) and not all(k in paths for k in group):raise ValueError('analysis artifact group is incomplete: '+', '.join(group))
+ if ('cycle_service_spec' in paths)!=('cycle_service_report' in paths) or ('cycle_service_report' in paths and 'evidence_report' not in paths):raise ValueError('cycle service review requires spec, report and evidence report')
  handoff=load_handoff(paths['inventory'],paths['inventory_manifest'],paths.get('mapping'),paths.get('assignments'))
  fg_raw=paths['foreground'].read_bytes();fg_hash=sha(fg_raw)
  if handoff.get('input_sha256')!=fg_hash:raise ValueError('foreground differs from inventory manifest')
- from cyclic_foreground import build
- fg=json.loads(fg_raw,parse_constant=lambda v: (_ for _ in ()).throw(ValueError('invalid JSON number '+v)));model=build(fg)
- if handoff.get('functional_unit')!=model['functional_unit'] or handoff.get('boundary')!=model['boundary'] or handoff.get('functional_unit_type')!='apparent_pollutant_removal':raise ValueError('manifest service or boundary differs from foreground')
+ from evidence_chain import build_foreground
+ fg=json.loads(fg_raw,parse_constant=lambda v: (_ for _ in ()).throw(ValueError('invalid JSON number '+v)));model,service=build_foreground(fg)
+ if handoff.get('functional_unit')!=model['functional_unit'] or handoff.get('boundary')!=model['boundary'] or handoff.get('functional_unit_type')!=service:raise ValueError('manifest service or boundary differs from foreground')
+ if service=='h2o2_product' and any(handoff.get(k)!=model[k] for k in ('product_basis','product_definition')):raise ValueError('manifest product basis or definition differs from foreground')
+ if service=='h2o2_product' and any(k in paths for k in ('domain_protocol','domain_input','domain_report','cycle_plot_data','cycle_plot_dir')):raise ValueError('cyclic domain review and cycle plots do not support H2O2 product foreground')
  invrows={x['activity_id']:x for x in handoff['rows']};flows={x['activity_id']:x for x in model['functional_unit_flows']}
  if invrows.keys()!=flows.keys():raise ValueError('inventory activities differ from rebuilt foreground')
  for aid,x in invrows.items():
@@ -84,7 +89,7 @@ def assemble(spec,root,outdir,spec_raw=None):
   if row['included'] and row['mapping_type'] in ('proxy','constructed'):warnings.append('Proxy or constructed mapping: '+row['activity_id'])
  warnings.extend(handoff.get('model_warnings',[]))
  checks.append('Foreground, functional unit, boundary and per-functional-unit inventory rebuilt and checked.')
- data={k:json_read(p) for k,p in paths.items() if k in ('evidence_spec','evidence_report','domain_protocol','domain_input','domain_report','candidate_review','candidate_record','model_plan','calculation','coverage','binding','plot_data','cycle_plot_data')}
+ data={k:json_read(p) for k,p in paths.items() if k in ('evidence_spec','evidence_report','domain_protocol','domain_input','domain_report','candidate_review','candidate_record','model_plan','calculation','coverage','binding','plot_data','cycle_plot_data','cycle_service_spec','cycle_service_report','scenario_baseline_bound','scenario_bound','scenario_source','scenario_contexts','scenario_comparison','scenario_plot_data','sensitivity_spec','sensitivity_report','sensitivity_plot_data')}
  for role,value in data.items():
   if not isinstance(value,dict) or not value:raise ValueError(role+' must be a nonempty JSON object')
  sources=spec.get('evidence_sources',{})
@@ -96,6 +101,7 @@ def assemble(spec,root,outdir,spec_raw=None):
  if 'evidence_report' in data:
   ev=data['evidence_report'];es=data['evidence_spec']
   if ev.get('schema_version')!='piezolca.evidence-audit/1' or ev.get('foreground_sha256')!=fg_hash or ev.get('spec_sha256')!=sha(paths['evidence_spec'].read_bytes()):raise ValueError('evidence report does not match foreground or evidence spec')
+  if service=='h2o2_product' and (ev.get('functional_unit_type')!=service or ev.get('product_basis')!=model['product_basis'] or ev.get('product_definition_user_asserted')!=model['product_definition']):raise ValueError('evidence product function differs from foreground')
   if (ev.get('inventory_rebuilt_and_verified') or {}).get('inventory_sha256')!=handoff['inventory_sha256'] or (ev.get('inventory_rebuilt_and_verified') or {}).get('manifest_sha256')!=handoff['manifest_sha256']:raise ValueError('evidence report is not bound to this inventory and manifest')
   declared={x['id']:x for x in es.get('sources',[])}
   if set(source_paths)-set(declared):raise ValueError('unknown evidence source id')
@@ -111,10 +117,21 @@ def assemble(spec,root,outdir,spec_raw=None):
    rebuilt=evidence_audit(replay,root,fg,fg_hash,paths['inventory'],paths['inventory_manifest'])
    for key in ('coverage','links','inventory_rebuilt_and_verified','campaign','functional_unit_flows','inventory_traces','issues','status'):
     if rebuilt[key]!=ev.get(key):raise ValueError('evidence audit differs from rebuilt sources: '+key)
+   if service=='h2o2_product' and any(rebuilt.get(k)!=ev.get(k) for k in ('functional_unit_type','product_basis','product_definition_user_asserted')):raise ValueError('evidence product function differs from rebuilt sources')
    checks.append('Evidence links and per-functional-unit provenance rebuilt from supplied CSV sources.')
   for issue in ev.get('issues',[]):warnings.append('Evidence '+str(issue.get('target','unknown'))+': '+str(issue.get('status','unknown')))
   checks.append('Evidence report hashes and supplied normalized sources checked; original measurement authenticity is not established.')
  else:warnings.append('Evidence audit not supplied.')
+ if 'cycle_service_report' in data:
+  if service!='apparent_pollutant_removal':raise ValueError('cycle service review requires a cyclic foreground')
+  sr=data['cycle_service_report']
+  if sr.get('spec_sha256')!=sha(paths['cycle_service_spec'].read_bytes()) or sr.get('evidence_report_sha256')!=sha(paths['evidence_report'].read_bytes()):raise ValueError('cycle service report input hash mismatch')
+  from cycle_service_review import review as cycle_service_review
+  rebuilt=cycle_service_review(data['cycle_service_spec'],fg,fg_hash,data['evidence_report'])
+  if any(sr.get(k)!=v for k,v in rebuilt.items()):raise ValueError('cycle service report differs from rebuilt declarations')
+  warnings.append('Cycle service thresholds and sample identities are user assertions; independently review service comparability, samples and catalyst fate.')
+  for issue in sr['issues']:warnings.append('Cycle service '+str(issue.get('field'))+': '+str(issue.get('status')))
+  checks.append('Cycle service declarations and sample links rebuilt; this does not convert the LCI to treated-water service.')
  if any(k in paths for k in ('domain_protocol','domain_input','domain_report')) and not all(k in paths for k in ('domain_protocol','domain_input','domain_report','evidence_report')):
   raise ValueError('domain report requires protocol, domain input and evidence report')
  if 'domain_report' in data:
@@ -127,10 +144,11 @@ def assemble(spec,root,outdir,spec_raw=None):
   if any(dr.get(k)!=v for k,v in rebuilt.items()):raise ValueError('domain report differs from rebuilt declarations')
   for issue in dr.get('issues',[]):warnings.append('Domain '+str(issue.get('field','unknown'))+': '+str(issue.get('status','unknown')))
   warnings.extend(dr.get('warnings',[]))
- else:warnings.append('Piezocatalysis boundary review not supplied.')
+ else:warnings.append('Piezocatalysis boundary review not supplied.' if service!='h2o2_product' else 'H2O2 product definition and experimental boundary require independent review; cyclic domain review is not applicable.')
  plan=data.get('model_plan')
  if plan:
   if plan.get('schema_version')!='piezolca.cycle-model-plan/1' or plan.get('inventory_sha256')!=handoff['inventory_sha256'] or plan.get('manifest_sha256')!=handoff['manifest_sha256'] or plan.get('mapping_sha256')!=handoff['mapping_sha256'] or plan.get('assignments_sha256')!=handoff['assignments_sha256']:raise ValueError('model plan differs from inventory or mapping handoff')
+  if service=='h2o2_product' and any(plan.get(k)!=handoff.get(k) for k in ('functional_unit_type','product_basis','product_definition','functional_unit','boundary')):raise ValueError('model plan product function differs from handoff')
   planrows={r['activity_id']:r for r in plan['rows']}
   if len(planrows)!=len(plan['rows']) or planrows.keys()!=invrows.keys():raise ValueError('model plan activities differ from inventory')
   for aid,x in invrows.items():
@@ -162,6 +180,7 @@ def assemble(spec,root,outdir,spec_raw=None):
  else:warnings.append('Candidate review and decisions not supplied.')
  calc=data.get('calculation');coverage=data.get('coverage');plot=data.get('plot_data')
  if calc:
+  if service=='h2o2_product' and model['campaign']['campaigns_per_functional_unit'] is None:raise ValueError('H2O2 product amount is unavailable; cannot attach a per-functional-unit calculation')
   if coverage.get('schema_version')!='piezolca.result-coverage/1' or coverage.get('calculation')!=calc:raise ValueError('coverage does not contain the supplied calculation')
   setup=calc.get('setup') or {};amount=setup.get('amount')
   if isinstance(amount,bool) or amount!=1:raise ValueError('calculation must use exactly one declared functional unit')
@@ -200,13 +219,44 @@ def assemble(spec,root,outdir,spec_raw=None):
   if ((cp.get('provenance') or {}).get('inputs',{}).get('report') or {}).get('sha256')!=fg_hash:raise ValueError('cyclic plot source hash mismatch')
   verify_plot_files(paths['cycle_plot_dir'],cp);warnings.extend(cp.get('warnings',[]))
   checks.append('Cyclic plot data recomputed from supplied foreground; rendering files checked by hash.')
- else:warnings.append('Cyclic plot not supplied.')
+ elif service!='h2o2_product':warnings.append('Cyclic plot not supplied.')
+ if 'scenario_comparison' in data:
+  if service!='apparent_pollutant_removal':raise ValueError('bound cyclic scenarios require a cyclic foreground')
+  from scenario_binding import compare_bound,digest
+  base=data['scenario_baseline_bound'];alt=data['scenario_bound'];comparison=data['scenario_comparison'];sp=data['scenario_plot_data']
+  if base.get('foreground_sha256')!=fg_hash or base.get('inventory_sha256')!=handoff['inventory_sha256'] or base.get('manifest_sha256')!=handoff['manifest_sha256']:raise ValueError('bound scenario baseline differs from delivery foreground or inventory')
+  if handoff['mapping_sha256'] is not None and (base.get('mapping_sha256')!=handoff['mapping_sha256'] or base.get('assignments_sha256')!=handoff['assignments_sha256']):raise ValueError('bound scenario mapping differs from delivery')
+  if calc and base['coverage']['calculation']!=calc:raise ValueError('bound baseline calculation differs from delivery calculation')
+  rebuilt=compare_bound(base,alt,fg,data['scenario_source'],data['scenario_contexts'])
+  if any(comparison.get(k)!=v for k,v in rebuilt.items()):raise ValueError('bound scenario comparison differs from rebuilt records')
+  refs={'baseline':'scenario_baseline_bound','scenario':'scenario_bound','baseline-input':'foreground','scenario-input':'scenario_source','contexts':'scenario_contexts'}
+  if any((comparison.get('input_sha256') or {}).get(k)!=sha(paths[v].read_bytes()) for k,v in refs.items()):raise ValueError('bound scenario comparison input hash mismatch')
+  if sp.get('schema_version')!='piezolca.plot-data/1' or sp.get('kind')!='scenarios':raise ValueError('invalid scenario plot data')
+  expected=scenarios(comparison,fg,data['scenario_source'],(sp.get('category') or {}).get('id'))
+  if any(sp.get(k)!=v for k,v in expected.items()):raise ValueError('scenario plot differs from bound comparison')
+  refs={'report':'scenario_comparison','baseline_input':'foreground','scenario_input':'scenario_source'}
+  if any(((sp.get('provenance') or {}).get('inputs',{}).get(k) or {}).get('sha256')!=sha(paths[v].read_bytes()) for k,v in refs.items()):raise ValueError('scenario plot input hash mismatch')
+  verify_plot_files(paths['scenario_plot_dir'],sp);warnings.extend(sp.get('warnings',[]));warnings.append('Scenario comparisons use captured models; scientific comparability and omitted background remain subject to review.')
+  checks.append('Bound scenario comparison and plot data recomputed; rendered files checked by hash. Neither openLCA nor rendering is rerun.')
+ if 'sensitivity_report' in data:
+  from sensitivity_report import build as sensitivity_build
+  report=data['sensitivity_report'];rebuilt=sensitivity_build(data['sensitivity_spec'])
+  if any(report.get(k)!=v for k,v in rebuilt.items()):raise ValueError('sensitivity report differs from source specification')
+  scope=report['scope_user_asserted'];fu=scope['functional_unit']
+  if scope['system_boundary']!=model['boundary'] or fu['amount']!=model['functional_unit']['value'] or fu['unit']!=model['functional_unit']['unit']:raise ValueError('sensitivity scope or functional unit differs from delivery')
+  sp=data['sensitivity_plot_data']
+  if sp.get('schema_version')!='piezolca.plot-data/1' or sp.get('kind')!='sensitivity':raise ValueError('invalid sensitivity plot data')
+  expected=sensitivity(report,sp.get('route'),(sp.get('category') or {}).get('id'))
+  if any(sp.get(k)!=v for k,v in expected.items()):raise ValueError('sensitivity plot differs from rebuilt report')
+  if (((sp.get('provenance') or {}).get('inputs') or {}).get('report') or {}).get('sha256')!=sha(paths['sensitivity_report'].read_bytes()):raise ValueError('sensitivity plot input hash mismatch')
+  verify_plot_files(paths['sensitivity_plot_dir'],sp);warnings.extend(sp.get('warnings',[]));warnings.append('Sensitivity is a user-supplied additive approximation, not an openLCA recalculation or verified link to this calculation.')
+  checks.append('Sensitivity report and plot data rebuilt from supplied additive inputs; rendered files checked by hash, not rerendered. Scientific assumptions remain user asserted.')
  warnings=list(dict.fromkeys(str(x) for x in warnings))
  # Only explicitly supplied inputs are copied, and no database is copied or queried.
  outdir.mkdir(parents=True,exist_ok=False);(outdir/'artifacts').mkdir();items=[]
  for role,p in paths.items():
-  if role in ('plot_dir','cycle_plot_dir'):
-   folder='figure' if role=='plot_dir' else 'figure-cycles';dest=outdir/'artifacts'/folder;dest.mkdir()
+  if role in ('plot_dir','cycle_plot_dir','scenario_plot_dir','sensitivity_plot_dir'):
+   folder={'plot_dir':'figure','cycle_plot_dir':'figure-cycles','scenario_plot_dir':'figure-scenarios','sensitivity_plot_dir':'figure-sensitivity'}[role];dest=outdir/'artifacts'/folder;dest.mkdir()
    for name in ('manifest.json','plot-data.json','table.csv','chart.svg','chart.png'):
     raw=(p/name).read_bytes();(dest/name).write_bytes(raw);items.append({'role':folder+'_'+name,'path':'artifacts/'+folder+'/'+name,'sha256':sha(raw)})
   else:
@@ -215,7 +265,7 @@ def assemble(spec,root,outdir,spec_raw=None):
   raw=p.read_bytes();name='evidence-source-'+sid+'.csv';(outdir/'artifacts'/name).write_bytes(raw);items.append({'role':'evidence_source:'+sid,'path':'artifacts/'+name,'sha256':sha(raw)})
  original=spec_raw if spec_raw is not None else json.dumps(spec,ensure_ascii=False,indent=2).encode()
  (outdir/'source-spec.json').write_bytes(original)
- replay=copy.deepcopy(spec);replay['artifacts']={k:('artifacts/figure' if k=='plot_dir' else 'artifacts/figure-cycles' if k=='cycle_plot_dir' else 'artifacts/'+k+(p.suffix.lower() or '.dat')) for k,p in paths.items()}
+ replay=copy.deepcopy(spec);replay['artifacts']={k:('artifacts/'+{'plot_dir':'figure','cycle_plot_dir':'figure-cycles','scenario_plot_dir':'figure-scenarios','sensitivity_plot_dir':'figure-sensitivity'}[k] if k in ('plot_dir','cycle_plot_dir','scenario_plot_dir','sensitivity_plot_dir') else 'artifacts/'+k+(p.suffix.lower() or '.dat')) for k,p in paths.items()}
  replay['evidence_sources']={k:'artifacts/evidence-source-'+k+'.csv' for k in source_paths}
  (outdir/'replay-spec.json').write_text(json.dumps(replay,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
  if calc:
@@ -226,12 +276,27 @@ def assemble(spec,root,outdir,spec_raw=None):
                          'functional_unit_user_asserted':calc['functional_unit_user_asserted'],'calculation_amount':calc['setup']['amount']}
     w.writerow({k:("'"+v if isinstance(v,str) and v.lstrip().startswith(('=','+','-','@')) else v) for k,v in row.items()})
  fu=model['functional_unit']
- methods=['# 研究方法与结果说明（待研究者审核）','', '## 研究范围','', '研究标题：'+title,'', '功能单位：'+str(fu.get('value','未提供'))+' '+str(fu.get('unit',''))+' 水相表观污染物去除（来源：'+str(fu.get('source','未提供'))+'；证据类别：'+str(fu.get('evidence_class','未提供'))+'）','', '系统边界：'+model['boundary'], '',
-  '## 前景与数据','', '逐循环前景按输入记录计算水相表观去除及每功能单位清单；表观去除不证明矿化。每功能单位清单不应重复缩放。',
+ if service=='h2o2_product':
+  basis={'net_accumulated':'净积累','recovered_product':'回收产品'}[model['product_basis']]
+  service_text='H₂O₂ '+basis
+  foreground_text='前景按声明的 H₂O₂ 产品量及催化剂分摊计算每功能单位清单；净积累、回收产品、原位消耗与总生成不能自动等同。每功能单位清单不应重复缩放。'
+ else:
+  service_text='水相表观污染物去除'
+  foreground_text='逐循环前景按输入记录计算水相表观去除及每功能单位清单；表观去除不证明矿化。每功能单位清单不应重复缩放。'
+ methods=['# 研究方法与结果说明（待研究者审核）','', '## 研究范围','', '研究标题：'+title,'', '功能单位：'+str(fu.get('value','未提供'))+' '+str(fu.get('unit',''))+' '+service_text+'（来源：'+str(fu.get('source','未提供'))+'；证据类别：'+str(fu.get('evidence_class','未提供'))+'）','', '系统边界：'+model['boundary'], '',
+  '## 前景与数据','', foreground_text,
   '证据、代理和未链接项以交付文件及审查记录为准。','']
+ if service=='h2o2_product':
+  methods+=['产品定义（用户声明）：'+model['product_definition'], '催化剂去向：'+model['campaign']['catalyst_destination']+'；产品测量、外加量修正及催化剂处置均须研究者核实。','']
+ if 'cycle_service_report' in data:
+  sr=data['cycle_service_report'];methods+=['## 逐循环服务条件（待复核）','', '服务类型：'+str(sr['service']['kind'])+'；阈值、样品和寿命为用户声明，数值检查不构成法规达标或服务等价证明。']
+  methods+=['- 循环 '+str(row['cycle_id'])+'：'+row['criterion_status']+'；样品关联声明完整：'+str(row['sample_links_complete_user_asserted']) for row in sr['cycles']]
+  methods+=['','清单仍按表观去除功能单位生成，不自动转换为处理水量功能单位。','']
  if data.get('evidence_report'):
   counts=data['evidence_report'].get('coverage') or {}
   methods+=['数值证据链接：'+str(counts.get('linked_count','未知'))+'/'+str(counts.get('quantity_count','未知'))+'；来源记录、计算依赖和缺口见 artifacts/evidence_report.json。','']
+ if 'scenario_comparison' in data:methods+=['## 情景比较','','情景图与记录基于已捕获的 openLCA 计算及绑定；每个功能和背景声明、未连接项与代理需独立复核，不自动排名。','']
+ if 'sensitivity_report' in data:methods+=['## 单因素敏感性','','此图基于用户提供的加和近似，不是 openLCA 重新计算；输入、范围和适用性需复核。','']
  if data.get('domain_protocol'):
   protocol=data['domain_protocol']
   methods+=['## 实验边界声明','']
@@ -248,11 +313,12 @@ def assemble(spec,root,outdir,spec_raw=None):
    '产品系统：'+str(target.get('name','未提供'))+'（ID：'+str(target.get('@id','未提供'))+'）；计算量：一个声明功能单位。',
    '计算结果功能单位（用户声明）：'+calc['functional_unit_user_asserted']+'。',
    '数据库身份及模型与实验的等价性需要独立确认。','']
+ elif 'scenario_comparison' in data:methods+=['## 背景与计算','','未单独提供主模型计算表；已捕获的情景计算结果见相关记录，仍须独立核对。','']
  else:methods+=['## 背景与计算','','未提供可核对的计算结果；不报告影响结果。','']
  methods+=['## 缺口与解释','']+['- '+x for x in warnings]+['','不得由本报告自动推断方案排名、矿化程度或未提供的不确定性。','', '许可说明：'+license_note,'']
  (outdir/'methods.md').write_text('\n'.join(methods),encoding='utf-8')
  readme=['# '+title,'','本地科研交付：清单、审查、计算与图表按提供的文件整理。','',
-  '查看 `methods.md`、`delivery-manifest.json` 和 `artifacts/`。阶段图和逐循环图存在时分别位于 `artifacts/figure/`、`artifacts/figure-cycles/`。',
+  '查看 `methods.md`、`delivery-manifest.json` 和 `artifacts/`。图表存在时分别位于 `figure/`、`figure-cycles/`、`figure-scenarios/`、`figure-sensitivity/`。',
   '原始 CSV 仅在明确提供时复制；原始 Excel/PDF 和数据库不会自动复制。source-spec.json 可能含原本机路径，分享前须检查。',
   'Agent 可用 `scripts/research_delivery.py verify <本目录>` 检查文件摘要，并使用 `replay-spec.json` 重新整理到新的目录；这不会重新运行 openLCA，验证不证明测量真实或结果科学适用。',
   '本交付可能包含商业数据库衍生信息，仅按许可使用；不要在未经审查时对外分享。','']
@@ -260,9 +326,9 @@ def assemble(spec,root,outdir,spec_raw=None):
  for name in ('methods.md','README.md','source-spec.json','replay-spec.json')+ (('lcia-results.csv',) if calc else ()):
   items.append({'role':'generated_'+name,'path':name,'sha256':sha((outdir/name).read_bytes())})
  manifest={'schema_version':SCHEMA,'title':title,'status':'review_required' if warnings else 'checks_passed_review_still_required','license_note':license_note,
-           'functional_unit':model['functional_unit'],'calculation_functional_unit_user_asserted':calc.get('functional_unit_user_asserted') if calc else None,
+           'functional_unit':model['functional_unit'],'functional_unit_type':service,'product_basis':model.get('product_basis'),'product_definition':model.get('product_definition'),'calculation_functional_unit_user_asserted':calc.get('functional_unit_user_asserted') if calc else None,
            'boundary':model['boundary'],'checks':checks,'warnings':warnings,'files':items,'python_version':sys.version.split()[0],
-           'generator_sha256':{n:sha(Path(__file__).with_name(n).read_bytes()) for n in ('research_delivery.py','cyclic_foreground.py','experimental_foreground.py','audit_and_scale_inventory.py','inventory_handoff.py','mapping_review.py','mapping_coverage.py','openlca_readonly.py','result_coverage.py','plot_data.py','evidence_chain.py','piezocatalysis_checks.py')}}
+           'generator_sha256':{n:sha(Path(__file__).with_name(n).read_bytes()) for n in ('research_delivery.py','cyclic_foreground.py','h2o2_foreground.py','experimental_foreground.py','audit_and_scale_inventory.py','inventory_handoff.py','mapping_review.py','mapping_coverage.py','openlca_readonly.py','result_coverage.py','plot_data.py','evidence_chain.py','piezocatalysis_checks.py','cycle_service_review.py','scenario_binding.py','sensitivity_report.py')}}
  (outdir/'delivery-manifest.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2,allow_nan=False)+'\n',encoding='utf-8')
  return manifest
 

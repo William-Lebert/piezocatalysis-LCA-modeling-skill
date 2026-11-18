@@ -1,0 +1,24 @@
+{
+  "schema_version": "piezolca.cycle-service-review/1",
+  "foreground_sha256": "dd2d110b3f4786b675cdbf918c39a1317348b80d4b367aec0548de5c0d50c499",
+  "campaign_id": "fictional-campaign",
+  "pollutant": "fictional pollutant",
+  "source": "fictional scenario",
+  "service": {
+    "kind": "treated_water_to_threshold",
+    "source": "fictional scenario",
+    "criterion": {
+      "value": 10,
+      "unit": "mg/L",
+      "source": "fictional threshold, not a regulation",
+      "evidence_class": "scenario"
+    },
+    "evidence_class": "scenario"
+  },
+  "lifetime": {
+    "kind": "observed",
+    "cycles": 2,
+    "source": "fictional scenario",
+    "evidence_class": "scenario"
+  }
+}

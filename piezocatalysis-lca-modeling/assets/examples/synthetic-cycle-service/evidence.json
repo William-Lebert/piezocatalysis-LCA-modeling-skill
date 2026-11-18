@@ -1,0 +1,223 @@
+{
+  "schema_version": "piezolca.evidence-chain/1",
+  "foreground_sha256": "dd2d110b3f4786b675cdbf918c39a1317348b80d4b367aec0548de5c0d50c499",
+  "sources": [
+    {
+      "id": "synthetic-lab",
+      "path": "observations.csv",
+      "sha256": "8e9a70e5edbe58f0fc400172453f496f11afcd2391d3b88d7b21aef413173201"
+    }
+  ],
+  "links": [
+    {
+      "target": "/dry_yield",
+      "source": "synthetic-lab",
+      "record": 1,
+      "basis": "campaign"
+    },
+    {
+      "target": "/treatment_target",
+      "source": "synthetic-lab",
+      "record": 2,
+      "basis": "campaign"
+    },
+    {
+      "target": "/initial_catalyst",
+      "source": "synthetic-lab",
+      "record": 3,
+      "basis": "campaign"
+    },
+    {
+      "target": "/preparation_activities/0/quantity",
+      "source": "synthetic-lab",
+      "record": 4,
+      "basis": "campaign"
+    },
+    {
+      "target": "/preparation_activities/1/quantity",
+      "source": "synthetic-lab",
+      "record": 5,
+      "basis": "campaign"
+    },
+    {
+      "target": "/cycles/0/catalyst_added",
+      "source": "synthetic-lab",
+      "record": 6,
+      "basis": "cycle-1"
+    },
+    {
+      "target": "/cycles/0/catalyst_loaded",
+      "source": "synthetic-lab",
+      "record": 7,
+      "basis": "cycle-1"
+    },
+    {
+      "target": "/cycles/0/catalyst_recovered",
+      "source": "synthetic-lab",
+      "record": 8,
+      "basis": "cycle-1"
+    },
+    {
+      "target": "/cycles/0/influent_volume",
+      "source": "synthetic-lab",
+      "record": 9,
+      "basis": "cycle-1",
+      "sample": {
+        "campaign_id": "fictional-campaign",
+        "cycle_id": "1",
+        "sample_id": "sample-1-influent",
+        "sample_role": "influent"
+      }
+    },
+    {
+      "target": "/cycles/0/influent_concentration",
+      "source": "synthetic-lab",
+      "record": 10,
+      "basis": "cycle-1",
+      "sample": {
+        "campaign_id": "fictional-campaign",
+        "cycle_id": "1",
+        "sample_id": "sample-1-influent",
+        "sample_role": "influent"
+      }
+    },
+    {
+      "target": "/cycles/0/effluent_volume",
+      "source": "synthetic-lab",
+      "record": 11,
+      "basis": "cycle-1",
+      "sample": {
+        "campaign_id": "fictional-campaign",
+        "cycle_id": "1",
+        "sample_id": "sample-1-effluent",
+        "sample_role": "effluent"
+      }
+    },
+    {
+      "target": "/cycles/0/effluent_concentration",
+      "source": "synthetic-lab",
+      "record": 12,
+      "basis": "cycle-1",
+      "sample": {
+        "campaign_id": "fictional-campaign",
+        "cycle_id": "1",
+        "sample_id": "sample-1-effluent",
+        "sample_role": "effluent"
+      }
+    },
+    {
+      "target": "/cycles/0/activities/0/power",
+      "source": "synthetic-lab",
+      "record": 13,
+      "basis": "cycle-1"
+    },
+    {
+      "target": "/cycles/0/activities/0/duration",
+      "source": "synthetic-lab",
+      "record": 14,
+      "basis": "cycle-1"
+    },
+    {
+      "target": "/cycles/0/activities/1/quantity",
+      "source": "synthetic-lab",
+      "record": 15,
+      "basis": "cycle-1"
+    },
+    {
+      "target": "/cycles/0/activities/2/quantity",
+      "source": "synthetic-lab",
+      "record": 16,
+      "basis": "cycle-1"
+    },
+    {
+      "target": "/cycles/1/catalyst_added",
+      "source": "synthetic-lab",
+      "record": 17,
+      "basis": "cycle-2"
+    },
+    {
+      "target": "/cycles/1/catalyst_loaded",
+      "source": "synthetic-lab",
+      "record": 18,
+      "basis": "cycle-2"
+    },
+    {
+      "target": "/cycles/1/catalyst_recovered",
+      "source": "synthetic-lab",
+      "record": 19,
+      "basis": "cycle-2"
+    },
+    {
+      "target": "/cycles/1/influent_volume",
+      "source": "synthetic-lab",
+      "record": 20,
+      "basis": "cycle-2",
+      "sample": {
+        "campaign_id": "fictional-campaign",
+        "cycle_id": "2",
+        "sample_id": "sample-2-influent",
+        "sample_role": "influent"
+      }
+    },
+    {
+      "target": "/cycles/1/influent_concentration",
+      "source": "synthetic-lab",
+      "record": 21,
+      "basis": "cycle-2",
+      "sample": {
+        "campaign_id": "fictional-campaign",
+        "cycle_id": "2",
+        "sample_id": "sample-2-influent",
+        "sample_role": "influent"
+      }
+    },
+    {
+      "target": "/cycles/1/effluent_volume",
+      "source": "synthetic-lab",
+      "record": 22,
+      "basis": "cycle-2",
+      "sample": {
+        "campaign_id": "fictional-campaign",
+        "cycle_id": "2",
+        "sample_id": "sample-2-effluent",
+        "sample_role": "effluent"
+      }
+    },
+    {
+      "target": "/cycles/1/effluent_concentration",
+      "source": "synthetic-lab",
+      "record": 23,
+      "basis": "cycle-2",
+      "sample": {
+        "campaign_id": "fictional-campaign",
+        "cycle_id": "2",
+        "sample_id": "sample-2-effluent",
+        "sample_role": "effluent"
+      }
+    },
+    {
+      "target": "/cycles/1/activities/0/power",
+      "source": "synthetic-lab",
+      "record": 24,
+      "basis": "cycle-2"
+    },
+    {
+      "target": "/cycles/1/activities/0/duration",
+      "source": "synthetic-lab",
+      "record": 25,
+      "basis": "cycle-2"
+    },
+    {
+      "target": "/cycles/1/activities/1/quantity",
+      "source": "synthetic-lab",
+      "record": 26,
+      "basis": "cycle-2"
+    },
+    {
+      "target": "/cycles/1/activities/2/quantity",
+      "source": "synthetic-lab",
+      "record": 27,
+      "basis": "cycle-2"
+    }
+  ]
+}

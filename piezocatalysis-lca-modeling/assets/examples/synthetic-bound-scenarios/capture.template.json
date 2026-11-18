@@ -1,0 +1,31 @@
+{
+  "foreground": "/replace-me/foreground.json",
+  "inventory": "/replace-me/inventory.csv",
+  "manifest": "/replace-me/inventory.csv.manifest.json",
+  "mapping": "/replace-me/mapping.csv",
+  "assignments": "/replace-me/assignments.csv",
+  "binding": "/replace-me/binding.json",
+  "mapping_database": "replace-me",
+  "category_id": "replace-me",
+  "flow_ids": [],
+  "start_local": {
+    "app": "/Applications/openLCA.app",
+    "workspace": "/replace-me/openLCA-data-1.4",
+    "database": "replace-me"
+  },
+  "calculation": {
+    "system_id": "replace-me",
+    "method_id": "replace-me",
+    "unit_id": "replace-me",
+    "flow_property_id": "replace-me",
+    "amount": 1,
+    "wait_seconds": 120,
+    "software_version": "2.7.0",
+    "database_label": "replace-me",
+    "database_version": "replace-me",
+    "system_model": "replace-me",
+    "functional_unit": "replace-me",
+    "unit_label": "replace-me",
+    "parameters": []
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": "piezolca.real-case-intake/1",
+  "study": {"question": "", "researcher_contact_local_only": "", "data_use_permission": "unknown"},
+  "service": {"kind": "", "functional_unit": "", "pollutant_or_product": "", "quality_criterion_and_source": "", "boundary": ""},
+  "raw_records": [{"local_path": "", "sha256": "", "original_locator": "", "permission": "unknown"}],
+  "experiment": {"campaign_id": "", "sample_ids_and_roles": "", "replication_and_calibration": "", "detection_limits": "", "influent_effluent_volumes_and_concentrations": "", "ultrasound_and_auxiliary_power_measurement": "", "lighting": "", "oxidants_and_ph": ""},
+  "catalyst": {"synthesis_inputs_and_dry_yield": "", "cycle_load_added_recovered": "", "observed_cycles": null, "assumed_or_extrapolated_lifetime": "", "washing_regeneration_and_losses": "", "final_destination": ""},
+  "h2o2_if_applicable": {"product_basis": "", "measurement_method": "", "external_addition_and_in_situ_consumption": "", "recovered_product_definition": ""},
+  "background": {"database_version": "", "system_model": "", "geography": "", "lcia_method": "", "licence_and_permissions": "", "mapping_and_proxy_review": ""},
+  "quality_and_review": {"missing_and_censored_values": "", "uncertainty_and_correlations": "", "independent_hand_anchor": "", "domain_reviewer": "", "lca_reviewer": "", "open_questions": ""}
+}

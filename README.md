@@ -2,11 +2,11 @@
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23813629.svg)](https://doi.org/10.5281/zenodo.23813629)
 
-Version 1.5.0, 2026-11-16.
+Version 1.6.0, 2026-11-18.
 
-版本：1.5.0，2026-11-16。
+版本：1.6.0，2026-11-18。
 
-本版更新与回滚方法见 [v1.5.0 版本说明](docs/RELEASE_v1.5.0_zh.md)。
+本版更新与回滚方法见 [v1.6.0 版本说明](docs/RELEASE_v1.6.0_zh.md)。
 
 This repository provides a research Skill for agents performing life-cycle assessment of piezocatalysis, photocatalysis, and piezo-photocatalysis systems. Its scripts, templates, and references support software-neutral modeling and openLCA or SimaPro workflows.
 
@@ -51,6 +51,10 @@ For cycle-by-cycle catalyst reuse, see the [synthetic cycle examples](piezocatal
 Selected ecoinvent process references, product-system links and selected LCIA flow factors can be reviewed using `mapping_coverage.py`; see the [openLCA workflow](piezocatalysis-lca-modeling/references/openlca-workflow.md#selected-mapping-and-lcia-coverage-review).
 
 可使用 `mapping_coverage.py` 核对选定数据集的参考交换、产品系统连接及指定基本流的 LCIA 表征因子；具体方法见 [openLCA 工作流](piezocatalysis-lca-modeling/references/openlca-workflow.md#selected-mapping-and-lcia-coverage-review)。
+
+Version 1.6.0 connects H₂O₂ and cycle-level evidence to research delivery, checks captured openLCA scenario models, and adds a checklist for preparing real cases. See the [release notes](docs/RELEASE_v1.6.0_zh.md) and [migration notes](docs/migration-notes.md).
+
+v1.6.0 衔接 H₂O₂ 与逐循环实验的证据、情景模型核对和科研交付，并增加真实案例准备清单。使用旧版情景采集记录时，请先阅读[迁移说明](docs/migration-notes.md)。
 
 ## Agent usage / Agent 使用
 
@@ -129,7 +133,7 @@ Agent 可用 `scripts/mapping_review.py` 只读记录多个候选的地域、参
 
 实验数据质量可先用 `scripts/experimental_quality.py` 核对逐批、逐循环记录、检测限和功率／时间配对，再结合 `uncertainty_readiness.py` 评估分布与关联依据。示例见[合成数据质量检查](piezocatalysis-lca-modeling/assets/examples/synthetic-quality/README.md)。
 
-压电催化应用还支持以过氧化氢为产品的功能单位：见 [合成 H2O2 前景示例](piezocatalysis-lca-modeling/assets/examples/synthetic-h2o2/README.md)和[领域文献与建模启示](piezocatalysis-lca-modeling/references/domain-literature.md)。过氧化氢净积累量、回收产品和污染物去除是不同的功能，需分别说明边界。
+压电催化应用还支持以过氧化氢为产品的功能单位：见 [合成 H2O2 前景示例](piezocatalysis-lca-modeling/assets/examples/synthetic-h2o2/README.md)和[领域文献与建模启示](piezocatalysis-lca-modeling/references/domain-literature.md)。过氧化氢净积累量、回收产品和污染物去除是不同的功能，需分别说明边界。开发中的扩展支持 H2O2 产品前景的证据链接与科研交付，产品定义和实验依据仍需人工审核。
 
 实验数据证据链可用 `scripts/evidence_chain.py` 将前景输入与 CSV 记录、单位、数据基准及每功能单位清单逐项核对；`scripts/piezocatalysis_checks.py` 可检查超声及光照能耗、氧化剂、pH 调节和催化剂去向。原始 Excel／文献页码目前仍须人工核对。参见[合成证据链示例](piezocatalysis-lca-modeling/assets/examples/synthetic-evidence/README.md)。
 
@@ -137,7 +141,7 @@ Agent 可用 `scripts/mapping_review.py` 只读记录多个候选的地域、参
 
 绘图接口可将逐循环、单类别阶段贡献、可比情景和单因素敏感性报告导出为 CSV、可编辑 SVG 和 PNG；详见[合成绘图示例与依赖](piezocatalysis-lca-modeling/assets/examples/synthetic-plotting/README.md)。阶段分配有明确的固定背景条件，部分模型及数据许可提示会随图保留。
 
-### Agent 科研交付（开发中）
+### Agent 科研交付
 
 Agent 可用 `scripts/research_delivery.py` 整理已有清单、证据、映射、计算、图表和方法草稿，并核对来源哈希与缺口。见[合成交付示例](piezocatalysis-lca-modeling/assets/examples/synthetic-delivery/README.md)；该整理流程不代替软件重算或科研审查。
 
@@ -162,3 +166,9 @@ The following projects informed the evaluation of LCA engines and integration ap
 For a quick check of supplied data, choose **Quick Audit**; for building or calculating a study, choose **Guided LCA**; to organize existing results, choose **Research Delivery**. Single-purpose tasks can call the appropriate existing tool directly. See [task routing and optional stage records](piezocatalysis-lca-modeling/references/task-routing.md). A file-integrity `PASS` is not a scientific approval.
 
 检查现有数据可选择**快速审查**；建立或计算模型选择**引导建模**；整理已有结果选择**科研交付**。单项任务可直接调用相应工具。阶段输入、人工复核点与可选状态记录见[任务路由](piezocatalysis-lca-modeling/references/task-routing.md)；文件完整性通过不代表科研审核通过。
+
+逐循环研究可使用[样品关联与服务检查合成案例](piezocatalysis-lca-modeling/assets/examples/synthetic-cycle-service/README.md)记录批次、样品、阈值和寿命声明；功能单位换算与科研可比性仍需单独确认。
+
+开发中的[逐循环情景绑定](piezocatalysis-lca-modeling/assets/examples/synthetic-bound-scenarios/README.md)可逐情景核对清单、软件模型交换、背景过程和参数；部分模型仍需人工复核。
+
+开发中的科研交付可核对绑定情景及加和敏感性图，区分已有 openLCA 重算与用户提供的近似；真实实验资料可按[数据准备清单](docs/real-case-intake_zh.md)整理。

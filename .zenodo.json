@@ -1,0 +1,12 @@
+{
+  "title": "Piezocatalysis LCA Modeling Skill",
+  "description": "A research skill for transparent, reproducible life-cycle assessment of piezocatalysis, photocatalysis, and piezo-photocatalysis systems.",
+  "upload_type": "software",
+  "license": "mit",
+  "creators": [
+    {"name": "Pu, Xiaoyu", "orcid": "0009-0002-3687-7560", "type": "ProjectLeader"}
+  ],
+  "contributors": [
+    {"name": "Gu, Jing", "type": "RelatedPerson"}
+  ]
+}
