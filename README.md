@@ -79,6 +79,10 @@ If you use this software in research, please cite the specific version used.
 
 如果您在科研工作中使用本软件，请引用实际使用的具体版本。
 
+### Version v1.6.0
+
+Pu, X. (2026). *Piezocatalysis LCA Modeling Skill (Version v1.6.0)* [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.24333330
+
 ### Version v1.5.0
 
 Pu, X. (2026). *Piezocatalysis LCA Modeling Skill (Version v1.5.0)* [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.24269146
