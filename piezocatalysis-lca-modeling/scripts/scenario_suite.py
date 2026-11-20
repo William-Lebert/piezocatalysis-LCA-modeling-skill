@@ -252,9 +252,16 @@ def check_recalculation(reference, current):
     prior = summarize(reference)
     fresh = summarize(current)
     for old, new in zip(reference['cases'], current['cases']):
-        for key in ('snapshot_sha256', 'plan_sha256', 'provider_snapshot_hashes'):
+        for key in ('snapshot_sha256', 'provider_snapshot_hashes'):
             if old['capture'][key] != new['capture'][key]:
                 raise ValueError('recalculation model or plan snapshot differs for '+old['id'])
+        # summarize() already verified each plan's full digest. Compare scientific inputs
+        # and observations across releases independently of generator revisions.
+        provenance = {'handoff_code_sha256', 'plan_code_sha256'}
+        old_plan = {k: v for k, v in old['capture']['plan'].items() if k not in provenance}
+        new_plan = {k: v for k, v in new['capture']['plan'].items() if k not in provenance}
+        if old_plan != new_plan:
+            raise ValueError('recalculation model or plan snapshot differs for '+old['id'])
     for old, new in zip(prior['cases'], fresh['cases']):
         for pair in compare_impacts(
                 [{'category': i['category'], 'amount': i['amount']} for i in old['impacts']],

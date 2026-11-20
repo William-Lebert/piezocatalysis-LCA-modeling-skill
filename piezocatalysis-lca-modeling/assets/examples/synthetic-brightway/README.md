@@ -4,14 +4,14 @@
 
 ## 合成案例与复现
 
-运行环境：macOS Apple Silicon、Python 3.9.6；`bw2calc==3.1.0`、`bw2data==4.8`、`bw_processing==1.6`，完整已安装版本见同目录 `requirements-verified-macos-python39.txt`。这份冻结清单记录本次求解后的版本，不含下载哈希，不保证其他平台、Python 版本或未来仍可安装；它不是主项目依赖，也不是安全审计。
+复现示例使用 macOS Apple Silicon、Python 3.12 和独立环境。核心引擎版本为 `bw2calc==3.1.0`、`bw2data==4.8` 和 `bw_processing==1.6`。新版[依赖清单](requirements-macos-python312.txt)补齐了 asteval、fsspec 和 python-dotenv 的安全更新。原先的 `requirements-verified-macos-python39.txt` 保留为 2026-11-07 的环境记录。
 
 仅在独立虚拟环境安装并运行（需要联网获取公开软件包）：
 
 ```sh
-python3.9 -m venv /tmp/piezolca-bw-example-env
-/tmp/piezolca-bw-example-env/bin/python -m pip install -r requirements-verified-macos-python39.txt
-/tmp/piezolca-bw-example-env/bin/python calculate.py
+python3.12 -m venv /tmp/piezolca-bw-python312
+/tmp/piezolca-bw-python312/bin/python -m pip install -r requirements-macos-python312.txt
+/tmp/piezolca-bw-python312/bin/python calculate.py
 ```
 
 命令在本目录执行。脚本在导入 Brightway 前创建独立临时数据目录，设置 `BRIGHTWAY2_DIR`，在其中写入虚构数据，结束后清除临时项目；不操作已有 Brightway/openLCA 项目。若进程异常终止，系统临时目录可能残留该次合成数据。

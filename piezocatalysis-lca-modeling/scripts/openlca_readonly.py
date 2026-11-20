@@ -18,7 +18,8 @@ import uuid
 from pathlib import Path
 
 
-ALLOWED_METHODS = frozenset({'data/get', 'data/get/descriptors', 'data/get/parameters', 'result/calculate', 'result/state',
+ALLOWED_METHODS = frozenset({'data/get', 'data/get/descriptors', 'data/get/parameters',
+                             'result/calculate', 'result/state',
                              'result/total-impacts', 'result/impact-contributions-of', 'result/total-flows', 'result/dispose'})
 KINDS = ('ProductSystem', 'ImpactMethod', 'Process', 'Flow', 'FlowProperty')
 MAX_RESPONSE = 32 * 1024 * 1024
@@ -27,6 +28,10 @@ DEFAULT_CANDIDATE_PORTS = (8080, 18808)
 
 class IPCError(Exception):
     pass
+
+
+class EntityNotFound(IPCError):
+    """openLCA reported that this explicitly requested entity does not exist."""
 
 
 class Client:
@@ -57,10 +62,14 @@ class Client:
             raise IPCError(f'{method}: connection or JSON error: {exc}') from exc
         finally:
             connection.close()
-        if not isinstance(payload, dict) or payload.get('id') != request_id or payload.get('jsonrpc') != '2.0':
+        if (not isinstance(payload, dict) or type(payload.get('id')) is not int
+                or payload['id'] != request_id or payload.get('jsonrpc') != '2.0'):
             raise IPCError(f'{method}: invalid JSON-RPC response or mismatched request ID')
-        if payload.get('error') is not None:
-            raise IPCError(f'{method}: server error: {payload["error"]}')
+        error = payload.get('error')
+        if error is not None:
+            if method == 'data/get' and isinstance(error, dict) and error.get('code') == 404:
+                raise EntityNotFound(f'{method}: server error: {error}')
+            raise IPCError(f'{method}: server error: {error}')
         if 'result' not in payload:
             raise IPCError(f'{method}: missing result')
         return payload['result']
@@ -220,7 +229,7 @@ def calculate(client: Client, args) -> dict:
 def valid_uuid(value: str) -> str:
     try:
         return str(uuid.UUID(value))
-    except ValueError as exc:
+    except (AttributeError, TypeError, ValueError) as exc:
         raise argparse.ArgumentTypeError('must be a UUID') from exc
 
 

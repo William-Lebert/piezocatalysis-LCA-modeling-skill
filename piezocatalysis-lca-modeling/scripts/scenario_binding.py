@@ -179,8 +179,6 @@ def capture(client,source_path,inventory,manifest,mapping,assignments,binding,ar
         y=actual[aid];a=x['amount'];b=y['amount_per_functional_unit']
         if any(x[k]!=y[t] for k,t in [('unit','unit'),('stage','stage'),('cycle','cycle_id'),('direction','direction'),('flow_name','flow_name'),('included','included'),('evidence_class','evidence_class')]) or x['source'].strip()!=y['source'] or (a is None)!=(b is None) or (a is not None and not same(a,b)):raise ValueError(aid+': inventory differs from rebuilt foreground')
     if isinstance(args.amount,bool) or args.amount!=1:raise ValueError('calculation amount must equal one functional unit')
-    plan=preflight(h,client,args.mapping_database)
-    check_plan_source(plan,source)
     def snapshot():
         system=read_entity(client,'ProductSystem',args.system_id)
         if not system or not isinstance(system.get('processes'),list):raise ValueError('product system or process list unavailable')
@@ -191,6 +189,8 @@ def capture(client,source_path,inventory,manifest,mapping,assignments,binding,ar
         if not isinstance(params,list) or not isinstance(method,dict) or not isinstance(category,dict):raise ValueError('method, category or parameter snapshot unavailable')
         return {'system':system,'processes':processes,'method':method,'category':category,'parameters':params}
     before=snapshot()
+    plan=preflight(h,client,args.mapping_database,system_processes=before['processes'])
+    check_plan_source(plan,source)
     reference=check_system_reference(before['system'],before['processes'].get(binding.get('root_uuid')),binding)
     check_parameter_overrides(getattr(args,'parameters',[]),before['parameters'])
     stage_references = None
@@ -202,7 +202,8 @@ def capture(client,source_path,inventory,manifest,mapping,assignments,binding,ar
     calc=calculate(client,args)
     after=snapshot()
     if digest(before)!=digest(after):raise ValueError('system, processes, method, selected category or parameters changed during calculation')
-    if preflight(h,client,args.mapping_database)!=plan:raise ValueError('mapping preflight changed during calculation')
+    if preflight(h,client,args.mapping_database,system_processes=after['processes'])!=plan:
+        raise ValueError('mapping preflight changed during calculation')
     coverage=analyze(calc,before['system'],before['processes'],before['category'],flow_ids)
     links=check_links(plan,coverage,binding,strict_basis=strict_basis,stage_references=stage_references)
     provider_ids={r['actual_reference']['process_uuid'] for r in plan['rows'] if r.get('actual_reference')}

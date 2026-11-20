@@ -3,6 +3,7 @@ import copy
 from pathlib import Path
 import sys
 import unittest
+from collections import Counter
 from uuid import UUID
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'piezocatalysis-lca-modeling/scripts'))
@@ -14,10 +15,12 @@ from openlca_readonly import IPCError
 class Entities:
     def __init__(self, entities):
         self.entities = {entity['@id']: entity for entity in entities}
+        self.reads = Counter()
 
     def call(self, operation, ref):
         if operation != 'data/get':
             raise AssertionError(operation)
+        self.reads[ref['@type']] += 1
         return self.entities.get(ref['@id'])
 
 
@@ -58,6 +61,8 @@ class CoverageMatrixTests(unittest.TestCase):
 
     def test_factor_presence_is_independent_of_inventory_occurrence(self):
         matrix = audit(self.client, self.calculation, self.flow_ids)
+        self.assertEqual(self.client.reads['FlowProperty'], 1)
+        self.assertEqual(self.client.reads['UnitGroup'], 1)
         rows = [(c['status'], c['observed_in_inventory'], c['factor_value']) for c in matrix['checks']]
         self.assertEqual(rows, [
             ('factor_present', True, 1.0), ('explicit_zero_factor', True, 0),

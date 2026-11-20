@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased (1.7.1)
+
+- Read mapped openLCA processes and location codes by ID. Reuse the process snapshots already captured on each side of a scenario calculation.
+- Index selected LCIA factors and calculated inventory entries once per audit. Keep each flow's factor status, reference basis and inventory occurrences.
+- Verify complete research deliveries against their replay specification, including evidence sources, result tables and plots. Keep older scenario captures usable across generator revisions while checking their original digests.
+- Refresh the optional Brightway example's installation requirements for Python 3.12 with patched dependency versions.
+
 ## 1.7.0
 
 - Trace end-of-campaign catalyst disposal to a declared route, source and dry mass, and verify the linked waste reference in openLCA.

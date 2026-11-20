@@ -14,6 +14,8 @@ REQUIRED=('foreground','inventory','inventory_manifest')
 PLOT_FOLDERS={'plot_dir':'figure','cycle_plot_dir':'figure-cycles',
               'scenario_plot_dir':'figure-scenarios','sensitivity_plot_dir':'figure-sensitivity',
               'suite_plot_dir':'figure-scenario-suite'}
+PLOT_OUTPUTS=('plot-data.json','table.csv','chart.svg','chart.png')
+GENERATED_FILES=('methods.md','README.md','source-spec.json','replay-spec.json')
 
 def sha(raw):return hashlib.sha256(raw).hexdigest()
 def json_read(path):
@@ -41,7 +43,7 @@ def verify_plot_files(directory,plot):
  valid_text(plot.get('license_note'),'plot license_note')
  manifest=json_read(directory/'manifest.json')
  if manifest.get('schema_version')!='piezolca.plot-manifest/1' or manifest.get('input_plot_data_sha256')!=sha(json_bytes(plot)) or manifest.get('license_note')!=plot['license_note']:raise ValueError('plot manifest input or license mismatch')
- if set(manifest.get('outputs',{}))!={'plot-data.json','table.csv','chart.svg','chart.png'}:raise ValueError('plot manifest output list mismatch')
+ if set(manifest.get('outputs',{}))!=set(PLOT_OUTPUTS):raise ValueError('plot manifest output list mismatch')
  for name,h in manifest['outputs'].items():
   if sha((directory/name).read_bytes())!=h:raise ValueError('plot output hash mismatch: '+name)
  if json_read(directory/'plot-data.json')!=plot:raise ValueError('rendered plot data differs')
@@ -289,7 +291,7 @@ def assemble(spec,root,outdir,spec_raw=None):
  for role,p in paths.items():
   if role in PLOT_FOLDERS:
    folder=PLOT_FOLDERS[role];dest=outdir/'artifacts'/folder;dest.mkdir()
-   for name in ('manifest.json','plot-data.json','table.csv','chart.svg','chart.png'):
+   for name in ('manifest.json',*PLOT_OUTPUTS):
     raw=(p/name).read_bytes();(dest/name).write_bytes(raw);items.append({'role':folder+'_'+name,'path':'artifacts/'+folder+'/'+name,'sha256':sha(raw)})
   else:
    ext=p.suffix.lower() or '.dat';name=role+ext;raw=p.read_bytes();(outdir/'artifacts'/name).write_bytes(raw);items.append({'role':role,'path':'artifacts/'+name,'sha256':sha(raw)})
@@ -365,7 +367,7 @@ def assemble(spec,root,outdir,spec_raw=None):
   'Agent 可用 `scripts/research_delivery.py verify <本目录>` 检查文件摘要，并使用 `replay-spec.json` 重新整理到新的目录；这不会重新运行 openLCA，验证不证明测量真实或结果科学适用。',
   '本交付可能包含商业数据库衍生信息，仅按许可使用；不要在未经审查时对外分享。','']
  (outdir/'README.md').write_text('\n'.join(readme),encoding='utf-8')
- for name in ('methods.md','README.md','source-spec.json','replay-spec.json')+ (('lcia-results.csv',) if calc else ())+ (('scenario-results.csv',) if suite_summary is not None else ()):
+ for name in generated_files(paths):
   items.append({'role':'generated_'+name,'path':name,'sha256':sha((outdir/name).read_bytes())})
  manifest={'schema_version':SCHEMA,'title':title,'status':'review_required' if warnings else 'checks_passed_review_still_required','license_note':license_note,
            'functional_unit':model['functional_unit'],'functional_unit_type':service,'product_basis':model.get('product_basis'),'product_definition':model.get('product_definition'),'calculation_functional_unit_user_asserted':calc.get('functional_unit_user_asserted') if calc else None,
@@ -374,19 +376,78 @@ def assemble(spec,root,outdir,spec_raw=None):
  (outdir/'delivery-manifest.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2,allow_nan=False)+'\n',encoding='utf-8')
  return manifest
 
+def generated_files(artifacts):
+    names = list(GENERATED_FILES)
+    if 'calculation' in artifacts:
+        names.append('lcia-results.csv')
+    if 'scenario_suite' in artifacts:
+        names.append('scenario-results.csv')
+    return names
+
+
+def replay_files(replay):
+    if not isinstance(replay, dict) or replay.get('schema_version') != SCHEMA:
+        raise ValueError('unsupported delivery replay specification')
+    artifacts = replay.get('artifacts')
+    evidence_sources = replay.get('evidence_sources', {})
+    if (not isinstance(artifacts, dict) or not set(REQUIRED) <= artifacts.keys() <= ROLES
+            or not isinstance(evidence_sources, dict)):
+        raise ValueError('replay specification has missing or unsupported artifacts')
+    files = {'generated_' + name: name for name in generated_files(artifacts)}
+    for role, path in artifacts.items():
+        if not isinstance(path, str) or not path.startswith('artifacts/'):
+            raise ValueError('invalid replay artifact path: ' + role)
+        if role in PLOT_FOLDERS:
+            folder = PLOT_FOLDERS[role]
+            if path != 'artifacts/' + folder:
+                raise ValueError('invalid replay plot directory: ' + role)
+            for name in ('manifest.json', *PLOT_OUTPUTS):
+                files[folder + '_' + name] = path + '/' + name
+        else:
+            files[role] = path
+    for source, path in evidence_sources.items():
+        if path != 'artifacts/evidence-source-' + source + '.csv':
+            raise ValueError('invalid replay evidence source path: ' + source)
+        files['evidence_source:' + source] = path
+    return files
+
+
 def verify(directory):
- manifest=json_read(directory/'delivery-manifest.json')
- if manifest.get('schema_version')!=SCHEMA or not isinstance(manifest.get('files'),list):raise ValueError('unsupported delivery manifest')
- required={'foreground','inventory','inventory_manifest','generated_methods.md','generated_README.md','generated_source-spec.json','generated_replay-spec.json'}
- roles=[item.get('role') for item in manifest['files'] if isinstance(item,dict)]
- if len(roles)!=len(manifest['files']) or len(roles)!=len(set(roles)) or not required.issubset(roles):raise ValueError('delivery manifest has missing or duplicate artifact roles')
- seen=set()
- for item in manifest['files']:
-  rel=item.get('path');path=Path(rel) if isinstance(rel,str) else None
-  if path is None or path.is_absolute() or '..' in path.parts or rel in seen:raise ValueError('invalid or duplicate delivery path')
-  seen.add(rel);p=(directory/path).resolve()
-  if not p.is_relative_to(directory.resolve()) or not p.is_file() or sha(p.read_bytes())!=item.get('sha256'):raise ValueError('delivery file missing or changed: '+rel)
- return {'verified_files':len(seen),'status':'hashes_match','note':'Hash consistency is not a digital signature or proof of scientific validity.'}
+    directory = directory.resolve()
+    manifest = json_read(directory / 'delivery-manifest.json')
+    if (not isinstance(manifest, dict) or manifest.get('schema_version') != SCHEMA
+            or not isinstance(manifest.get('files'), list)):
+        raise ValueError('unsupported delivery manifest')
+    paths = {}
+    seen = set()
+    replay = None
+    for item in manifest['files']:
+        role = item.get('role') if isinstance(item, dict) else None
+        if not isinstance(role, str) or role in paths:
+            raise ValueError('delivery manifest has missing or duplicate artifact roles')
+        rel = item.get('path')
+        path = Path(rel) if isinstance(rel, str) else None
+        if (not path or path.drive or path.is_absolute() or '\\' in rel or '..' in path.parts
+                or path.as_posix() != rel or rel in seen):
+            raise ValueError('invalid or duplicate delivery path')
+        seen.add(rel)
+        file = (directory / path).resolve()
+        if not file.is_relative_to(directory) or not file.is_file():
+            raise ValueError('delivery file missing or changed: ' + rel)
+        raw = file.read_bytes()
+        if sha(raw) != item.get('sha256'):
+            raise ValueError('delivery file missing or changed: ' + rel)
+        paths[role] = rel
+        if role == 'generated_replay-spec.json' and rel == 'replay-spec.json':
+            replay = json.loads(raw)
+    if replay is None:
+        raise ValueError('delivery manifest has missing or duplicate artifact roles')
+    expected = replay_files(replay)
+    if paths != expected:
+        roles = sorted(role for role in paths.keys() | expected.keys() if paths.get(role) != expected.get(role))
+        raise ValueError('delivery manifest differs from replay specification: ' + ', '.join(roles))
+    return {'verified_files': len(paths), 'status': 'hashes_match',
+            'note': 'Hash consistency is not a digital signature or proof of scientific validity.'}
 
 def main():
  p=argparse.ArgumentParser(description=__doc__);sub=p.add_subparsers(dest='command',required=True)

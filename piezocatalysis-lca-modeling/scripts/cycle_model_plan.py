@@ -7,16 +7,18 @@ from pathlib import Path
 import sys
 
 from inventory_handoff import load_handoff, sha
-from openlca_readonly import Client, IPCError, descriptors
-from mapping_coverage import read_entity
+from openlca_readonly import Client, IPCError
+from mapping_coverage import ident, read_entity
 from cyclic_foreground import TERMINAL_CATALYST_ACTIVITY
 
 
-def preflight(handoff, client, database_name):
+def preflight(handoff, client, database_name, *, system_processes=None):
     if not isinstance(handoff, dict) or handoff.get('schema_version') != 'piezolca.handoff/1':
         raise ValueError('unsupported handoff report')
-    available = {x.get('@id'):x for x in descriptors(client, 'Process')}
-    cache = {}; rows = []
+    # Cache only within this preflight. Each side of a calculation reads fresh metadata.
+    processes = dict(system_processes or {})
+    locations = {}
+    rows = []
     for row in handoff['rows']:
         if not row['included']:
             rows.append({'activity_id':row['activity_id'],'status':'excluded','note':row['note']});continue
@@ -27,21 +29,24 @@ def preflight(handoff, client, database_name):
             uid = m['process_uuid']
             if m['database'] != database_name:
                 issues.append('database_name_mismatch')
-            elif uid not in available:
-                issues.append('process_uuid_not_found')
             else:
-                if uid not in cache: cache[uid] = read_entity(client, 'Process', uid)
-                process = cache[uid]
+                if uid not in processes:
+                    processes[uid] = read_entity(client, 'Process', uid)
+                process = processes[uid]
                 if process is None:
-                    issues.append('process_not_found')
+                    issues.append('process_uuid_not_found')
                 else:
                     refs = [e for e in process.get('exchanges', []) if e.get('isQuantitativeReference') is True]
                     if len(refs) != 1:
                         issues.append('reference_exchange_invalid')
                     else:
-                        e=refs[0];d=available[uid]
+                        e=refs[0]
+                        location_id = ident(process.get('location'))
+                        if location_id and location_id not in locations:
+                            location = read_entity(client, 'Location', location_id)
+                            locations[location_id] = (location or {}).get('code')
                         actual={'process_uuid':uid,'name':process.get('name'),'process_version':process.get('version'),
-                                'process_type':process.get('processType'),'geography':d.get('location'),
+                                'process_type':process.get('processType'),'geography':locations.get(location_id),
                                 'reference_flow_uuid':(e.get('flow') or {}).get('@id'),
                                 'reference_product':(e.get('flow') or {}).get('name'),
                                 'flow_property_uuid':(e.get('flowProperty') or {}).get('@id'),

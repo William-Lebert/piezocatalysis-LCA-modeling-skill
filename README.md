@@ -8,6 +8,8 @@ Version 1.7.0.
 
 本版更新与回滚方法见 [v1.7.0 版本说明](docs/RELEASE_v1.7.0_zh.md)。
 
+开发分支上的维护改动见 [v1.7.1 候选说明](docs/RELEASE_CANDIDATE_v1.7.1_zh.md)。
+
 This repository provides a research Skill for agents performing life-cycle assessment of piezocatalysis, photocatalysis, and piezo-photocatalysis systems. Its scripts, templates, and references support software-neutral modeling and openLCA or SimaPro workflows.
 
 本项目是供科研 Agent 使用的 Skill 包，面向压电催化、光催化和压电光催化体系的生命周期评价。Agent 可按任务调用建模脚本、模板和参考文档，并结合 openLCA 或 SimaPro 工作。

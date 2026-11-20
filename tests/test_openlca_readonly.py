@@ -28,6 +28,8 @@ class Handler(BaseHTTPRequestHandler):
         method=req['method']; params=req.get('params', {}); result=None
         if self.server.fail == method:
             response={'jsonrpc':'2.0','id':req['id'],'error':{'code':-32000,'message':'synthetic error'}}
+        elif method == 'data/get' and self.server.fail == 'missing-entity':
+            response={'jsonrpc':'2.0','id':req['id'],'error':{'code':404,'message':'resource not found'}}
         else:
             if method == 'data/get/descriptors':
                 typ=params['@type']; ident={'ProductSystem':SYSTEM,'ImpactMethod':METHOD}.get(typ)
@@ -44,7 +46,7 @@ class Handler(BaseHTTPRequestHandler):
             elif method == 'result/total-flows': result=[{'enviFlow':{'flow':{'flowType':'WASTE_FLOW'},'isInput':False},'amount':0.5}]
             elif method == 'result/dispose': result='ok'
             else: raise AssertionError(method)
-            response={'jsonrpc':'2.0','id':req['id'],'result':result}
+            response={'jsonrpc':'2.0','id':True if self.server.fail == 'boolean-id' else req['id'],'result':result}
         raw=json.dumps(response).encode(); self.send_response(200); self.send_header('Content-Type','application/json'); self.send_header('Content-Length',str(len(raw))); self.end_headers(); self.wfile.write(raw)
 
 class ReadOnlyTests(unittest.TestCase):
@@ -65,6 +67,22 @@ class ReadOnlyTests(unittest.TestCase):
         r=self.invoke('list','--type','ProductSystem');self.assertEqual(r.returncode,0,r.stderr)
         self.assertEqual(json.loads(r.stdout)['descriptors'][0]['@id'], SYSTEM)
         self.assertEqual([x['method'] for x in self.server.calls], ['data/get/descriptors'])
+    def test_boolean_rpc_id_is_rejected(self):
+        self.server.fail='boolean-id'
+        result=self.invoke('list','--type','ProductSystem')
+        self.assertNotEqual(result.returncode,0)
+        self.assertIn('mismatched request ID',result.stderr)
+    def test_openlca_missing_entity_has_a_distinct_error(self):
+        sys.path.insert(0,str(SCRIPT.parent))
+        self.addCleanup(sys.path.remove,str(SCRIPT.parent))
+        from mapping_coverage import read_entity
+        from openlca_readonly import Client,IPCError
+        client=Client(self.server.server_port)
+        self.server.fail='missing-entity'
+        self.assertIsNone(read_entity(client,'Process',SYSTEM))
+        self.server.fail='data/get'
+        with self.assertRaisesRegex(IPCError,'synthetic error'):
+            read_entity(client,'Process',SYSTEM)
     def test_synthetic_calculation_and_cleanup(self):
         r=self.calc();self.assertEqual(r.returncode,0,r.stderr); x=json.loads(r.stdout)
         self.assertEqual(x['impacts'][0]['amount'],3.2);self.assertTrue(x['impacts'][0]['reconciliation']['within_tolerance'])

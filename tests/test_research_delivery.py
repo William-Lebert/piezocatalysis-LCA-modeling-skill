@@ -63,7 +63,14 @@ class DeliveryTests(unittest.TestCase):
   run=subprocess.run([sys.executable,str(SCRIPTS/'piezocatalysis_checks.py'),str(ex/'protocol.json'),'--foreground',str(self.fg),'--evidence',str(ev),'--domain',str(ex/'domain.json')],capture_output=True,text=True);self.assertEqual(run.returncode,0,run.stderr);dr.write_text(run.stdout)
   self.spec['artifacts'].update(evidence_spec=str(ex/'evidence.json'),evidence_report=str(ev),domain_protocol=str(ex/'protocol.json'),domain_input=str(ex/'domain.json'),domain_report=str(dr))
   self.spec['evidence_sources']={'synthetic-lab':str(ex/'synthetic-observations.csv')}
-  r=assemble(self.spec,self.dir,self.dir/'linked');self.assertTrue(any('rebuilt from supplied CSV' in c for c in r['checks']));self.assertTrue(any('ph_adjustment' in w for w in r['warnings']))
+  out=self.dir/'linked';r=assemble(self.spec,self.dir,out);self.assertTrue(any('rebuilt from supplied CSV' in c for c in r['checks']));self.assertTrue(any('ph_adjustment' in w for w in r['warnings']))
+  self.assertEqual(verify(out)['verified_files'],len(r['files']))
+  manifest=out/'delivery-manifest.json'
+  for role in ('evidence_report','evidence_source:synthetic-lab'):
+   with self.subTest(omitted=role):
+    missing=dict(r,files=[item for item in r['files'] if item['role']!=role])
+    manifest.write_text(json.dumps(missing),encoding='utf-8')
+    with self.assertRaisesRegex(ValueError,role):verify(out)
   bad=json.loads(dr.read_text());bad['issues']=[];dr.write_text(json.dumps(bad))
   with self.assertRaisesRegex(ValueError,'domain report differs'):assemble(self.spec,self.dir,self.dir/'bad')
  def test_evidence_source_hash_mismatch_fails(self):
@@ -98,8 +105,14 @@ class DeliveryTests(unittest.TestCase):
   data=self.dir/'cycle-plot.json';fig=self.dir/'figure'
   p=subprocess.run([sys.executable,str(SCRIPTS/'plot_data.py'),'--kind','cycles','--report',str(self.fg),'--output',str(data),'--license-note','fictional'],capture_output=True,text=True);self.assertEqual(p.returncode,0,p.stderr)
   p=subprocess.run([sys.executable,str(SCRIPTS/'plot_report.py'),str(data),'--output-dir',str(fig),'--locale','en','--dpi','72'],capture_output=True,text=True);self.assertEqual(p.returncode,0,p.stderr)
-  self.spec['artifacts'].update(cycle_plot_data=str(data),cycle_plot_dir=str(fig));r=assemble(self.spec,self.dir,self.dir/'with-cycle')
+  out=self.dir/'with-cycle'
+  self.spec['artifacts'].update(cycle_plot_data=str(data),cycle_plot_dir=str(fig));r=assemble(self.spec,self.dir,out)
   self.assertTrue(any('Cyclic plot data recomputed' in x for x in r['checks']))
+  self.assertEqual(verify(out)['verified_files'],len(r['files']))
+  role='figure-cycles_chart.png'
+  missing=dict(r,files=[item for item in r['files'] if item['role']!=role])
+  (out/'delivery-manifest.json').write_text(json.dumps(missing),encoding='utf-8')
+  with self.assertRaisesRegex(ValueError,role):verify(out)
   (fig/'chart.svg').write_text('changed')
   with self.assertRaisesRegex(ValueError,'plot output hash mismatch'):assemble(self.spec,self.dir,self.dir/'broken')
  def test_coverage_category_cannot_be_relabelled(self):

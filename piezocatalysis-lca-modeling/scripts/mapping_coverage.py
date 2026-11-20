@@ -8,7 +8,7 @@ from pathlib import Path
 import sys
 
 from audit_and_scale_inventory import unit_factor
-from openlca_readonly import Client, IPCError, valid_uuid
+from openlca_readonly import Client, EntityNotFound, IPCError, valid_uuid
 
 
 def ident(obj):
@@ -16,7 +16,10 @@ def ident(obj):
 
 
 def read_entity(client, kind, uid):
-    value = client.call('data/get', {'@type': kind, '@id': uid})
+    try:
+        value = client.call('data/get', {'@type': kind, '@id': uid})
+    except EntityNotFound:
+        return None
     if value is None:
         return None
     if not isinstance(value, dict) or ident(value) != uid or value.get('@type') != kind:

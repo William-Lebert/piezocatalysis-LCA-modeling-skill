@@ -13,17 +13,20 @@ from mapping_coverage import factor_status, ident, read_entity
 from openlca_readonly import Client, IPCError, valid_uuid
 
 
-def reference_basis(client, flow):
+def reference_basis(client, flow, cache):
     properties = [ident(row.get('flowProperty')) for row in flow.get('flowProperties', [])
                   if row.get('isRefFlowProperty') is True]
     if len(properties) != 1 or not properties[0]:
         return None, None, None
-    prop = read_entity(client, 'FlowProperty', properties[0])
-    group_id = ident((prop or {}).get('unitGroup'))
-    group = read_entity(client, 'UnitGroup', group_id) if group_id else None
-    units = [unit for unit in (group or {}).get('units', []) if unit.get('isRefUnit') is True]
-    unit = units[0] if len(units) == 1 else {}
-    return properties[0], ident(unit), unit.get('name')
+    property_id = properties[0]
+    if property_id not in cache:
+        prop = read_entity(client, 'FlowProperty', property_id)
+        group_id = ident((prop or {}).get('unitGroup'))
+        group = read_entity(client, 'UnitGroup', group_id) if group_id else None
+        units = [unit for unit in (group or {}).get('units', []) if unit.get('isRefUnit') is True]
+        unit = units[0] if len(units) == 1 else {}
+        cache[property_id] = property_id, ident(unit), unit.get('name')
+    return cache[property_id]
 
 
 def audit(client, calculation, flow_ids, category_ids=None):
@@ -60,6 +63,20 @@ def audit(client, calculation, flow_ids, category_ids=None):
     inventory = calculation.get('total_flows')
     if not isinstance(inventory, list):
         raise IPCError('calculation has no total inventory; use --include-total-flows')
+    occurrences_by_flow = {flow_id: [] for flow_id in flow_ids}
+    for entry in inventory:
+        flow_id = ident(entry['enviFlow']['flow'])
+        if flow_id in occurrences_by_flow:
+            occurrences_by_flow[flow_id].append(entry)
+    factors_by_category = {}
+    for category in categories:
+        factors = {flow_id: [] for flow_id in flow_ids}
+        for factor in category['impactFactors']:
+            flow_id = ident(factor.get('flow'))
+            if flow_id in factors:
+                factors[flow_id].append(factor)
+        factors_by_category[ident(category)] = factors
+    basis_cache = {}
     rows = []
     flows = []
     for flow_id in flow_ids:
@@ -70,11 +87,11 @@ def audit(client, calculation, flow_ids, category_ids=None):
         if kind not in ('ELEMENTARY_FLOW', 'PRODUCT_FLOW', 'WASTE_FLOW'):
             raise IPCError('flow type unavailable: ' + flow_id)
         elementary = kind == 'ELEMENTARY_FLOW'
-        occurrences = [entry for entry in inventory if ident(entry['enviFlow']['flow']) == flow_id]
+        occurrences = occurrences_by_flow[flow_id]
         if any(entry['enviFlow']['flow'].get(key) != flow.get(key)
                for entry in occurrences for key in ('name', 'category', 'flowType')):
             raise IPCError('live flow differs from calculated inventory: ' + flow_id)
-        property_id, unit_id, unit_name = reference_basis(client, flow) if elementary else (None, None, None)
+        property_id, unit_id, unit_name = reference_basis(client, flow, basis_cache) if elementary else (None, None, None)
         if unit_name and any(entry['enviFlow']['flow'].get('refUnit') != unit_name for entry in occurrences):
             raise IPCError('live reference unit differs from calculated inventory: ' + flow_id)
         flows.append({'flow_uuid': flow_id, 'name': flow.get('name'), 'flow_type': kind,
@@ -83,7 +100,7 @@ def audit(client, calculation, flow_ids, category_ids=None):
                       'reference_unit': unit_name,
                       'inventory_occurrences': occurrences})
         for category in categories:
-            matches = [factor for factor in category['impactFactors'] if ident(factor.get('flow')) == flow_id]
+            matches = factors_by_category[ident(category)][flow_id]
             status = (factor_status(matches, property_id, unit_id) if elementary
                       else 'not_applicable_technical_flow')
             value = matches[0]['value'] if status == 'factor_present' else None
