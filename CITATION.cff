@@ -1,9 +1,9 @@
 cff-version: 1.2.0
 message: "If you use this software, please cite it using the metadata below."
 title: "Piezocatalysis LCA Modeling Skill"
-version: 1.7.0
-doi: 10.5281/zenodo.24395295
-date-released: 2026-11-20
+version: 1.7.1
+commit: "baf98205cf876fed8c4c3765d687570f61cd0588"
+date-released: "2026-11-21"
 type: software
 authors:
   - family-names: "Pu"

@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased (1.7.1)
+## 1.7.1 — 2026-11-21
 
 - Read mapped openLCA processes and location codes by ID. Reuse the process snapshots already captured on each side of a scenario calculation.
 - Index selected LCIA factors and calculated inventory entries once per audit. Keep each flow's factor status, reference basis and inventory occurrences.

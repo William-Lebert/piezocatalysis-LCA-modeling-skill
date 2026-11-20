@@ -1,4 +1,4 @@
-# v1.7.1 维护版候选
+# v1.7.1 维护版说明
 
 这次把时间花在日常复算和交付上。openLCA 预检按 UUID 查询映射用到的过程和地域代码，并复用本轮已经读取的过程数据。计算前后各做一次核对。在本机四组 BiOCl 情景的对照中，复算耗时从 89.3 秒降到 80.3 秒，约节省 10%，计时从 IPC 服务就绪后开始。72 项影响结果均与 v1.7.0 记录一致。
 
@@ -12,4 +12,4 @@ LCIA 覆盖审查一次整理好各类别的表征因子和清单项。同一个
 
 ## 回滚
 
-在单独目录安装 v1.7.0，再让 Agent 切回该目录的 Skill。保留原实验记录、清单和交付包，复算结果写到新目录。正式版本的引用使用对应版本的 DOI。[GitHub v1.7.0](https://github.com/William-Lebert/piezocatalysis-LCA-modeling-skill/releases/tag/v1.7.0) · [Zenodo v1.7.0](https://doi.org/10.5281/zenodo.24395295)
+在单独目录安装 v1.7.0，再让 Agent 切回该目录的 Skill。保留原实验记录、清单和交付包，复算结果写到新目录。[GitHub v1.7.0](https://github.com/William-Lebert/piezocatalysis-LCA-modeling-skill/releases/tag/v1.7.0) · [Zenodo v1.7.0](https://doi.org/10.5281/zenodo.24395295)
