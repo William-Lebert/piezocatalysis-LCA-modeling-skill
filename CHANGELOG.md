@@ -6,6 +6,8 @@
 - Index selected LCIA factors and calculated inventory entries once per audit. Keep each flow's factor status, reference basis and inventory occurrences.
 - Verify complete research deliveries against their replay specification, including evidence sources, result tables and plots. Keep older scenario captures usable across generator revisions while checking their original digests.
 - Refresh the optional Brightway example's installation requirements for Python 3.12 with patched dependency versions.
+- Dispose of openLCA calculation results after interruption. Reject duplicate impact categories and inventory rows without a flow identifier.
+- Match saved scenario factor checks to the selected flows. Check that a delivery's source and replay specifications describe the same study, and reject evidence names that would collide on case-insensitive file systems.
 
 ## 1.7.0
 

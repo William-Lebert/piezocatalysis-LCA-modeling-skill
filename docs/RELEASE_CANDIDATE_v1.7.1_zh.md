@@ -8,6 +8,8 @@ LCIA 覆盖审查一次整理好各类别的表征因子和清单项。同一个
 
 可选的 Brightway 合成示例改用 Python 3.12，更新了依赖扫描发现的三个软件包。旧环境清单继续保留，方便追溯之前的计算。
 
+复核还补上了几处异常处理。取消计算时会回收 openLCA 已分配的临时结果，重复的影响类别和缺少流标识的清单行会报错。复算核对记录的表征因子是否对应指定流，交付核对原始规格和复现规格，也会提前识别 Windows 和 macOS 上可能互相覆盖的证据文件名。
+
 ## 回滚
 
 在单独目录安装 v1.7.0，再让 Agent 切回该目录的 Skill。保留原实验记录、清单和交付包，复算结果写到新目录。正式版本的引用使用对应版本的 DOI。[GitHub v1.7.0](https://github.com/William-Lebert/piezocatalysis-LCA-modeling-skill/releases/tag/v1.7.0) · [Zenodo v1.7.0](https://doi.org/10.5281/zenodo.24395295)

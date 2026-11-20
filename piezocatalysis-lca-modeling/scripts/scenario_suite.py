@@ -167,6 +167,16 @@ def activity_changes(baseline, case, source, alternative):
     return details
 
 
+def selected_flow_ids(configuration):
+    requested = configuration.get('flow_ids', [])
+    if not isinstance(requested, list):
+        raise ValueError('flow_ids must be an array of distinct flow UUIDs')
+    ids = [valid_uuid(value) for value in requested]
+    if len(ids) != len(set(ids)):
+        raise ValueError('flow_ids must be an array of distinct flow UUIDs')
+    return ids
+
+
 def summarize(bundle):
     if bundle['schema_version'] != SCHEMA:
         raise ValueError('unsupported scenario suite schema')
@@ -179,6 +189,7 @@ def summarize(bundle):
     source, calc, scope = captured_case(cases[0])
     control = cases[0]['capture']
     config = bundle['configuration']
+    flow_ids = selected_flow_ids(config)
     if ident(calc['impact_method']) != config['method_id'] or calc['database']['name'] != config['database_label']:
         raise ValueError('suite calculation configuration differs from baseline')
     rows = []
@@ -195,6 +206,8 @@ def summarize(bundle):
         if (ident(result['setup']['impactMethod']) != config['method_id']
                 or ident(cap['coverage']['selected_category']) != config['category_id']):
             raise ValueError('selected method or category differs from suite configuration')
+        if [row['flow_uuid'] for row in cap['coverage']['selected_factor_checks']] != flow_ids:
+            raise ValueError(case['id'] + ': selected flows differ from suite configuration')
         base_params = {digest(param) for param in control['parameters_at_calculation']
                        if ident(param.get('context')) not in (control['provider_snapshot_hashes'].keys()
                                                               - cap['provider_snapshot_hashes'].keys())}
@@ -221,6 +234,7 @@ def summarize(bundle):
 def run(client, configuration, cases):
     for key in ('method_id', 'category_id'):
         valid_uuid(configuration[key])
+    flow_ids = selected_flow_ids(configuration)
     records = []
     with TemporaryDirectory(prefix='piezolca-suite-') as tmp:
         paths = {key: Path(tmp)/file for key, file in FILES.items()}
@@ -236,7 +250,7 @@ def run(client, configuration, cases):
                                    unit_id=valid_uuid(binding['unit_uuid']),
                                    flow_property_id=valid_uuid(binding['property_uuid']), parameters=[])
             captured = capture(client, *(paths[k] for k in FILES), binding, args,
-                               configuration['category_id'], configuration.get('flow_ids', []), strict_basis=True)
+                               configuration['category_id'], flow_ids, strict_basis=True)
             records.append({**case, 'capture': captured})
     bundle = {'schema_version': SCHEMA, 'configuration': configuration, 'cases': records}
     summarize(bundle)

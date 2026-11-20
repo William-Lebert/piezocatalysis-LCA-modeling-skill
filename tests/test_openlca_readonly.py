@@ -8,7 +8,9 @@ import sys
 import threading
 import socket
 import tempfile
+from types import SimpleNamespace
 import unittest
+from unittest.mock import patch
 
 SCRIPT = Path(__file__).resolve().parents[1] / 'piezocatalysis-lca-modeling/scripts/openlca_readonly.py'
 SYSTEM = '11111111-1111-4111-8111-111111111111'
@@ -16,6 +18,7 @@ METHOD = '22222222-2222-4222-8222-222222222222'
 UNIT = '33333333-3333-4333-8333-333333333333'
 PROPERTY = '44444444-4444-4444-8444-444444444444'
 CAT = {'@type': 'ImpactCategory', '@id': '55555555-5555-4555-8555-555555555555', 'name': 'synthetic climate', 'refUnit': 'kg CO2-eq'}
+INVENTORY_FLOW = {'@id': '66666666-6666-4666-8666-666666666666', 'flowType': 'WASTE_FLOW'}
 
 class FakeServer(ThreadingHTTPServer):
     def __init__(self):
@@ -40,10 +43,15 @@ class Handler(BaseHTTPRequestHandler):
                 self.server.states += 1
                 result={'@id':'result-synthetic','isReady':self.server.fail != 'never-ready'}
                 if self.server.fail == 'state-error': result['error']='synthetic calculation failed'
-            elif method == 'result/total-impacts': result=[] if self.server.fail == 'empty-impacts' else [{'impactCategory':CAT,'amount':1e-13 if self.server.fail == 'tiny-mismatch' else 3.2}]
+            elif method == 'result/total-impacts':
+                result=[] if self.server.fail == 'empty-impacts' else [{'impactCategory':CAT,'amount':1e-13 if self.server.fail == 'tiny-mismatch' else 3.2}]
+                if self.server.fail == 'duplicate-impacts':
+                    result *= 2
             elif method == 'result/impact-contributions-of':
                 result=[] if self.server.fail == 'empty-contributions' else [{'techFlow':{'provider':{'name':'A'}},'amount':0.0 if self.server.fail == 'tiny-mismatch' else 1.2}, {'techFlow':{'provider':{'name':'B'}},'amount':0.0 if self.server.fail == 'tiny-mismatch' else (1.0 if self.server.fail == 'mismatch' else 2.0)}]
-            elif method == 'result/total-flows': result=[{'enviFlow':{'flow':{'flowType':'WASTE_FLOW'},'isInput':False},'amount':0.5}]
+            elif method == 'result/total-flows':
+                env_flow = {} if self.server.fail == 'missing-inventory-flow' else {'flow': INVENTORY_FLOW, 'isInput': False}
+                result=[{'enviFlow':env_flow,'amount':0.5}]
             elif method == 'result/dispose': result='ok'
             else: raise AssertionError(method)
             response={'jsonrpc':'2.0','id':True if self.server.fail == 'boolean-id' else req['id'],'result':result}
@@ -95,6 +103,28 @@ class ReadOnlyTests(unittest.TestCase):
         self.assertEqual(self.server.calls[-1]['method'],'result/dispose')
         self.server.fail='result/total-flows'; r=self.calc('--include-total-flows')
         self.assertNotEqual(r.returncode,0); self.assertEqual(self.server.calls[-1]['method'],'result/dispose')
+
+    def test_incomplete_inventory_and_duplicate_impacts_fail_and_dispose(self):
+        for failure, message in [('missing-inventory-flow', 'inventory flow'),
+                                 ('duplicate-impacts', 'duplicate impact category')]:
+            with self.subTest(failure=failure):
+                self.server.calls.clear()
+                self.server.fail = failure
+                result = self.calc('--include-total-flows')
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn(message, result.stderr)
+                self.assertEqual(self.server.calls[-1]['method'], 'result/dispose')
+
+    def test_interrupted_calculation_disposes_the_result(self):
+        spec = importlib.util.spec_from_file_location('olca_readonly', SCRIPT)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        args = SimpleNamespace(system_id=SYSTEM, method_id=METHOD, unit_id=UNIT,
+                               flow_property_id=PROPERTY, amount=1, wait_seconds=5)
+        with patch.object(module.time, 'sleep', side_effect=KeyboardInterrupt):
+            with self.assertRaises(KeyboardInterrupt):
+                module.calculate(module.Client(self.server.server_port), args)
+        self.assertEqual(self.server.calls[-1]['method'], 'result/dispose')
 
     def test_rpc_failure_is_error_and_disposes(self):
         self.server.fail='result/total-impacts'; r=self.calc()

@@ -134,12 +134,16 @@ def get_impacts(client: Client, result_id: str) -> tuple[list, list]:
     if not isinstance(raw, list) or not raw:
         raise IPCError('result/total-impacts: no impact results returned; inspect method and model')
     impacts, warnings = [], []
+    category_ids = set()
     for row in raw:
         if not isinstance(row, dict) or not isinstance(row.get('impactCategory'), dict):
             raise IPCError('invalid impact result')
         category = row['impactCategory']
         if not isinstance(category.get('@id'), str) or not category['@id']:
             raise IPCError('impact category has no stable identifier')
+        if category['@id'] in category_ids:
+            raise IPCError('result/total-impacts: duplicate impact category: ' + category['@id'])
+        category_ids.add(category['@id'])
         amount = numeric(row.get('amount'), 'impact')
         contributions = client.call('result/impact-contributions-of', {'@id': result_id, 'impactCategory': category})
         if not isinstance(contributions, list):
@@ -178,7 +182,6 @@ def calculate(client: Client, args) -> dict:
         raise IPCError('calculation returned no result ID; no result can be retrieved or disposed')
     result_id = state['@id']
     failure = None
-    report = None
     try:
         deadline = time.monotonic() + args.wait_seconds
         while True:
@@ -201,6 +204,9 @@ def calculate(client: Client, args) -> dict:
             for row in total_flows:
                 if not isinstance(row, dict) or not isinstance(row.get('enviFlow'), dict):
                     raise IPCError('result/total-flows: invalid inventory entry')
+                flow = row['enviFlow'].get('flow')
+                if not isinstance(flow, dict) or not isinstance(flow.get('@id'), str) or not flow['@id']:
+                    raise IPCError('result/total-flows: inventory flow has no stable identifier')
                 numeric(row.get('amount'), 'inventory amount')
         warnings.append('Database identity, software and unit labels are user supplied and not independently verified by IPC.')
         report = {'calculated_at_utc': datetime.now(timezone.utc).isoformat(),
@@ -213,17 +219,20 @@ def calculate(client: Client, args) -> dict:
                   'impacts': impacts, 'warnings': warnings}
         if total_flows is not None:
             report['total_flows'] = total_flows
-    except (IPCError, ValueError, OverflowError) as exc:
+        return report
+    except BaseException as exc:
         failure = exc
-    try:
-        client.call('result/dispose', {'@id': result_id})
-    except (IPCError, ValueError) as exc:
-        if failure is not None:
-            raise IPCError(f'{failure}; additionally failed to dispose result {result_id}: {exc}') from exc
-        raise IPCError(f'failed to dispose result {result_id}: {exc}') from exc
-    if failure is not None:
-        raise failure
-    return report
+        raise
+    finally:
+        try:
+            client.call('result/dispose', {'@id': result_id})
+        except (IPCError, ValueError) as exc:
+            message = f'failed to dispose result {result_id}: {exc}'
+            if failure is None:
+                raise IPCError(message) from exc
+            if isinstance(failure, (IPCError, ValueError, OverflowError)):
+                raise IPCError(f'{failure}; additionally {message}') from exc
+            print(message, file=sys.stderr)
 
 
 def valid_uuid(value: str) -> str:

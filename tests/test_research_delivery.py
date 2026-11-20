@@ -17,6 +17,21 @@ class DeliveryTests(unittest.TestCase):
  def test_tampered_bundle_is_detected(self):
   out=self.dir/'bundle';assemble(self.spec,self.dir,out);(out/'methods.md').write_text('modified')
   with self.assertRaisesRegex(ValueError,'changed'):verify(out)
+ def test_archived_spec_and_replay_must_describe_the_same_study(self):
+  out=self.dir/'bundle';manifest=assemble(self.spec,self.dir,out)
+  source=dict(self.spec,title='A different study')
+  raw=json.dumps(source).encode()
+  (out/'source-spec.json').write_bytes(raw)
+  for item in manifest['files']:
+   if item['role']=='generated_source-spec.json':
+    item['sha256']=hashlib.sha256(raw).hexdigest()
+  (out/'delivery-manifest.json').write_text(json.dumps(manifest),encoding='utf-8')
+  with self.assertRaisesRegex(ValueError,'source and replay'):verify(out)
+ def test_case_only_evidence_source_ids_are_rejected_before_copying(self):
+  spec=dict(self.spec,evidence_sources={'Data':str(self.inv),'data':str(self.inv)})
+  out=self.dir/'bundle'
+  with self.assertRaisesRegex(ValueError,'ignoring letter case'):assemble(spec,self.dir,out)
+  self.assertFalse(out.exists())
  def test_empty_manifest_does_not_pass_verification(self):
   out=self.dir/'bundle';assemble(self.spec,self.dir,out);p=out/'delivery-manifest.json';m=json.loads(p.read_text());m['files']=[];p.write_text(json.dumps(m))
   with self.assertRaisesRegex(ValueError,'missing or duplicate artifact roles'):verify(out)

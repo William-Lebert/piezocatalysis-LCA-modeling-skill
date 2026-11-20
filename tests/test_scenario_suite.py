@@ -6,7 +6,7 @@ import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'piezocatalysis-lca-modeling/scripts'))
 from scenario_binding import check_fixed_foreground, check_links
-from scenario_suite import activity_changes, check_recalculation, without_changes
+from scenario_suite import activity_changes, check_recalculation, run, without_changes
 
 
 def activity():
@@ -103,3 +103,9 @@ class ScenarioSuiteTests(unittest.TestCase):
         for cases in ([baseline, dict(alternative, id='another')], [baseline]):
             with self.assertRaisesRegex(ValueError, 'case declarations'):
                 check_recalculation(reference, {'configuration': {}, 'cases': cases})
+
+    def test_duplicate_selected_flow_is_rejected_before_calculation(self):
+        flow = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
+        configuration = {'method_id': flow, 'category_id': flow, 'flow_ids': [flow, flow.upper()]}
+        with self.assertRaisesRegex(ValueError, 'distinct flow UUIDs'):
+            run(None, configuration, [])

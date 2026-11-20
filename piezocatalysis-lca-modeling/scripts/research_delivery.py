@@ -54,6 +54,7 @@ def candidate_matches_plan(candidate,actual):
 
 def assemble(spec,root,outdir,spec_raw=None):
  if spec.get('schema_version')!=SCHEMA:raise ValueError('unsupported delivery schema')
+ if spec_raw is not None and json.loads(spec_raw)!=spec:raise ValueError('original source specification differs from the assembly input')
  title=valid_text(spec.get('title'),'title');license_note=valid_text(spec.get('license_note'),'license_note')
  files=spec.get('artifacts')
  if not isinstance(files,dict) or set(files)-ROLES:raise ValueError('unsupported or missing artifacts object')
@@ -107,6 +108,8 @@ def assemble(spec,root,outdir,spec_raw=None):
  source_paths={k:resolve(root,v) for k,v in sources.items()}
  for sid in source_paths:
   if not sid or any(ch not in 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-' for ch in sid):raise ValueError('evidence source id must be safe for a filename')
+ if len({sid.lower() for sid in source_paths})!=len(source_paths):
+  raise ValueError('evidence source IDs must be distinct ignoring letter case')
  if ('evidence_spec' in paths)!=('evidence_report' in paths):raise ValueError('evidence_spec and evidence_report must be supplied together')
  if 'evidence_report' in data:
   ev=data['evidence_report'];es=data['evidence_spec']
@@ -412,6 +415,19 @@ def replay_files(replay):
     return files
 
 
+def study_declaration(spec):
+    """Keep the declared inputs and study metadata when paths are rewritten for replay."""
+    if not isinstance(spec, dict) or spec.get('schema_version') != SCHEMA:
+        raise ValueError('unsupported source or replay specification')
+    declaration = dict(spec)
+    for field in ('artifacts', 'evidence_sources'):
+        inputs = spec.get(field, {})
+        if not isinstance(inputs, dict):
+            raise ValueError('invalid declared inputs in source or replay specification')
+        declaration[field] = sorted(inputs)
+    return declaration
+
+
 def verify(directory):
     directory = directory.resolve()
     manifest = json_read(directory / 'delivery-manifest.json')
@@ -420,7 +436,7 @@ def verify(directory):
         raise ValueError('unsupported delivery manifest')
     paths = {}
     seen = set()
-    replay = None
+    specs = {}
     for item in manifest['files']:
         role = item.get('role') if isinstance(item, dict) else None
         if not isinstance(role, str) or role in paths:
@@ -438,14 +454,17 @@ def verify(directory):
         if sha(raw) != item.get('sha256'):
             raise ValueError('delivery file missing or changed: ' + rel)
         paths[role] = rel
-        if role == 'generated_replay-spec.json' and rel == 'replay-spec.json':
-            replay = json.loads(raw)
-    if replay is None:
+        if rel in ('source-spec.json', 'replay-spec.json') and role == 'generated_' + rel:
+            specs[rel] = json.loads(raw)
+    if len(specs) != 2:
         raise ValueError('delivery manifest has missing or duplicate artifact roles')
+    source, replay = (specs[name] for name in ('source-spec.json', 'replay-spec.json'))
     expected = replay_files(replay)
     if paths != expected:
         roles = sorted(role for role in paths.keys() | expected.keys() if paths.get(role) != expected.get(role))
         raise ValueError('delivery manifest differs from replay specification: ' + ', '.join(roles))
+    if study_declaration(source) != study_declaration(replay):
+        raise ValueError('delivery source and replay specifications describe different inputs or study metadata')
     return {'verified_files': len(paths), 'status': 'hashes_match',
             'note': 'Hash consistency is not a digital signature or proof of scientific validity.'}
 
