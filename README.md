@@ -2,11 +2,11 @@
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23813629.svg)](https://doi.org/10.5281/zenodo.23813629)
 
-Version 1.6.0, 2026-11-18.
+Version 1.7.0.
 
-版本：1.6.0，2026-11-18。
+版本 1.7.0。
 
-本版更新与回滚方法见 [v1.6.0 版本说明](docs/RELEASE_v1.6.0_zh.md)。
+本版更新与回滚方法见 [v1.7.0 版本说明](docs/RELEASE_v1.7.0_zh.md)。
 
 This repository provides a research Skill for agents performing life-cycle assessment of piezocatalysis, photocatalysis, and piezo-photocatalysis systems. Its scripts, templates, and references support software-neutral modeling and openLCA or SimaPro workflows.
 
@@ -52,9 +52,9 @@ Selected ecoinvent process references, product-system links and selected LCIA fl
 
 可使用 `mapping_coverage.py` 核对选定数据集的参考交换、产品系统连接及指定基本流的 LCIA 表征因子；具体方法见 [openLCA 工作流](piezocatalysis-lca-modeling/references/openlca-workflow.md#selected-mapping-and-lcia-coverage-review)。
 
-Version 1.6.0 connects H₂O₂ and cycle-level evidence to research delivery, checks captured openLCA scenario models, and adds a checklist for preparing real cases. See the [release notes](docs/RELEASE_v1.6.0_zh.md) and [migration notes](docs/migration-notes.md).
+Version 1.7.0 connects cyclic experiment intake and catalyst disposal tracking to openLCA mapping checks, fixed-exchange scenario recalculation, and replayable research deliveries. See the [release notes](docs/RELEASE_v1.7.0_zh.md) and [migration notes](docs/migration-notes.md).
 
-v1.6.0 衔接 H₂O₂ 与逐循环实验的证据、情景模型核对和科研交付，并增加真实案例准备清单。使用旧版情景采集记录时，请先阅读[迁移说明](docs/migration-notes.md)。
+v1.7.0 把逐循环实验接入、催化剂末端去向、openLCA 映射核对和情景重算接到科研交付。升级时请阅读[迁移说明](docs/migration-notes.md)。
 
 ## Agent usage / Agent 使用
 
@@ -78,6 +78,10 @@ The source DOCX and licensed LCA databases are intentionally not included.
 If you use this software in research, please cite the specific version used.
 
 如果您在科研工作中使用本软件，请引用实际使用的具体版本。
+
+### Version v1.7.0
+
+Version DOI will be added once the archive is available. / 版本 DOI 将在归档后补录。
 
 ### Version v1.6.0
 

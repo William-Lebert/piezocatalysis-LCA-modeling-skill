@@ -13,6 +13,9 @@ import sys
 
 from audit_and_scale_inventory import UNITS, scaled_product, unit_factor
 from experimental_foreground import CANONICAL, CONCENTRATION, CSV_FIELDS, POWER, TIME, quantity, units_for
+from validate_inventory import EVIDENCE
+
+TERMINAL_CATALYST_ACTIVITY = 'final-recovered-catalyst'
 
 
 def q(item, label, units, positive=False):
@@ -35,7 +38,7 @@ def activity(entry, stage, cycle, ids, groups):
     if not isinstance(entry, dict):
         raise ValueError('activity must be an object')
     ident = entry.get('activity_id')
-    if not isinstance(ident, str) or not ident.strip() or ident in ids or ident == 'final-recovered-catalyst':
+    if not isinstance(ident, str) or not ident.strip() or ident in ids or ident == TERMINAL_CATALYST_ACTIVITY:
         raise ValueError('activity_id must be unique and nonempty across the campaign')
     ids.add(ident)
     name, direction, kind = entry.get('flow_name'), entry.get('direction'), entry.get('kind')
@@ -154,7 +157,17 @@ def build(data):
     destination = data.get('final_recovered_destination')
     if destination not in ('disposed', 'retained', 'unknown'):
         raise ValueError('final_recovered_destination must be disposed, retained or unknown')
+    fate = data.get('final_recovered_fate')
+    if 'final_recovered_fate' in data:
+        text_fields = ('route', 'source')
+        if (destination == 'unknown' or not isinstance(fate, dict)
+                or any(not isinstance(fate.get(key), str) or not fate[key].strip()
+                       or 'replace-me' in fate[key].lower() for key in text_fields)
+                or fate.get('evidence_class') not in EVIDENCE):
+            raise ValueError('final_recovered_fate requires a known destination, route, source and evidence_class')
+        fate = {key: fate[key].strip() for key in (*text_fields, 'evidence_class')}
     fresh = finite_sum([initial] + additions, 'fresh catalyst')
+    unaccounted = finite_sum([r['catalyst_unaccounted_g'] for r in reports], 'campaign unaccounted catalyst')
     total_removed = finite_sum([r['apparent_removal_mg'] for r in reports], 'campaign removal')
     intervals = [r['apparent_removal_interval_mg'] for r in reports]
     total_interval = ([finite_sum([x[0] for x in intervals], 'removal lower'),
@@ -170,11 +183,18 @@ def build(data):
         amount = None if item['value'] is None or factor is None else scaled_product(item['value'], factor * unit_factor(item['unit'], unit), item['activity_id'])
         results.append({**item, 'campaign_value': item['value'], 'campaign_unit': item['unit'], 'amount': amount, 'unit': unit})
     if destination == 'disposed':
-        amount = None if prev_recovered is None or scale is None else scaled_product(prev_recovered, scale, 'final catalyst disposal')
-        results.append({'activity_id': 'final-recovered-catalyst', 'stage': 'treatment', 'cycle': reports[-1]['cycle_id'],
+        amount = None
+        if basis == 'dry' and prev_recovered is not None and scale is not None:
+            amount = scaled_product(prev_recovered, scale, 'final catalyst disposal')
+        source = 'final recovered catalyst: ' + cycles[-1]['catalyst_recovered']['source']
+        note = 'disposal route must be mapped'
+        if fate is not None:
+            source += '; destination evidence: ' + fate['source']
+            note = 'Declared disposal route: ' + fate['route'] + ' (' + fate['evidence_class'] + ')'
+        results.append({'activity_id': TERMINAL_CATALYST_ACTIVITY, 'stage': 'treatment', 'cycle': reports[-1]['cycle_id'],
                         'flow_name': 'final recovered catalyst for disposal', 'direction': 'output', 'kind': 'waste',
-                        'amount': amount, 'unit': 'g', 'source': 'final recovered catalyst: ' + cycles[-1]['catalyst_recovered']['source'],
-                        'evidence_class': 'calculated', 'dataset_mapping': '', 'included': True, 'note': 'disposal route must be mapped',
+                        'amount': amount, 'unit': 'g', 'source': source,
+                        'evidence_class': 'calculated', 'dataset_mapping': '', 'included': True, 'note': note,
                         'overlap_group': '', 'derivation': None, 'campaign_value': prev_recovered, 'campaign_unit': 'g'})
     warnings = []
     observed_flows = set()
@@ -189,6 +209,8 @@ def build(data):
     if basis != 'dry': warnings.append('Catalyst masses are not declared dry; they cannot be divided by dry yield without conversion.')
     if any(r['catalyst_continuity_verified'] is None for r in reports): warnings.append('Some catalyst continuity checks are unavailable.')
     if destination == 'unknown': warnings.append('Final recovered catalyst destination is unknown.')
+    if destination == 'disposed' and basis != 'dry':
+        warnings.append('Final disposal amount is unavailable on a dry mass basis.')
     if any(r['catalyst_unaccounted_g'] is None or r['catalyst_unaccounted_g'] > 0 for r in reports):
         warnings.append('Catalyst losses are unaccounted mass; their destination is not assumed.')
     if any(r['amount'] is None for r in results if r['included']): warnings.append('Some included inventory amounts are unknown.')
@@ -197,10 +219,60 @@ def build(data):
                          'preparation_batches': batches, 'apparent_removal_mg': total_removed,
                          'apparent_removal_interval_mg': total_interval, 'campaigns_per_functional_unit': scale,
                          'final_recovered_g': prev_recovered, 'final_recovered_destination': destination,
+                         'final_recovered_fate': fate, 'unaccounted_catalyst_g': unaccounted,
                          'input_evidence': {'initial_catalyst': data['initial_catalyst'], 'dry_yield': data['dry_yield']},
                          'allocation_note': 'Allocate all initial and added fresh catalyst to this campaign; no credit for retained residual. Scaling repeats the complete campaign fractionally.'},
             'cycles': reports, 'functional_unit_flows': results, 'warnings': warnings,
             'interpretation': 'Water-phase mass change only; no assertion of mineralization or complete mass balance.'}
+
+
+def check_disposal_evidence(expected_campaign, declared_campaign):
+    """Keep explicit disposal evidence tied to the foreground that produced it."""
+    declared = declared_campaign or {}
+    if expected_campaign.get('final_recovered_fate') is None and declared.get('final_recovered_fate') is None:
+        return
+    fields = ('catalyst_mass_basis', 'final_recovered_destination', 'final_recovered_fate')
+    if any(expected_campaign.get(key) != declared.get(key) for key in fields):
+        raise ValueError('disposal evidence in the inventory manifest differs from the foreground')
+
+
+def write_inventory(result, raw, input_name, inventory_path):
+    manifest_path = inventory_path.with_name(inventory_path.name + '.manifest.json')
+    if inventory_path.exists() or manifest_path.exists():
+        raise FileExistsError('inventory or associated manifest already exists')
+    with io.StringIO(newline='') as f:
+        writer = csv.DictWriter(f, fieldnames=CSV_FIELDS + ['cycle_id', 'inventory_schema_version', 'amount_basis']); writer.writeheader()
+        for flow in result['functional_unit_flows']:
+            writer.writerow({'system': result['system'], 'stage': flow['stage'], 'flow_name': flow['flow_name'],
+                'amount': flow['amount'], 'unit': flow['unit'], 'direction': flow['direction'],
+                'evidence_class': flow['evidence_class'], 'source': flow['source'],
+                'dataset_mapping': flow['dataset_mapping'], 'included': str(flow['included']).lower(),
+                'note': flow['note'], 'activity_id': flow['activity_id'], 'overlap_group': flow['overlap_group'], 'cycle_id': flow['cycle'] or '',
+                'inventory_schema_version': 'piezolca.inventory/2', 'amount_basis': 'per_functional_unit'})
+        csv_bytes = f.getvalue().encode('utf-8')
+    scripts = Path(__file__).resolve().parent
+    manifest = {'schema_version': 'piezolca.inventory-manifest/1',
+                'inventory_schema_version': 'piezolca.inventory/2', 'amount_basis': 'per_functional_unit',
+                'inventory_sha256': hashlib.sha256(csv_bytes).hexdigest(),
+                'input_sha256': hashlib.sha256(raw).hexdigest(), 'input_name': input_name,
+                'generator': 'cyclic_foreground', 'generator_version': '1.0.0',
+                'code_sha256': {name: hashlib.sha256((scripts / name).read_bytes()).hexdigest() for name in
+                                ('cyclic_foreground.py', 'experimental_foreground.py', 'audit_and_scale_inventory.py', 'validate_inventory.py')},
+                'system': result['system'], 'boundary': result['boundary'],
+                'functional_unit_type': 'apparent_pollutant_removal', 'functional_unit': result['functional_unit'],
+                'scaling': {'campaigns_per_functional_unit': result['campaign']['campaigns_per_functional_unit'],
+                            'allocation_note': result['campaign']['allocation_note']},
+                'campaign': {'catalyst_mass_basis': result['campaign']['catalyst_mass_basis'],
+                             'final_recovered_destination': result['campaign']['final_recovered_destination'],
+                             'loss_g_by_cycle': [{'cycle_id': c['cycle_id'], 'loss_g': c['catalyst_unaccounted_g']} for c in result['cycles']]},
+                'warnings': result['warnings']}
+    if result['campaign']['final_recovered_fate'] is not None:
+        manifest['campaign']['final_recovered_fate'] = result['campaign']['final_recovered_fate']
+    with inventory_path.open('xb') as f:
+        f.write(csv_bytes)
+    with manifest_path.open('x', encoding='utf-8') as f:
+        json.dump(manifest, f, ensure_ascii=False, indent=2, allow_nan=False); f.write('\n')
+    return manifest_path
 
 
 def main():
@@ -213,39 +285,7 @@ def main():
         raw = args.input.read_bytes()
         result = build(json.loads(raw, parse_constant=bad))
         if args.inventory_csv:
-            manifest_path = args.inventory_csv.with_name(args.inventory_csv.name + '.manifest.json')
-            if args.inventory_csv.exists() or manifest_path.exists():
-                raise FileExistsError('inventory or associated manifest already exists')
-            with io.StringIO(newline='') as f:
-                writer = csv.DictWriter(f, fieldnames=CSV_FIELDS + ['cycle_id', 'inventory_schema_version', 'amount_basis']); writer.writeheader()
-                for flow in result['functional_unit_flows']:
-                    writer.writerow({'system': result['system'], 'stage': flow['stage'], 'flow_name': flow['flow_name'],
-                        'amount': flow['amount'], 'unit': flow['unit'], 'direction': flow['direction'],
-                        'evidence_class': flow['evidence_class'], 'source': flow['source'],
-                        'dataset_mapping': flow['dataset_mapping'], 'included': str(flow['included']).lower(),
-                        'note': flow['note'], 'activity_id': flow['activity_id'], 'overlap_group': flow['overlap_group'], 'cycle_id': flow['cycle'] or '',
-                        'inventory_schema_version': 'piezolca.inventory/2', 'amount_basis': 'per_functional_unit'})
-                csv_bytes = f.getvalue().encode('utf-8')
-            scripts = Path(__file__).resolve().parent
-            manifest = {'schema_version': 'piezolca.inventory-manifest/1',
-                        'inventory_schema_version': 'piezolca.inventory/2', 'amount_basis': 'per_functional_unit',
-                        'inventory_sha256': hashlib.sha256(csv_bytes).hexdigest(),
-                        'input_sha256': hashlib.sha256(raw).hexdigest(), 'input_name': args.input.name,
-                        'generator': 'cyclic_foreground', 'generator_version': '1.0.0',
-                        'code_sha256': {name: hashlib.sha256((scripts / name).read_bytes()).hexdigest() for name in
-                                        ('cyclic_foreground.py', 'experimental_foreground.py', 'audit_and_scale_inventory.py', 'validate_inventory.py')},
-                        'system': result['system'], 'boundary': result['boundary'],
-                        'functional_unit_type': 'apparent_pollutant_removal', 'functional_unit': result['functional_unit'],
-                        'scaling': {'campaigns_per_functional_unit': result['campaign']['campaigns_per_functional_unit'],
-                                    'allocation_note': result['campaign']['allocation_note']},
-                        'campaign': {'catalyst_mass_basis': result['campaign']['catalyst_mass_basis'],
-                                     'final_recovered_destination': result['campaign']['final_recovered_destination'],
-                                     'loss_g_by_cycle': [{'cycle_id': c['cycle_id'], 'loss_g': c['catalyst_unaccounted_g']} for c in result['cycles']]},
-                        'warnings': result['warnings']}
-            with args.inventory_csv.open('xb') as f:
-                f.write(csv_bytes)
-            with manifest_path.open('x', encoding='utf-8') as f:
-                json.dump(manifest, f, ensure_ascii=False, indent=2, allow_nan=False); f.write('\n')
+            write_inventory(result, raw, args.input.name, args.inventory_csv)
         print(json.dumps(result, ensure_ascii=False, indent=2, allow_nan=False)); return 0
     except (OSError, UnicodeError, ValueError, TypeError, KeyError, OverflowError, ZeroDivisionError) as exc:
         print('ERROR:', exc, file=sys.stderr); return 1

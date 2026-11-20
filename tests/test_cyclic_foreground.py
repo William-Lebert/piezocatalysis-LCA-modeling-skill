@@ -68,6 +68,28 @@ class CyclicForegroundTests(unittest.TestCase):
         d=case('constant');d['cycles'][1]['catalyst_recovered']['value']=1.1
         with self.assertRaisesRegex(ValueError,'recovered catalyst exceeds'):build(d)
 
+    def test_terminal_fate_preserves_basis_source_and_unexplained_losses(self):
+        data = case('variable-exact')
+        data['final_recovered_fate'] = {'route': 'Fictional incineration',
+                                        'source': 'Synthetic disposal sheet R2',
+                                        'evidence_class': 'scenario'}
+        result = build(data)
+        terminal = next(flow for flow in result['functional_unit_flows']
+                        if flow['activity_id'] == 'final-recovered-catalyst')
+        self.assertAlmostEqual(terminal['amount'], 1)
+        self.assertIn('Synthetic disposal sheet R2', terminal['source'])
+        self.assertAlmostEqual(result['campaign']['unaccounted_catalyst_g'], 0.8)
+        for basis in ('wet', 'unknown'):
+            with self.subTest(basis=basis):
+                result = build(dict(data, catalyst_mass_basis=basis))
+                terminal = next(flow for flow in result['functional_unit_flows']
+                                if flow['activity_id'] == 'final-recovered-catalyst')
+                self.assertIsNone(terminal['amount'])
+        with self.assertRaisesRegex(ValueError, 'final_recovered_fate'):
+            build(dict(data, final_recovered_destination='unknown'))
+        with self.assertRaisesRegex(ValueError, 'final_recovered_fate'):
+            build(dict(data, final_recovered_fate={'route': 'Fictional incineration'}))
+
     def test_no_silent_loss_disposal_or_reuse_credit(self):
         d=case('variable-exact');d['final_recovered_destination']='retained'
         r=build(d)

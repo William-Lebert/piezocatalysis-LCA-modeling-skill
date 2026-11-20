@@ -54,6 +54,7 @@ def link_review(system, processes):
             match=indexed.get((pid,e.get('internalId')),[])
             rows.append({'process':ref, 'exchange_internal_id':e.get('internalId'), 'flow':flow,
                          'is_input':e.get('isInput'), 'amount':e.get('amount'), 'unit':e.get('unit'),
+                         'flow_property':e.get('flowProperty'),
                          'links':match, 'status':'unlinked_candidate' if not match else 'linked' if len(match)==1 and ident(match[0].get('flow'))==ident(flow) else 'link_requires_review'})
     return {'system_link_count':len(links),'process_count':len(processes),'technical_exchanges':rows,
             'scope':'Non-reference product/waste exchanges in listed system processes; linked means one matching link record only, not provider/reference compatibility. Unlinked candidates include intended co-products or cutoffs; review their role.'}

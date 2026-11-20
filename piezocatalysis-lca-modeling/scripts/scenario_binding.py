@@ -8,7 +8,8 @@ import math
 from pathlib import Path
 import sys
 from types import SimpleNamespace
-from cyclic_foreground import build
+from cyclic_foreground import TERMINAL_CATALYST_ACTIVITY, check_disposal_evidence
+from evidence_chain import build_foreground
 from inventory_handoff import load_handoff
 from cycle_model_plan import preflight
 from openlca_readonly import Client,IPCError,calculate,numeric
@@ -26,7 +27,10 @@ def same(a,b):return math.isclose(float(a),float(b),rel_tol=1e-10,abs_tol=1e-14)
 
 
 def check_plan_source(plan,source):
-    model=build(source);expected={x['activity_id']:x for x in model['functional_unit_flows']};rows=plan.get('rows')
+    model, service=build_foreground(source)
+    if service == 'apparent_pollutant_removal':
+        check_disposal_evidence(model['campaign'], plan.get('campaign'))
+    expected={x['activity_id']:x for x in model['functional_unit_flows']};rows=plan.get('rows')
     if not isinstance(rows,list) or plan.get('functional_unit')!=model['functional_unit'] or plan.get('boundary')!=model['boundary']:raise ValueError('plan functional unit or boundary differs from foreground')
     actual={x['activity_id']:x for x in rows}
     if len(actual)!=len(rows) or actual.keys()!=expected.keys():raise ValueError('plan activities differ from foreground')
@@ -64,20 +68,28 @@ def check_system_reference(system,root_process,binding):
     return {'ref_process':binding['root_uuid'],'reference_exchange_id':rid,'reference_flow':flow,'target_unit':binding['unit_uuid'],'target_flow_property':binding['property_uuid']}
 
 
-def check_links(plan,coverage,binding):
+def check_links(plan,coverage,binding,*,strict_basis=False,stage_references=None):
     calc=coverage['calculation'];target=(calc.get('target') or {}).get('@id')
     if not target or target!=binding.get('system_uuid') or target!=(calc['setup'].get('target') or {}).get('@id'):raise ValueError('calculation system differs from binding')
     if isinstance(calc['setup'].get('amount'),bool) or calc['setup'].get('amount')!=1:raise ValueError('exactly one declared functional unit required')
     if not binding.get('unit_uuid') or binding['unit_uuid']!=(calc['setup'].get('unit') or {}).get('@id') or not binding.get('property_uuid') or binding['property_uuid']!=(calc['setup'].get('flowProperty') or {}).get('@id'):raise ValueError('calculation unit or flow property differs from binding')
     ids=binding.get('stages');root=binding.get('root_uuid');rows=coverage['link_review']['technical_exchanges']
     if not isinstance(ids,list) or not ids or len(ids)!=len(set(ids)):raise ValueError('invalid foreground stage list')
+    if strict_basis and (not isinstance(stage_references, dict) or set(stage_references) != set(ids)):
+        raise ValueError('stage reference checks are unavailable; recapture the scenario')
     root_rows=[x for x in rows if ident(x.get('process'))==root]
     if len(root_rows)!=len(ids):raise ValueError('root stage exchanges do not match declared stages')
     providers=[]
     for x in root_rows:
         ls=x.get('links') or []
         if x.get('is_input') is not True or not same(x.get('amount'),1) or x.get('status')!='linked' or len(ls)!=1:raise ValueError('root stage link is invalid')
-        providers.append(ident(ls[0].get('provider')))
+        provider = ident(ls[0].get('provider'))
+        if strict_basis:
+            actual = {'flow_uuid': ident(x.get('flow')), 'unit_uuid': ident(x.get('unit')),
+                      'flow_property_uuid': ident(x.get('flow_property'))}
+            if stage_references.get(provider) != actual or ident(ls[0].get('flow')) != actual['flow_uuid']:
+                raise ValueError('root stage link differs from provider reference exchange')
+        providers.append(provider)
     if len(set(providers))!=len(providers) or set(providers)!=set(ids):raise ValueError('root stage providers differ')
     used=set();stage_map={};unresolved=[]
     for row in plan['rows']:
@@ -85,6 +97,9 @@ def check_links(plan,coverage,binding):
         found=[x for x in binding.get('activities',[]) if x.get('activity_id')==row['activity_id']]
         if len(found)!=1:raise ValueError(row['activity_id']+': missing or duplicate binding')
         rec=found[0];pid=rec.get('process_uuid')
+        exchange_id = rec.get('exchange_internal_id')
+        if (strict_basis or 'exchange_internal_id' in rec) and (type(exchange_id) is not int or exchange_id <= 0):
+            raise ValueError(row['activity_id'] + ': invalid openLCA internal exchange ID')
         if pid not in ids or rec.get('is_input')!=(row['direction']=='input'):raise ValueError(row['activity_id']+': stage or direction differs')
         if stage_map.setdefault(pid,row['stage'])!=row['stage']:raise ValueError('foreground process mixes declared stages')
         if row['status']=='unresolved':
@@ -103,6 +118,14 @@ def check_links(plan,coverage,binding):
         for x in rows:
             key=(ident(x.get('process')),x.get('exchange_internal_id'))
             if key in used or key[0]!=pid or ident(x.get('flow'))!=rec['flow_uuid'] or x.get('is_input')!=rec['is_input'] or (x.get('unit') or {}).get('name')!=rec['unit'] or not same(x.get('amount'),expected) or x.get('status')!=state:continue
+            if exchange_id is not None and key[1] != exchange_id:
+                continue
+            if state == 'linked' and (strict_basis or row['activity_id'] == TERMINAL_CATALYST_ACTIVITY):
+                if (ident(x.get('unit')) != actual['unit_uuid']
+                        or ident(x.get('flow_property')) != actual['flow_property_uuid']
+                        or (row['activity_id'] == TERMINAL_CATALYST_ACTIVITY
+                            and (x.get('flow') or {}).get('flowType') != 'WASTE_FLOW')):
+                    continue
             ls=x.get('links') or []
             if state=='linked' and (len(ls)!=1 or ident(ls[0].get('provider'))!=rec['provider_uuid']):continue
             matches.append(key)
@@ -114,10 +137,42 @@ def check_links(plan,coverage,binding):
     return {'checked_activities':len(used),'unresolved_activity_ids':unresolved}
 
 
-def capture(client,source_path,inventory,manifest,mapping,assignments,binding,args,category_id,flow_ids):
-    raw=source_path.read_bytes();source=json.loads(raw,parse_constant=lambda x: (_ for _ in ()).throw(ValueError('invalid JSON number '+x)));model=build(source)
+def check_fixed_foreground(processes, binding):
+    """Verify the one-unit basis and explicitly modelled technical exchanges."""
+    stage_references = {}
+    for pid in [binding['root_uuid'], *binding['stages']]:
+        process = processes[pid]
+        if process.get('parameters') or process.get('allocationFactors'):
+            raise ValueError('fixed foreground has parameters or allocation factors')
+        exchanges = process['exchanges']
+        if any(row.get('formula') or row.get('amountFormula') or row.get('isAvoidedProduct')
+               or (row.get('flow') or {}).get('flowType') not in ('PRODUCT_FLOW', 'WASTE_FLOW')
+               for row in exchanges):
+            raise ValueError('fixed foreground requires explicit technical exchanges')
+        refs = [row for row in exchanges if row.get('isQuantitativeReference') is True]
+        if (len(refs) != 1 or refs[0].get('isInput') is not False
+                or numeric(refs[0]['amount'], 'reference exchange') != 1
+                or (refs[0]['flow'] or {}).get('flowType') != 'PRODUCT_FLOW'):
+            raise ValueError('fixed foreground requires exactly one unit of reference product')
+        ref = refs[0]
+        basis = (ident(ref.get('unit')), ident(ref.get('flowProperty')))
+        if None in basis:
+            raise ValueError('fixed foreground reference basis is unavailable')
+        if pid == binding['root_uuid']:
+            if basis != (binding['unit_uuid'], binding['property_uuid']):
+                raise ValueError('root reference exchange basis differs from calculation')
+        else:
+            stage_references[pid] = {'flow_uuid': ident(ref['flow']), 'unit_uuid': basis[0],
+                                     'flow_property_uuid': basis[1]}
+    return stage_references
+
+
+def capture(client,source_path,inventory,manifest,mapping,assignments,binding,args,category_id,flow_ids,*,strict_basis=False):
+    raw=source_path.read_bytes();source=json.loads(raw,parse_constant=lambda x: (_ for _ in ()).throw(ValueError('invalid JSON number '+x)));model,service=build_foreground(source)
     h=load_handoff(inventory,manifest,mapping,assignments)
-    if h['input_sha256']!=hashlib.sha256(raw).hexdigest() or h['functional_unit']!=model['functional_unit'] or h['boundary']!=model['boundary'] or h['functional_unit_type']!='apparent_pollutant_removal':raise ValueError('inventory manifest differs from foreground')
+    if h['input_sha256']!=hashlib.sha256(raw).hexdigest() or h['functional_unit']!=model['functional_unit'] or h['boundary']!=model['boundary'] or h['functional_unit_type']!=service:raise ValueError('inventory manifest differs from foreground')
+    if service == 'h2o2_product' and any(h.get(key) != model[key] for key in ('product_basis', 'product_definition')):
+        raise ValueError('inventory product definition differs from foreground')
     expected={x['activity_id']:x for x in model['functional_unit_flows']};actual={x['activity_id']:x for x in h['rows']}
     if expected.keys()!=actual.keys():raise ValueError('inventory activities differ from foreground')
     for aid,x in expected.items():
@@ -135,19 +190,31 @@ def capture(client,source_path,inventory,manifest,mapping,assignments,binding,ar
         params=client.call('data/get/parameters',{'@type':'ProductSystem','@id':args.system_id})
         if not isinstance(params,list) or not isinstance(method,dict) or not isinstance(category,dict):raise ValueError('method, category or parameter snapshot unavailable')
         return {'system':system,'processes':processes,'method':method,'category':category,'parameters':params}
-    before=snapshot();reference=check_system_reference(before['system'],before['processes'].get(binding.get('root_uuid')),binding);check_parameter_overrides(getattr(args,'parameters',[]),before['parameters']);args.include_total_flows=True;calc=calculate(client,args);after=snapshot()
+    before=snapshot()
+    reference=check_system_reference(before['system'],before['processes'].get(binding.get('root_uuid')),binding)
+    check_parameter_overrides(getattr(args,'parameters',[]),before['parameters'])
+    stage_references = None
+    if strict_basis:
+        if getattr(args, 'parameters', []):
+            raise ValueError('scenario suite requires fixed exchanges without parameter overrides')
+        stage_references = check_fixed_foreground(before['processes'], binding)
+    args.include_total_flows=True
+    calc=calculate(client,args)
+    after=snapshot()
     if digest(before)!=digest(after):raise ValueError('system, processes, method, selected category or parameters changed during calculation')
     if preflight(h,client,args.mapping_database)!=plan:raise ValueError('mapping preflight changed during calculation')
     coverage=analyze(calc,before['system'],before['processes'],before['category'],flow_ids)
-    links=check_links(plan,coverage,binding)
+    links=check_links(plan,coverage,binding,strict_basis=strict_basis,stage_references=stage_references)
     provider_ids={r['actual_reference']['process_uuid'] for r in plan['rows'] if r.get('actual_reference')}
     providers={pid:before['processes'].get(pid) for pid in provider_ids}
     if any(v is None for v in providers.values()):raise ValueError('mapped provider missing from system snapshot')
-    return {'schema_version':'piezolca.bound-scenario/2','foreground_sha256':hashlib.sha256(raw).hexdigest(),'foreground_semantic_sha256':digest(source),'inventory_sha256':h['inventory_sha256'],'manifest_sha256':h['manifest_sha256'],'mapping_sha256':h['mapping_sha256'],'assignments_sha256':h['assignments_sha256'],'binding':binding,'binding_sha256':digest(binding),'system_reference':reference,'snapshot_sha256':digest(before),'provider_snapshots_sha256':digest(providers),'parameters_at_calculation':before['parameters'],'parameters_sha256':digest(before['parameters']),'parameter_overrides':calc['setup'].get('parameters',[]),'plan':plan,'plan_sha256':digest(plan),'coverage':coverage,'coverage_sha256':digest(coverage),'calculation_sha256':digest(calc),'link_check':links,'status':'observed_in_session_review_required','note':'Snapshot comparison covers the listed system/processes, method, selected category and parameters, not every LCIA category or licensed database file. Database and functional-unit labels are user assertions; human scientific review remains required.'}
+    return {'schema_version':'piezolca.bound-scenario/2','foreground_sha256':hashlib.sha256(raw).hexdigest(),'foreground_semantic_sha256':digest(source),'inventory_sha256':h['inventory_sha256'],'manifest_sha256':h['manifest_sha256'],'mapping_sha256':h['mapping_sha256'],'assignments_sha256':h['assignments_sha256'],'binding':binding,'binding_sha256':digest(binding),'system_reference':reference,'snapshot_sha256':digest(before),'provider_snapshots_sha256':digest(providers),'provider_snapshot_hashes':{pid:digest(p) for pid,p in providers.items()},'method_snapshot_sha256':digest(before['method']),'category_snapshot_sha256':digest(before['category']),'strict_exchange_basis':strict_basis,'stage_references':stage_references,'parameters_at_calculation':before['parameters'],'parameters_sha256':digest(before['parameters']),'parameter_overrides':calc['setup'].get('parameters',[]),'plan':plan,'plan_sha256':digest(plan),'coverage':coverage,'coverage_sha256':digest(coverage),'calculation_sha256':digest(calc),'link_check':links,'status':'observed_in_session_review_required','note':'Snapshot comparison covers the listed system/processes, method, selected category and parameters, not every LCIA category or licensed database file. Database and functional-unit labels are user assertions; human scientific review remains required.'}
 
 
 def compare_bound(left,right,left_source,right_source,contexts):
     if any(x.get('schema_version')!='piezolca.bound-scenario/2' or x.get('status')!='observed_in_session_review_required' for x in (left,right)):raise ValueError('two version 2 captured scenario records are required; recapture older records')
+    if any('product_basis' in source for source in (left_source, right_source)):
+        raise ValueError('use scenario_suite.py to compare H2O2 product scenarios')
     if not isinstance(contexts.get('cases'),list) or len(contexts['cases'])!=2:raise ValueError('exactly two ordered scenario contexts are required')
     for record,source in ((left,left_source),(right,right_source)):
         if digest(record['binding'])!=record['binding_sha256'] or any(record['plan'].get(k)!=record.get(k) for k in ('inventory_sha256','manifest_sha256','mapping_sha256','assignments_sha256')):raise ValueError('captured binding or plan hashes differ')

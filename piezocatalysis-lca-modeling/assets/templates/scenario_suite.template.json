@@ -1,0 +1,48 @@
+{
+  "schema_version": "piezolca.scenario-suite/1",
+  "configuration": {
+    "database_label": "replace-with-prepared-database-copy",
+    "database_version": "ecoinvent 3.9.1",
+    "system_model": "cutoff LCI_RESULT",
+    "mapping_database": "ecoinvent_391_cutoff_lci",
+    "software_version": "2.7.0",
+    "functional_unit": "replace-with-declared-functional-unit",
+    "unit_label": "service",
+    "wait_seconds": 150,
+    "method_id": "replace-with-method-uuid",
+    "category_id": "replace-with-selected-category-uuid",
+    "flow_ids": []
+  },
+  "cases": [
+    {
+      "id": "baseline",
+      "binding": "baseline/binding.json",
+      "files": {
+        "foreground": "baseline/foreground.json",
+        "inventory": "baseline/inventory.csv",
+        "manifest": "baseline/inventory.csv.manifest.json",
+        "mapping": "baseline/mapping.csv",
+        "assignments": "baseline/assignments.csv"
+      }
+    },
+    {
+      "id": "higher-power",
+      "binding": "higher-power/binding.json",
+      "files": {
+        "foreground": "higher-power/foreground.json",
+        "inventory": "higher-power/inventory.csv",
+        "manifest": "higher-power/inventory.csv.manifest.json",
+        "mapping": "baseline/mapping.csv",
+        "assignments": "baseline/assignments.csv"
+      },
+      "change": {
+        "kind": "foreground",
+        "variable": "Cycle 1 ultrasound power",
+        "setting": "120 W vs 100 W",
+        "source": "Synthetic example at fixed duration and performance",
+        "source_pointers": ["/cycles/0/activities/0/power"],
+        "activities": ["ultrasound-1"]
+      }
+    }
+  ]
+}

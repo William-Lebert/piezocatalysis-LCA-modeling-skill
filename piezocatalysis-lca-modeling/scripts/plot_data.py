@@ -171,7 +171,7 @@ def sensitivity(report,route,category):
 
 
 def main():
-    p=argparse.ArgumentParser(description=__doc__);p.add_argument('--kind',choices=('cycles','stages','scenarios','sensitivity'),required=True)
+    p=argparse.ArgumentParser(description=__doc__);p.add_argument('--kind',choices=('cycles','stages','scenarios','sensitivity','scenario-suite'),required=True)
     p.add_argument('--report',type=Path,required=True);p.add_argument('--output',type=Path,required=True)
     p.add_argument('--plan',type=Path);p.add_argument('--binding',type=Path);p.add_argument('--baseline-input',type=Path);p.add_argument('--scenario-input',type=Path)
     p.add_argument('--category');p.add_argument('--route');p.add_argument('--license-note',required=True)
@@ -191,6 +191,10 @@ def main():
             for name,path in [('baseline-input',a.baseline_input),('scenario-input',a.scenario_input)]:
                 if hashlib.sha256(path.read_bytes()).hexdigest()!=hashes.get(name):raise ValueError(name+' hash differs from comparison report')
             out=scenarios(data,read(a.baseline_input),read(a.scenario_input),a.category)
+        elif a.kind=='scenario-suite':
+            from scenario_suite import suite_plot, summarize
+            if not a.category:raise ValueError('scenario-suite requires --category')
+            out=suite_plot(summarize(data),a.category)
         else:
             if not a.category or not a.route:raise ValueError('sensitivity requires --route and --category')
             out=sensitivity(data,a.route,a.category)

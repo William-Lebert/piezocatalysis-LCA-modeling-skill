@@ -30,6 +30,25 @@ class BindingTests(unittest.TestCase):
    with self.subTest(key=key),self.assertRaises(ValueError):check_links(plan,report,q)
   q=copy.deepcopy(report);q['link_review']['technical_exchanges'][0]['links']=[]
   with self.assertRaises(ValueError):check_links(plan,q,b)
+ def test_internal_ids_distinguish_identical_exchanges_in_one_process(self):
+  report, plan, binding = fixture()
+  report['calculation']['setup'].update(target={'@id':'system'}, unit={'@id':'unit'}, flowProperty={'@id':'property'})
+  binding.update(unit_uuid='unit', property_uuid='property')
+  duplicate = dict(binding['activities'][0], activity_id='another-cycle')
+  binding['activities'].append(duplicate)
+  plan['rows'].append(dict(plan['rows'][0], activity_id='another-cycle'))
+  rows = report['link_review']['technical_exchanges']
+  original_id = rows[0]['exchange_internal_id']
+  rows.append(dict(rows[0], exchange_internal_id=200))
+  with self.assertRaisesRegex(ValueError, 'ambiguous'):
+   check_links(plan, report, binding)
+  binding['activities'][0]['exchange_internal_id'] = original_id
+  duplicate['exchange_internal_id'] = 200
+  self.assertEqual(check_links(plan, report, binding)['checked_activities'], 3)
+  duplicate['exchange_internal_id'] = original_id
+  with self.assertRaisesRegex(ValueError, 'ambiguous'):
+   check_links(plan, report, binding)
+
  def test_untracked_exchange_and_nonunit_root_blocked(self):
   report,plan,b=fixture();report['calculation']['setup'].update(target={'@id':'system'},unit={'@id':'unit'},flowProperty={'@id':'property'});b.update(unit_uuid='unit',property_uuid='property')
   altered=copy.deepcopy(report);altered['link_review']['technical_exchanges'].append({'process':{'@id':'x'},'exchange_internal_id':999})

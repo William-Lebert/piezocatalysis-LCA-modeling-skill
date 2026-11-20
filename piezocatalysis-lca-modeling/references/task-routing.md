@@ -12,15 +12,15 @@ Use the stages that the question needs. Reuse a prior artifact only after its re
 
 | Stage (state key) | Minimum input and automated check | Output and human gate |
 |---|---|---|
-| Intake (`intake`) | Available copied records and research question; list omissions | Input list; agree intended service and data permissions. |
+| Intake (`intake`) | Copied records and research question; for a cyclic apparent-removal case use `real_case_intake.py` with explicit observation records | Input list or normalized observations, inventory and evidence audit; check original locators, sample roles and permissions. |
 | Evidence (`evidence`) | Foreground plus normalized sources; `evidence_chain.py`, `experimental_quality.py` | Evidence report; check original cells, qualifiers and origins. |
 | Goal and scope (`scope`) | Defined service, FU and boundaries; `domain_review.py`, `piezocatalysis_checks.py` | Scope and domain checks; confirm service quality, exclusions and endpoints. |
 | Foreground LCI (`foreground`) | Batch or per-cycle observations; `experimental_foreground.py` or `cyclic_foreground.py` | Inventory and applicable manifest; check mass loss, treatment performance and cycle assumptions. |
 | Background mapping (`mapping`) | Inventory and manifest, available database; `inventory_handoff.py`, `mapping_review.py` | Candidates and pending decisions; review provider, geography, unit and proxy rationale. |
 | Model validation (`validation`) | Mapping and accessible existing system; `cycle_model_plan.py`, `mapping_coverage.py` | Preflight and selected links/factors; independently confirm unresolved connections and model scope. |
 | Software execution (`execution`) | Verified context, method and existing system; `openlca_readonly.py` | Absolute calculated results; connection alone does not imply model completeness. Writes require separate authorization. |
-| LCIA QA (`lcia_qa`) | Calculation plus applicable links/factors; `result_coverage.py` | Coverage and contribution checks; verify units, signs, totals and remaining gaps. |
-| Sensitivity (`sensitivity`) | Explicit parameters, assumptions and uncertainty evidence; `parameter_sensitivity.py`, `sensitivity_report.py`, `uncertainty_readiness.py` | Clearly distinguish recalculation, scenario and additive approximation; review correlations and absent distributions. |
+| LCIA QA (`lcia_qa`) | Calculation plus applicable links/factors; `result_coverage.py`, `lcia_coverage_matrix.py` | Review contributions, reconcile totals and audit selected flow–category factor pairs against the calculated LCIA method. |
+| Sensitivity (`sensitivity`) | Explicit parameters, assumptions and uncertainty evidence; `parameter_sensitivity.py`, `scenario_suite.py`, `sensitivity_report.py`, `uncertainty_readiness.py` | Clearly distinguish recalculation, scenario and additive approximation; review correlations and absent distributions. |
 | Reporting (`reporting`) | Existing checked outputs; `research_delivery.py` and plotting tools | Delivery and method draft; scientific conclusions require independent human review. |
 
 `PASS` means the stated automatic check passed, `WARNING` means a non-blocking issue, `REVIEW_REQUIRED` requires a human decision, `BLOCKED` means a prerequisite is missing or invalid, and `NOT_EVALUATED` means the check was not performed. These labels do not prove the truth of measurements, suitability of proxies, full method coverage, or comparability. Existing script-specific statuses must retain their documented meanings rather than being automatically promoted to `PASS`.

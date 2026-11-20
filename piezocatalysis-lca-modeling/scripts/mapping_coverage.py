@@ -60,6 +60,25 @@ def review_process(request, process):
             'provider_link_status': 'not_checked', 'review_status': request.get('review_status', 'pending')}
 
 
+def factor_status(matches, property_id, unit_id):
+    if not matches:
+        return 'no_characterization_factor'
+    if len(matches) != 1:
+        return 'multiple_factors_review_required'
+    factor = matches[0]
+    if (not property_id or not unit_id or ident(factor.get('flowProperty')) != property_id
+            or ident(factor.get('unit')) != unit_id):
+        return 'factor_unit_or_property_unverified'
+    if factor.get('location'):
+        return 'regional_factor_requires_review'
+    if factor.get('formula'):
+        return 'factor_formula_requires_evaluation'
+    value = factor.get('value')
+    if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
+        return 'factor_value_unavailable'
+    return 'factor_present'
+
+
 def review_method(request, method, categories):
     if method is None:
         return {'status': 'method_not_found', 'issues': ['method_not_found'], 'categories': []}
@@ -85,15 +104,7 @@ def review_method(request, method, categories):
         flows = []
         for flow in query['flows']:
             matches = [f for f in cat.get('impactFactors', []) if ident(f.get('flow')) == flow['flow_uuid']]
-            if not matches: status = 'no_characterization_factor'
-            elif len(matches) != 1: status = 'multiple_factors_review_required'
-            elif not flow.get('flow_property_uuid') or not flow.get('unit_uuid') or not ident(matches[0].get('flowProperty')) or not ident(matches[0].get('unit')) or flow.get('flow_property_uuid') != ident(matches[0].get('flowProperty')) or flow.get('unit_uuid') != ident(matches[0].get('unit')):
-                status = 'factor_unit_or_property_unverified'
-            elif matches[0].get('formula'):
-                status = 'factor_formula_requires_evaluation'
-            elif isinstance(matches[0].get('value'), bool) or not isinstance(matches[0].get('value'), (int, float)) or not math.isfinite(matches[0]['value']):
-                status = 'factor_value_unavailable'
-            else: status = 'factor_present'
+            status = factor_status(matches, flow.get('flow_property_uuid'), flow.get('unit_uuid'))
             flows.append({'flow_uuid': flow['flow_uuid'], 'status': status,
                           'matching_factor_count': len(matches),
                           'factor_value': matches[0].get('value') if status == 'factor_present' else None,
@@ -118,6 +129,9 @@ def review_link(request, system, consumer, provider_id):
     exchange = exchanges[0]
     if ident(exchange.get('flow')) != request['flow_uuid'] or exchange.get('isInput') != request['is_input']:
         return {'status': 'consumer_exchange_mismatch'}
+    for key, field in (('unit_uuid', 'unit'), ('flow_property_uuid', 'flowProperty')):
+        if key in request and request[key] != ident(exchange.get(field)):
+            return {'status': 'consumer_exchange_mismatch', 'field': key}
     links = [link for link in system.get('processLinks', [])
              if ident(link.get('process')) == ident(consumer)
              and (link.get('exchange') or {}).get('internalId') == request['exchange_internal_id']]
@@ -151,6 +165,9 @@ def audit(client, request):
     if request.get('link'):
         link = request['link']
         for key in ('system_uuid', 'consumer_uuid', 'flow_uuid'): valid_uuid(link[key])
+        for key in ('unit_uuid', 'flow_property_uuid'):
+            if key in link:
+                valid_uuid(link[key])
         if isinstance(link['exchange_internal_id'], bool) or not isinstance(link['exchange_internal_id'], int) or not isinstance(link['is_input'], bool):
             raise ValueError('link requires an integer exchange_internal_id and boolean is_input')
         system = read_entity(client, 'ProductSystem', link['system_uuid'])

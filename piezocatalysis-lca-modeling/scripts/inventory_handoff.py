@@ -11,6 +11,7 @@ import uuid
 
 from audit_and_scale_inventory import MAPPING_FIELDS, BOOLEAN, FALSE, TRUE, UNITS, csv_rows, number, scaled_product, unit_factor
 from validate_inventory import REQUIRED, EVIDENCE
+from cyclic_foreground import TERMINAL_CATALYST_ACTIVITY
 
 
 def sha(path):
@@ -79,6 +80,17 @@ def load_handoff(inventory_path, manifest_path, mapping_path=None, assignments_p
             status = 'mapping_not_found'; flags.append(status)
         else:
             mapping = maps[selected]
+            if activity == TERMINAL_CATALYST_ACTIVITY and manifest.get('generator') == 'cyclic_foreground':
+                campaign = manifest.get('campaign') or {}
+                fate = campaign.get('final_recovered_fate')
+                if (not isinstance(fate, dict) or fate.get('evidence_class') not in EVIDENCE
+                        or any(not isinstance(fate.get(key), str) or not fate[key].strip()
+                               or 'replace-me' in fate[key].lower() for key in ('route', 'source'))):
+                    flags.append('terminal_fate_evidence_missing')
+                if campaign.get('final_recovered_destination') != 'disposed' or row['direction'].lower() != 'output':
+                    flags.append('terminal_disposal_status_or_direction_mismatch')
+                if campaign.get('catalyst_mass_basis') != 'dry':
+                    flags.append('terminal_disposal_dry_basis_missing')
             kind, review = mapping['match_type'], mapping['review_status']
             status = kind if kind in ('exact', 'proxy', 'constructed') else 'invalid_match_type'
             if status == 'invalid_match_type': flags.append(status)
@@ -117,7 +129,8 @@ def load_handoff(inventory_path, manifest_path, mapping_path=None, assignments_p
             elif (direction in TRUE) != (row['direction'].lower() == 'output'):
                 flags.append('reference_direction_mismatch')
             if any(flag in {'foreground_flow_or_unit_mismatch', 'conversion_factor_mismatch', 'unit_conversion_unverified',
-                            'reference_direction_mismatch', 'invalid_match_type'} or flag.endswith('_invalid') for flag in flags):
+                            'reference_direction_mismatch', 'invalid_match_type', 'terminal_fate_evidence_missing',
+                            'terminal_disposal_status_or_direction_mismatch', 'terminal_disposal_dry_basis_missing'} or flag.endswith('_invalid') for flag in flags):
                 mapped_amount = None
         output.append({'inventory_row': int(row['_row']), 'activity_id': activity, 'stage': row['stage'], 'cycle_id': row['cycle_id'] or None,
                        'flow_name': row['flow_name'], 'direction': row['direction'].lower(), 'included': include in TRUE,

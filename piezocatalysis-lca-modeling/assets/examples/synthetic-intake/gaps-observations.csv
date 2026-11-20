@@ -1,0 +1,28 @@
+record_id,target,selected,value,unit,qualifier,limit,evidence_class,campaign_id,cycle_id,sample_id,sample_role,original_id,original_locator,energy_basis,selection_reason,instrument_id
+R01,/dry_yield,yes,5000,mg,exact,,scenario,FIC-01,,,,,,,,
+R02,/treatment_target,yes,65,mg,exact,,scenario,FIC-01,,,,,,,,
+R03,/initial_catalyst,yes,0.001,kg,exact,,scenario,FIC-01,,,,,,,,
+R04,/preparation_activities/0/quantity,yes,10,g,exact,,scenario,FIC-01,,,,,,,,
+R05,/preparation_activities/1/quantity,yes,2,kWh,exact,,scenario,FIC-01,,,,,,metered_energy,,fictional meter A
+R06,/cycles/0/catalyst_added,yes,0,g,exact,,scenario,FIC-01,1,,,,,,,
+R07,/cycles/0/catalyst_loaded,yes,1,g,exact,,scenario,FIC-01,1,,,,,,,
+R08,/cycles/0/catalyst_recovered,yes,1,g,exact,,scenario,FIC-01,1,,,,,,,
+R09,/cycles/0/influent_volume,yes,1000,mL,exact,,scenario,FIC-01,1,influent-1,influent,,,,,
+R10,/cycles/0/influent_concentration,yes,20000,µg/L,exact,,scenario,FIC-01,1,influent-1,influent,,,,,
+R11,/cycles/0/effluent_volume,yes,900,mL,exact,,scenario,FIC-01,1,effluent-1,effluent,,,,,
+R12,/cycles/0/effluent_concentration,yes,,µg/L,below_lod,500,scenario,FIC-01,1,effluent-1,effluent,,,,,
+R13,/cycles/0/activities/0/power,yes,0.12,kW,exact,,scenario,FIC-01,1,,,,,metered_input_power,,fictional meter A
+R14,/cycles/0/activities/0/duration,yes,,min,missing,,scenario,FIC-01,1,,,,,elapsed_runtime,,fictional meter A
+R15,/cycles/0/activities/1/quantity,yes,0.2,L,exact,,scenario,FIC-01,1,,,,,,,
+R16,/cycles/0/activities/2/quantity,yes,0.2,L,exact,,scenario,FIC-01,1,,,,,,,
+R17,/cycles/1/catalyst_added,yes,0,g,exact,,scenario,FIC-01,2,,,,,,,
+R18,/cycles/1/catalyst_loaded,yes,1,g,exact,,scenario,FIC-01,2,,,,,,,
+R19,/cycles/1/catalyst_recovered,yes,1,g,exact,,scenario,FIC-01,2,,,,,,,
+R20,/cycles/1/influent_volume,yes,1200,mL,exact,,scenario,FIC-01,2,influent-2,influent,,,,,
+R21,/cycles/1/influent_concentration,yes,0.015,g/L,exact,,scenario,FIC-01,2,influent-2,influent,,,,,
+R22,/cycles/1/effluent_volume,yes,1100,mL,exact,,scenario,FIC-01,2,effluent-2,effluent,,,,,
+R23,/cycles/1/effluent_concentration,yes,,µg/L,below_loq,1500,scenario,FIC-01,2,effluent-2,effluent,,,,Primary fictional measurement; retain the repeat separately.,
+R24,/cycles/1/activities/0/quantity,yes,90,Wh,exact,,scenario,FIC-01,2,,,meter-log,"CSV data record 1, column reading_wh",metered_energy,,fictional meter A
+R25,/cycles/1/activities/1/quantity,yes,0.2,L,exact,,scenario,FIC-01,2,,,,,,,
+R26,/cycles/1/activities/2/quantity,yes,0.2,L,exact,,scenario,FIC-01,2,,,,,,,
+R-repeat,/cycles/1/effluent_concentration,no,5200,µg/L,exact,,scenario,FIC-01,2,effluent-2,effluent,,,,Repeat; kept for review.,

@@ -45,6 +45,13 @@ class DeliveryTests(unittest.TestCase):
   p=subprocess.run([sys.executable,str(SCRIPTS/'cyclic_foreground.py'),str(foreground),'--inventory-csv',str(inv)],capture_output=True,text=True);self.assertEqual(p.returncode,0,p.stderr)
   spec=copy.deepcopy(self.spec);spec['artifacts'].update(foreground=str(foreground),inventory=str(inv),inventory_manifest=str(inv)+'.manifest.json')
   self.assertEqual(assemble(spec,self.dir,self.dir/'spaced-bundle')['status'],'review_required')
+ def test_disposal_manifest_cannot_lend_evidence_to_legacy_foreground(self):
+  manifest=json.loads(self.man.read_text())
+  manifest['campaign']['final_recovered_fate']={'route':'invented','source':'invented','evidence_class':'scenario'}
+  self.man.write_text(json.dumps(manifest))
+  with self.assertRaisesRegex(ValueError,'disposal evidence'):
+   assemble(self.spec,self.dir,self.dir/'bundle')
+  self.assertFalse((self.dir/'bundle').exists())
  def test_incomplete_pairs_fail(self):
   for role in ('mapping','evidence_spec','domain_report','coverage','plot_data','cycle_plot_data','candidate_review'):
    with self.subTest(role=role):

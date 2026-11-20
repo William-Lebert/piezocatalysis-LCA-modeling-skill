@@ -28,6 +28,24 @@ class ModelPlanTests(unittest.TestCase):
  def test_unmapped_never_becomes_zero(self):
   h=case();h['rows'][0].update(mapping_user_asserted=None,issues=['unmapped'],dataset_amount_per_functional_unit=None)
   r=preflight(h,FakeClient(),'synthetic');self.assertEqual(r['summary']['status'],'partial');self.assertIsNone(r['rows'][0]['dataset_amount_per_functional_unit'])
+ def test_terminal_disposal_checks_actual_reference_flow_type(self):
+  handoff = case()
+  row = handoff['rows'][0]
+  row.update(activity_id='final-recovered-catalyst', direction='output', unit='g',
+             amount_per_functional_unit=5, dataset_amount_per_functional_unit=0.005)
+  row['mapping_user_asserted'].update(reference_is_input='true', dataset_unit='kg')
+  client = FakeClient()
+  reference = client.process['exchanges'][0]
+  reference['isInput'] = True
+  reference['unit']['name'] = 'kg'
+  reference['flow']['flowType'] = 'PRODUCT_FLOW'
+  rejected = preflight(handoff, client, 'synthetic')['rows'][0]
+  self.assertIn('terminal_disposal_reference_not_waste', rejected['issues'])
+  self.assertIsNone(rejected['dataset_amount_per_functional_unit'])
+  reference['flow']['flowType'] = 'WASTE_FLOW'
+  accepted = preflight(handoff, client, 'synthetic')['rows'][0]
+  self.assertEqual(accepted['dataset_amount_per_functional_unit'], 0.005)
+
  def test_stale_unit_region_and_reference_detected(self):
   h=case();c=FakeClient();c.process['exchanges'][0]['unit']['name']='MJ';c.descriptor['location']='GLO';c.process['exchanges'][0]['isInput']=True
   r=preflight(h,c,'synthetic');issues=r['rows'][0]['issues']

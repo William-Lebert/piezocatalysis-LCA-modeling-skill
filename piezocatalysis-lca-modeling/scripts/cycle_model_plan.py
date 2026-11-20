@@ -9,6 +9,7 @@ import sys
 from inventory_handoff import load_handoff, sha
 from openlca_readonly import Client, IPCError, descriptors
 from mapping_coverage import read_entity
+from cyclic_foreground import TERMINAL_CATALYST_ACTIVITY
 
 
 def preflight(handoff, client, database_name):
@@ -50,6 +51,10 @@ def preflight(handoff, client, database_name):
                                           ('reference_product','reference_product'),('flow_property_uuid','flow_property_uuid'),
                                           ('unit_uuid','unit_uuid'),('dataset_unit','unit_name')]:
                             if m.get(key) != actual[field]: issues.append(key+'_database_mismatch')
+                        if row['activity_id'] == TERMINAL_CATALYST_ACTIVITY:
+                            actual['reference_flow_type'] = (e.get('flow') or {}).get('flowType')
+                            if actual['reference_flow_type'] != 'WASTE_FLOW':
+                                issues.append('terminal_disposal_reference_not_waste')
                         if m.get('process_version') and m['process_version'] != actual['process_version']:
                             issues.append('process_version_database_mismatch')
                         expected_input=m.get('reference_is_input','').lower() in ('true','1','yes')

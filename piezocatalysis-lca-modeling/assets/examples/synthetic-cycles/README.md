@@ -24,3 +24,20 @@ python3 piezocatalysis-lca-modeling/scripts/cyclic_foreground.py \
 `activity_id` 跨制备和各循环必须唯一；同一个 `overlap_group` 只能有一个纳入项。初装、补加和最终回收物必须使用专门字段，已标为 `is_catalyst` 的普通活动会被拒绝；同一循环的重复流名会警告，但程序无法识别所有不同名称或未标注的重复测量。填报者应避免同时录入总表电量和分项、催化剂补加及其重复清单。每项测量记录单位、来源和证据类别；未知值填写 `null`，不能填零替代。模板在 `assets/templates/cyclic_foreground.template.json`。
 
 The inventory `evidence_class` describes the underlying activity input, not an assertion that the per-functional-unit amount was measured directly. The exported amount is calculated using the functional-unit allocation and can depend on other recorded inputs. / 清单中的 `evidence_class` 描述原活动输入的证据类别，并不表示每功能单位数量为直接实测；导出数量经过功能单位分配计算，还依赖其他记录的输入。
+
+### Recording the final catalyst destination
+
+Set `final_recovered_destination` to `disposed`, `retained` or `unknown`. For a known route, add a `final_recovered_fate` object with `route`, `source` and `evidence_class`, for example:
+
+```json
+{
+  "final_recovered_destination": "disposed",
+  "final_recovered_fate": {
+    "route": "Fictional incineration of collected dry catalyst residue",
+    "source": "Synthetic terminal fate worksheet, row 1",
+    "evidence_class": "scenario"
+  }
+}
+```
+
+Use a dry catalyst mass to map disposal and regenerate the paired inventory and manifest. In the `constant` case, 1 g is recovered per campaign and five campaigns provide the functional unit. The disposal line is 5 g per functional unit, equivalent to 0.005 kg in a kg-based dataset. Assign `final-recovered-catalyst` to a reviewed waste treatment mapping through the existing assignments CSV. Check the actual openLCA reference waste, input direction, mass unit, geography and route. Record every proxy's rationale and potential bias. A wet or unknown mass basis leaves this dry-basis amount unavailable. Retention makes no disposal demand or credit, and unaccounted cycle losses remain separate from the recovered mass.

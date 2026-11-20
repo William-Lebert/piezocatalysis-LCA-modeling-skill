@@ -149,7 +149,7 @@ python3 piezocatalysis-lca-modeling/scripts/mapping_coverage.py \
   --workspace "$HOME/openLCA-data-1.4" --database ecoinvent_391_cutoff_lci
 ```
 
-The process and category UUIDs must be taken from the active database. Compare the exact process reference exchange (including direction), flow property and unit UUID, not only the descriptor's reference unit. `conversion_factor` converts one foreground unit into the process exchange unit (1 MJ = 1/3.6 kWh). Location in a full process may be a name such as `China` even where a descriptor uses `CN`; inspect the returned value. The optional `link` specifies the product system, consuming process, exchange internal ID, flow and direction; omit it when no product system exists. An absent link is reported as `not_checked`, and a reference match still requires human approval. Retain the filled request, result and reviewer decision with the study.
+The process and category UUIDs must be taken from the active database. Compare the exact process reference exchange (including direction), flow property and unit UUID, not only the descriptor's reference unit. `conversion_factor` converts one foreground unit into the process exchange unit (1 MJ = 1/3.6 kWh). Location in a full process may be a name such as `China` even where a descriptor uses `CN`; inspect the returned value. The optional `link` specifies the product system, consuming process, exchange internal ID, flow and direction. Add `unit_uuid` and `flow_property_uuid` to verify the consuming exchange basis. Omit `link` when no product system exists. An absent link is reported as `not_checked`, and a reference match still requires human approval. Retain the filled request, result and reviewer decision with the study.
 
 LCIA checks only the named flow UUIDs in the named categories; a missing factor is not set to zero. A present zero-valued factor is distinct from no factor. Multiple matches, absent/different factor units or properties, missing numeric values, and formula-based factors require review. This is not a check of all model emissions, a calculation, or proof of complete method coverage. Database version and system model are user assertions, not verified by IPC. A zero calculated impact cannot by itself identify the cause. The `data/get` endpoint also makes other individual database entities readable by local clients while the guarded service runs; writes remain disabled and no whole-database export is implemented. Keep commercial data and review reports subject to your licence.
 
@@ -159,11 +159,44 @@ LCIA checks only the named flow UUIDs in the named categories; a missing factor 
 
 With local openLCA 2.7.0 installed, run `python3 piezocatalysis-lca-modeling/scripts/result_coverage.py --help` for required system, method, unit, flow-property, category and flow UUIDs. Use `--start-local --workspace "$HOME/openLCA-data-1.4" --database NAME` for a guarded temporary clone, or an explicitly selected `--port` for an already running service. The full JSON is printed to stdout and may contain licensed database information. `--summary-output /new/path.json` writes a reduced report without process or flow names; results may still be license-restricted, so review before sharing. The file must not already exist. Cancellation or near-zero totals suppress contribution percentages; negative contributions remain visible. Calculation results are disposed after retrieval.
 
+### Factor coverage across impact categories
+
+Save an IPC calculation with `--include-total-flows` and audit it against the same database and LCIA method. Repeat `--flow-id` for flows selected by the study question. Omit `--category-id` to check all categories returned in the calculation or repeat it for a subset.
+
+```sh
+python3 piezocatalysis-lca-modeling/scripts/lcia_coverage_matrix.py \
+  --calculation /path/to/ipc-calculation.json \
+  --flow-id FLOW_UUID --category-id CATEGORY_UUID \
+  --start-local --workspace "$HOME/openLCA-data-1.4" --database CASE_DATABASE
+```
+
+The matrix uses exact UUIDs, records the compartment and observed inventory direction and amounts, and compares the factor property and unit with the flow’s reference basis. It distinguishes a nonzero numeric factor, an explicit zero, no matching factor, and factors needing review. Product and waste flows belong in the technical link review. A calculated total of zero may coexist with several of these statuses. Use `--port` with an existing IPC service whose active database you have confirmed.
+
+For a GUI cross-check, use the same product system, reference amount, LCIA method and calculation options. Export results to Excel, match impact categories by UUID and unit, and report both absolute and relative differences. Record unresolved foreground exchanges alongside the comparison.
+
 ### Cycle scenario comparison
 
 `cycle_scenario_compare.py` rebuilds the per-functional-unit inventory from two cycle input files and matches activities to a reviewed baseline plan. It reports changes in each cycle exchange, aggregates mapped provider demands, compares independently calculated impact results, and estimates changes by rescaling baseline provider contributions. Run `python3 piezocatalysis-lca-modeling/scripts/cycle_scenario_compare.py --help` for the six JSON inputs. The `--contexts` input uses the same case declarations as `scenario_comparability.py`; functional unit, boundary, method, database, geography and other declared context fields are checked. New activities or changed mapping identities require a new mapping plan.
 
 Supply calculation results from openLCA systems whose foreground exchange amounts and provider links were independently verified against each cycle inventory. This tool cannot prove that supplied calculation files belong to those inputs. It performs no database writes and does not create scenario systems. The contribution estimate assumes the same provider impacts per unit; it is not a substitute for actual recalculation when backgrounds, formulas or interactions change. `ranking_permitted` is always false: matching declarations, even without unresolved or proxy activities, do not prove scientific comparability. Full JSON can include licensed provider identities and impact data; review before sharing.
+
+### Recalculated one-factor scenarios
+
+Use separate product systems in one reviewed database copy. Build and preflight each per-functional-unit inventory before capturing the suite. The workflow supports cyclic treatment and H₂O₂ product foregrounds with fixed, explicit process exchanges. If varying an openLCA formula parameter, use `parameter_sensitivity.py`; for a different electricity provider, rebuild the actual process link first.
+
+Start from `assets/templates/scenario_suite.template.json`. Each foreground case declares the source JSON pointers for one variable and the expected affected activity IDs, including indirect changes from rescaling and any repeated cycle activities. Each background case declares the exact activities whose providers change and retains the baseline foreground, physical quantities, reference products, units and exchange directions. Keep unresolved inputs unchanged and record the source and assumptions for every scenario.
+
+```sh
+python3 piezocatalysis-lca-modeling/scripts/scenario_suite.py capture suite-spec.json \
+  --workspace "$HOME/openLCA-data-1.4" --output suite.json
+python3 piezocatalysis-lca-modeling/scripts/scenario_suite.py rerun suite.json \
+  --workspace "$HOME/openLCA-data-1.4" --output recaptured.json
+python3 piezocatalysis-lca-modeling/scripts/scenario_suite.py summarize suite.json --output summary.json
+```
+
+Capture verifies the reference and foreground exchange bases and checks the declared provider mappings before and after computation. The saved suite holds the exact UTF-8 inputs, calculation records, model bindings, shared provider digests and the selected LCIA category snapshot. Rerun requires the prepared database and identical model snapshots, and compares numerical results with relative tolerance 10⁻⁹ and absolute tolerance 10⁻¹². Changes to recorded inputs, mappings or the method call for a new capture. Register the suite specification and its constituent files with `workflow_state.py` to flag later changes to the source files.
+
+Add the suite as `scenario_suite` in a research delivery spec. The baseline foreground, inventory, mapping and assignments must match the delivery; if supplying its main calculation, use the suite baseline calculation. `research_delivery.py assemble` rebuilds the comparison table and may include a verified plot via `suite_plot_data` and `suite_plot_dir`. Generate plot data with `plot_data.py --kind scenario-suite --report suite.json --category CATEGORY_UUID --license-note NOTE --output plot.json`, then render it with `plot_report.py`. Keep licensed database and derived results within their authorized scope.
 
 ### Experimental data and uncertainty readiness
 

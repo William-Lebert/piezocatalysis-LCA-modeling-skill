@@ -1,0 +1,23 @@
+{
+  "schema_version": "piezolca.real-case-intake/1",
+  "study": {
+    "question": "Verify synthetic intake",
+    "data_use_permission": "fictional"
+  },
+  "service": {
+    "kind": "apparent_pollutant_removal"
+  },
+  "experiment": {
+    "campaign_id": "FIC-01"
+  },
+  "import": {
+    "foreground_template": "foreground-template.json",
+    "observations_csv": "exact-observations.csv"
+  },
+  "raw_records": [
+    {
+      "id": "meter-log",
+      "local_path": "meter-log.csv"
+    }
+  ]
+}

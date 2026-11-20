@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.7.0
+
+- Trace end-of-campaign catalyst disposal to a declared route, source and dry mass, and verify the linked waste reference in openLCA.
+- Import cycle observations from CSV with sample identities, replicate choices, detection limits and energy measurement bases.
+- Preserve published H₂O₂ production as a distinct functional-unit basis and audit selected flow–category coverage against the stored inventory unit.
+- Recalculate fixed-exchange cyclic and H₂O₂ scenarios in openLCA, verify actual provider links, and package the inputs, results and figures for replay.
+
 ## 1.6.0 — 2026-11-18
 
 - Check the actual product-system reference process, reference exchange and unit during scenario capture, and repeat mapping preflight after calculation. Bound records now use version 2; older captures need to be recreated.

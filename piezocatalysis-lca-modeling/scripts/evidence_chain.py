@@ -161,7 +161,8 @@ def audit(spec,root,foreground,foreground_hash,inventory=None,manifest=None):
     activity_paths={}
     for i,entry in enumerate(foreground['preparation_activities']):activity_paths[entry['activity_id']]='/preparation_activities/'+str(i)
     if service=='h2o2_product':
-        scaling=['/functional_unit','/net_product_per_campaign']
+        product_path = '/reported_product_per_campaign' if model['product_basis'] == 'reported_production' else '/net_product_per_campaign'
+        scaling=['/functional_unit',product_path]
         prep_scaling=scaling+['/fresh_catalyst_per_campaign','/dry_yield']
         for i,entry in enumerate(foreground['campaign_activities']):activity_paths[entry['activity_id']]='/campaign_activities/'+str(i)
     else:

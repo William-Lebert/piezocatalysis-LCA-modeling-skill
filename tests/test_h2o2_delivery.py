@@ -32,6 +32,42 @@ class H2O2DeliveryTests(unittest.TestCase):
   p=subprocess.run([sys.executable,str(S/'evidence_chain.py'),str(ep),'--foreground',str(path),'--inventory',str(inv),'--manifest',str(inv)+'.manifest.json'],capture_output=True,text=True);self.assertEqual(p.returncode,0,p.stderr);ev=self.dir/'recovered-evidence.json';ev.write_text(p.stdout)
   spec=copy.deepcopy(self.spec);spec['artifacts'].update(foreground=str(path),inventory=str(inv),inventory_manifest=str(inv)+'.manifest.json',evidence_spec=str(ep),evidence_report=str(ev));out=self.dir/'recovered-delivery';r=assemble(spec,self.dir,out)
   self.assertEqual(r['product_basis'],'recovered_product');self.assertIn('H₂O₂ 回收产品',(out/'methods.md').read_text())
+ def test_reported_production_preserved_from_evidence_through_delivery(self):
+  foreground = copy.deepcopy(self.fg)
+  foreground['product_basis'] = 'reported_production'
+  foreground['product_definition'] = 'Fictional table reports production on a molar basis.'
+  foreground['reported_product_per_campaign'] = foreground.pop('net_product_per_campaign')
+  foreground_path = self.dir / 'literature.json'
+  foreground_path.write_text(json.dumps(foreground))
+  inventory = self.dir / 'literature.csv'
+  manifest = Path(str(inventory) + '.manifest.json')
+  subprocess.run([sys.executable, str(S/'h2o2_foreground.py'), str(foreground_path), '--inventory-csv', str(inventory)],
+                 check=True, capture_output=True, text=True)
+  evidence_spec = copy.deepcopy(self.es)
+  evidence_spec['foreground_sha256'] = hashlib.sha256(foreground_path.read_bytes()).hexdigest()
+  evidence_spec['sources'][0]['path'] = str(EX/'observations.csv')
+  for link in evidence_spec['links']:
+   if link['target'] == '/net_product_per_campaign':
+    link['target'] = '/reported_product_per_campaign'
+  evidence_path = self.dir / 'literature-spec.json'
+  evidence_path.write_text(json.dumps(evidence_spec))
+  result = subprocess.run([sys.executable, str(S/'evidence_chain.py'), str(evidence_path), '--foreground', str(foreground_path),
+                           '--inventory', str(inventory), '--manifest', str(manifest)], check=True, capture_output=True, text=True)
+  report_path = self.dir / 'literature-evidence.json'
+  report_path.write_text(result.stdout)
+  report = json.loads(result.stdout)
+  self.assertIn('reported_h2o2_g', report['campaign'])
+  self.assertNotIn('net_h2o2_g', report['campaign'])
+  ultrasound = next(x for x in report['inventory_traces'] if x['activity_id'] == 'ultrasound')
+  self.assertIn('/reported_product_per_campaign', ultrasound['allocation_input_pointers'])
+  spec = copy.deepcopy(self.spec)
+  spec['artifacts'].update(foreground=str(foreground_path), inventory=str(inventory), inventory_manifest=str(manifest),
+                           evidence_spec=str(evidence_path), evidence_report=str(report_path))
+  output = self.dir / 'literature-delivery'
+  assembled = assemble(spec, self.dir, output)
+  self.assertEqual(assembled['product_basis'], 'reported_production')
+  self.assertIn('H₂O₂ 文献报告产量', (output/'methods.md').read_text())
+
  def test_changed_source_or_class_rejected_even_with_rehashed_manifest(self):
   for field,value in [('source','false source'),('evidence_class','measured')]:
    with self.subTest(field=field):
