@@ -1,0 +1,6 @@
+* text=auto eol=lf
+
+# Evidence and catalog files can be referenced by their original byte hashes.
+*.csv -text
+*.json -text
+*.jar binary

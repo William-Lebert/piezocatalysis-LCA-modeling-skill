@@ -56,6 +56,12 @@ Version 1.7.0 connects cyclic experiment intake and catalyst disposal tracking t
 
 v1.7.0 把逐循环实验接入、催化剂末端去向、openLCA 映射核对和情景重算接到科研交付。升级时请阅读[迁移说明](docs/migration-notes.md)。
 
+## Windows and macOS development / 双平台开发
+
+The two platforms share the same Skill and tests. Follow the [Windows guide](platforms/windows/README.md) or [macOS guide](platforms/macos/README.md) for setup, testing, and local openLCA behavior.
+
+Windows 与 macOS 共用科研核心和发布版本。平台接入、提交流程及目录说明见[双平台开发布局](platforms/README.md)。
+
 ## Agent usage / Agent 使用
 
 Install or load the `piezocatalysis-lca-modeling/` Skill in the agent environment, then request the relevant LCA task. The agent starts from [`SKILL.md`](piezocatalysis-lca-modeling/SKILL.md) and selects the appropriate scripts and references; for example: “审查两组压电催化实验的功能单位和数据缺口，再用合成数据演示清单与图表。” Outputs and software access depend on the data, environment and task.

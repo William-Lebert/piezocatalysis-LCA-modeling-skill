@@ -11,3 +11,4 @@ Thumbs.db
 *.xls
 private/
 raw-data/
+.venv/
