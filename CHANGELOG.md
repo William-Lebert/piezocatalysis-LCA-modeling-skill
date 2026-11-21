@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased (v1.7.2 candidate)
+
+- Validate the exact files included in a research delivery and publish the complete directory in one step. A failed assembly can be retried at the same output path.
+- Require an evidence specification and report for attached evidence sources. Check portable artifact names and reject symbolic links when verifying a package.
+- Look up foreground activity bindings and exchange IDs directly, preserve support for older bindings without exchange IDs, and reject duplicate IDs within a foreground process.
+
 ## 1.7.1 — 2026-11-21
 
 - Read mapped openLCA processes and location codes by ID. Reuse the process snapshots already captured on each side of a scenario calculation.

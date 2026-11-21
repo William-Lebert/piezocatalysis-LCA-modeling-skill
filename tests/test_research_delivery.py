@@ -1,6 +1,8 @@
 import copy,csv,hashlib,importlib.util,json,subprocess,sys,tempfile,unittest
 from pathlib import Path
+from unittest.mock import patch
 ROOT=Path(__file__).resolve().parents[1];SCRIPTS=ROOT/'piezocatalysis-lca-modeling/scripts';sys.path.insert(0,str(SCRIPTS))
+import research_delivery
 from research_delivery import assemble,verify,candidate_matches_plan
 from result_coverage import contribution_summary
 from inventory_handoff import load_handoff
@@ -14,6 +16,76 @@ class DeliveryTests(unittest.TestCase):
   out=self.dir/'bundle';r=assemble(self.spec,self.dir,out);self.assertEqual(r['status'],'review_required');self.assertTrue(any('not supplied' in x for x in r['warnings']));self.assertEqual(verify(out)['status'],'hashes_match')
   replay=json.loads((out/'replay-spec.json').read_text());r2=assemble(replay,out,self.dir/'replayed');self.assertEqual(r2['warnings'],r['warnings'])
   self.assertIn('不会重新运行 openLCA',(out/'README.md').read_text());self.assertIn('100 mg 水相表观污染物去除',(out/'methods.md').read_text())
+ def test_assembly_validates_the_packaged_input_bytes(self):
+  out = self.dir / 'bundle'
+  def change_source_after_read(*args, **kwargs):
+   checked = load_handoff(*args, **kwargs)
+   self.inv.write_bytes(b'changed while assembling')
+   return checked
+
+  original = self.inv.read_bytes()
+  with patch.object(research_delivery, 'load_handoff', side_effect=change_source_after_read):
+   assemble(self.spec, self.dir, out)
+  self.assertEqual((out / 'artifacts/inventory.csv').read_bytes(), original)
+  self.assertEqual(verify(out)['status'], 'hashes_match')
+
+ def test_write_failure_leaves_no_partial_delivery(self):
+  out = self.dir / 'bundle'
+  write_text = Path.write_text
+
+  def fail_on_manifest(path, *args, **kwargs):
+   if path.name == 'delivery-manifest.json':
+    raise OSError('simulated write failure')
+   return write_text(path, *args, **kwargs)
+
+  with patch.object(Path, 'write_text', fail_on_manifest):
+   with self.assertRaisesRegex(OSError, 'simulated write failure'):
+    assemble(self.spec, self.dir, out)
+  self.assertFalse(out.exists())
+  assemble(self.spec, self.dir, out)
+  with self.assertRaises(FileExistsError):
+   assemble(self.spec, self.dir, out)
+  self.assertEqual(verify(out)['status'], 'hashes_match')
+
+ def test_evidence_sources_require_their_audit(self):
+  spec = dict(self.spec, evidence_sources={'unverified': str(self.inv)})
+  with self.assertRaisesRegex(ValueError, 'require an evidence spec and report'):
+   assemble(spec, self.dir, self.dir / 'bundle')
+  self.assertFalse((self.dir / 'bundle').exists())
+
+ def test_verify_rejects_artifact_symlinks(self):
+  out = self.dir / 'bundle'
+  assemble(self.spec, self.dir, out)
+  artifact = out / 'artifacts/inventory.csv'
+  target = artifact.with_name('alias-target.csv')
+  artifact.rename(target)
+  try:
+   artifact.symlink_to(target.name)
+  except (OSError, NotImplementedError):
+   self.skipTest('file symlink creation is unavailable')
+  with self.assertRaisesRegex(ValueError, 'delivery file missing or changed'):
+   verify(out)
+
+ def test_verify_requires_the_artifact_name_assigned_to_its_role(self):
+  out = self.dir / 'bundle'
+  manifest = assemble(self.spec, self.dir, out)
+  path = out / 'replay-spec.json'
+  replay = json.loads(path.read_text())
+  old_name = replay['artifacts']['inventory']
+  new_name = 'artifacts/renamed.csv'
+  (out / old_name).rename(out / new_name)
+  replay['artifacts']['inventory'] = new_name
+  raw = json.dumps(replay).encode()
+  path.write_bytes(raw)
+  for item in manifest['files']:
+   if item['role'] == 'inventory':
+    item['path'] = new_name
+   if item['role'] == 'generated_replay-spec.json':
+    item['sha256'] = hashlib.sha256(raw).hexdigest()
+  (out / 'delivery-manifest.json').write_text(json.dumps(manifest), encoding='utf-8')
+  with self.assertRaisesRegex(ValueError, 'invalid replay artifact path: inventory'):
+   verify(out)
+
  def test_tampered_bundle_is_detected(self):
   out=self.dir/'bundle';assemble(self.spec,self.dir,out);(out/'methods.md').write_text('modified')
   with self.assertRaisesRegex(ValueError,'changed'):verify(out)

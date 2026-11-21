@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """Assemble and verify a local, traceable research delivery from existing artifacts."""
 import argparse,copy,csv,hashlib,io,json,math,sys
-from pathlib import Path
+import os
+from pathlib import Path, PurePosixPath
+from shutil import copyfile
+from tempfile import TemporaryDirectory
 from inventory_handoff import load_handoff
 from mapping_review import finalize,DECISION_FIELDS
 from plot_data import stage_contributions,cycles,scenarios,sensitivity
@@ -18,8 +21,16 @@ PLOT_OUTPUTS=('plot-data.json','table.csv','chart.svg','chart.png')
 GENERATED_FILES=('methods.md','README.md','source-spec.json','replay-spec.json')
 
 def sha(raw):return hashlib.sha256(raw).hexdigest()
+def decode_json(raw):
+    def invalid_number(value):
+        raise ValueError('invalid JSON number ' + value)
+
+    return json.loads(raw, parse_constant=invalid_number)
+
+
 def json_read(path):
- raw=path.read_bytes();return json.loads(raw,parse_constant=lambda v: (_ for _ in ()).throw(ValueError('invalid JSON number '+v)))
+    return decode_json(path.read_bytes())
+
 def resolve(root,value):
  if not isinstance(value,str) or not value.strip():raise ValueError('artifact path must be a nonempty string')
  return (root/Path(value)).resolve()
@@ -39,32 +50,124 @@ def declaration(value):
   parts.append(label+'：'+('、'.join(map(str,item)) if isinstance(item,list) else str(item)))
  return '；'.join(parts) if parts else '未提供'
 
+def file_sha256(path):
+    digest = hashlib.sha256()
+    with path.open('rb') as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b''):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def artifact_location(role, filename):
+    if role in PLOT_FOLDERS:
+        return 'artifacts/' + PLOT_FOLDERS[role]
+    suffix = PurePosixPath(filename).suffix.lower() or '.dat'
+    if suffix.endswith((' ', '.')) or any(ord(char) < 32 or char in '<>:"/\\|?*' for char in suffix):
+        raise ValueError('artifact extension is not portable: ' + role)
+    return 'artifacts/' + role + suffix
+
+
+def evidence_locations(sources):
+    locations = {}
+    seen = set()
+    for source in sources:
+        if (not isinstance(source, str) or not source or
+                any(char not in 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-' for char in source)):
+            raise ValueError('evidence source id must be safe for a filename')
+        folded = source.lower()
+        if folded in seen:
+            raise ValueError('evidence source IDs must be distinct ignoring letter case')
+        seen.add(folded)
+        locations[source] = 'artifacts/evidence-source-' + source + '.csv'
+    return locations
+
+
+def _snapshot_artifacts(replay, paths, sources, directory):
+    """Copy inputs to the delivery staging directory before checking their contents."""
+    inputs = {**paths, **{'evidence_source:' + key: path for key, path in sources.items()}}
+    for role, path in paths.items():
+        if role not in PLOT_FOLDERS:
+            continue
+        folder = PLOT_FOLDERS[role]
+        for name in ('manifest.json', *PLOT_OUTPUTS):
+            inputs[folder + '_' + name] = path / name
+    items = []
+    for role, rel in replay_files(replay).items():
+        if role not in inputs:
+            continue
+        target = directory / rel
+        target.parent.mkdir(parents=True, exist_ok=True)
+        copyfile(inputs[role], target)
+        items.append({'role': role, 'path': rel, 'sha256': file_sha256(target)})
+    return items
+
+
 def verify_plot_files(directory,plot):
  valid_text(plot.get('license_note'),'plot license_note')
  manifest=json_read(directory/'manifest.json')
  if manifest.get('schema_version')!='piezolca.plot-manifest/1' or manifest.get('input_plot_data_sha256')!=sha(json_bytes(plot)) or manifest.get('license_note')!=plot['license_note']:raise ValueError('plot manifest input or license mismatch')
  if set(manifest.get('outputs',{}))!=set(PLOT_OUTPUTS):raise ValueError('plot manifest output list mismatch')
  for name,h in manifest['outputs'].items():
-  if sha((directory/name).read_bytes())!=h:raise ValueError('plot output hash mismatch: '+name)
+  if file_sha256(directory/name)!=h:raise ValueError('plot output hash mismatch: '+name)
  if json_read(directory/'plot-data.json')!=plot:raise ValueError('rendered plot data differs')
 
 def candidate_matches_plan(candidate,actual):
  fields=('process_uuid','name','process_version','process_type','geography','reference_flow_uuid','reference_product','flow_property_uuid','unit_uuid','reference_is_input')
  return all(candidate.get(k)==actual.get(k) for k in fields) and candidate.get('dataset_unit')==actual.get('unit_name')
 
-def assemble(spec,root,outdir,spec_raw=None):
- if spec.get('schema_version')!=SCHEMA:raise ValueError('unsupported delivery schema')
- if spec_raw is not None and json.loads(spec_raw)!=spec:raise ValueError('original source specification differs from the assembly input')
- title=valid_text(spec.get('title'),'title');license_note=valid_text(spec.get('license_note'),'license_note')
- files=spec.get('artifacts')
- if not isinstance(files,dict) or set(files)-ROLES:raise ValueError('unsupported or missing artifacts object')
- paths={k:resolve(root,v) for k,v in files.items()}
- for role in REQUIRED:
-  if role not in paths:raise ValueError('required artifact missing: '+role)
- for k,p in paths.items():
-  if k in PLOT_FOLDERS:
-   if not p.is_dir():raise ValueError('plot_dir must be a directory')
-  elif not p.is_file():raise ValueError(k+' must be a file')
+def assemble(spec, root, outdir, spec_raw=None):
+    if not isinstance(spec, dict) or spec.get('schema_version') != SCHEMA:
+        raise ValueError('unsupported delivery schema')
+    if spec_raw is not None and decode_json(spec_raw) != spec:
+        raise ValueError('original source specification differs from the assembly input')
+    title = valid_text(spec.get('title'), 'title')
+    license_note = valid_text(spec.get('license_note'), 'license_note')
+    files = spec.get('artifacts')
+    if not isinstance(files, dict) or set(files) - ROLES:
+        raise ValueError('unsupported or missing artifacts object')
+    paths = {role: resolve(root, value) for role, value in files.items()}
+    for role in REQUIRED:
+        if role not in paths:
+            raise ValueError('required artifact missing: ' + role)
+    for role, path in paths.items():
+        if role in PLOT_FOLDERS:
+            if not path.is_dir():
+                raise ValueError(role + ' must be a directory')
+        elif not path.is_file():
+            raise ValueError(role + ' must be a file')
+    sources = spec.get('evidence_sources', {})
+    if not isinstance(sources, dict):
+        raise ValueError('evidence_sources must be an object')
+    evidence_paths = evidence_locations(sources)
+    if sources and not {'evidence_spec', 'evidence_report'} <= paths.keys():
+        raise ValueError('evidence sources require an evidence spec and report')
+    source_paths = {key: resolve(root, value) for key, value in sources.items()}
+    for key, path in source_paths.items():
+        if not path.is_file():
+            raise ValueError('evidence source hash mismatch: ' + key)
+
+    replay = {
+        **spec,
+        'artifacts': {role: artifact_location(role, path.name) for role, path in paths.items()},
+        'evidence_sources': evidence_paths,
+    }
+    outdir.parent.mkdir(parents=True, exist_ok=True)
+    if os.path.lexists(outdir):
+        raise FileExistsError('output directory already exists: ' + str(outdir))
+    with TemporaryDirectory(prefix='.delivery-', dir=outdir.parent.resolve()) as temp:
+        stage = Path(temp)
+        items = _snapshot_artifacts(replay, paths, source_paths, stage)
+        manifest = _assemble_snapshot(spec, replay, stage, items, title, license_note, spec_raw)
+        if os.path.lexists(outdir):
+            raise FileExistsError('output directory already exists: ' + str(outdir))
+        stage.rename(outdir)
+    return manifest
+
+
+def _assemble_snapshot(spec, replay, outdir, items, title, license_note, spec_raw):
+ paths = {role: outdir / rel for role, rel in replay['artifacts'].items()}
+ source_paths = {source: outdir / rel for source, rel in replay['evidence_sources'].items()}
+ hashes = {entry['role']: entry['sha256'] for entry in items}
  if ('mapping' in paths)!=('assignments' in paths):raise ValueError('mapping and assignments must be supplied together')
  if any(k in paths for k in ('candidate_review','candidate_decisions','candidate_record')) and not all(k in paths for k in ('candidate_review','candidate_decisions','candidate_record')):
   raise ValueError('candidate review, decisions and record must be supplied together')
@@ -78,10 +181,10 @@ def assemble(spec,root,outdir,spec_raw=None):
   raise ValueError('suite plot requires scenario_suite, suite_plot_data and suite_plot_dir')
  if ('cycle_service_spec' in paths)!=('cycle_service_report' in paths) or ('cycle_service_report' in paths and 'evidence_report' not in paths):raise ValueError('cycle service review requires spec, report and evidence report')
  handoff=load_handoff(paths['inventory'],paths['inventory_manifest'],paths.get('mapping'),paths.get('assignments'))
- fg_raw=paths['foreground'].read_bytes();fg_hash=sha(fg_raw)
+ fg_raw=paths['foreground'].read_bytes();fg_hash=hashes['foreground']
  if handoff.get('input_sha256')!=fg_hash:raise ValueError('foreground differs from inventory manifest')
  from evidence_chain import build_foreground
- fg=json.loads(fg_raw,parse_constant=lambda v: (_ for _ in ()).throw(ValueError('invalid JSON number '+v)));model,service=build_foreground(fg)
+ fg=decode_json(fg_raw);model,service=build_foreground(fg)
  if handoff.get('functional_unit')!=model['functional_unit'] or handoff.get('boundary')!=model['boundary'] or handoff.get('functional_unit_type')!=service:raise ValueError('manifest service or boundary differs from foreground')
  if service=='h2o2_product' and any(handoff.get(k)!=model[k] for k in ('product_basis','product_definition')):raise ValueError('manifest product basis or definition differs from foreground')
  if service=='apparent_pollutant_removal':
@@ -103,31 +206,24 @@ def assemble(spec,root,outdir,spec_raw=None):
  data={k:json_read(p) for k,p in paths.items() if k in ('evidence_spec','evidence_report','domain_protocol','domain_input','domain_report','candidate_review','candidate_record','model_plan','calculation','coverage','binding','plot_data','cycle_plot_data','cycle_service_spec','cycle_service_report','scenario_baseline_bound','scenario_bound','scenario_source','scenario_contexts','scenario_comparison','scenario_plot_data','sensitivity_spec','sensitivity_report','sensitivity_plot_data','scenario_suite','suite_plot_data')}
  for role,value in data.items():
   if not isinstance(value,dict) or not value:raise ValueError(role+' must be a nonempty JSON object')
- sources=spec.get('evidence_sources',{})
- if not isinstance(sources,dict):raise ValueError('evidence_sources must be an object')
- source_paths={k:resolve(root,v) for k,v in sources.items()}
- for sid in source_paths:
-  if not sid or any(ch not in 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-' for ch in sid):raise ValueError('evidence source id must be safe for a filename')
- if len({sid.lower() for sid in source_paths})!=len(source_paths):
-  raise ValueError('evidence source IDs must be distinct ignoring letter case')
  if ('evidence_spec' in paths)!=('evidence_report' in paths):raise ValueError('evidence_spec and evidence_report must be supplied together')
  if 'evidence_report' in data:
   ev=data['evidence_report'];es=data['evidence_spec']
-  if ev.get('schema_version')!='piezolca.evidence-audit/1' or ev.get('foreground_sha256')!=fg_hash or ev.get('spec_sha256')!=sha(paths['evidence_spec'].read_bytes()):raise ValueError('evidence report does not match foreground or evidence spec')
+  if ev.get('schema_version')!='piezolca.evidence-audit/1' or ev.get('foreground_sha256')!=fg_hash or ev.get('spec_sha256')!=hashes['evidence_spec']:raise ValueError('evidence report does not match foreground or evidence spec')
   if service=='h2o2_product' and (ev.get('functional_unit_type')!=service or ev.get('product_basis')!=model['product_basis'] or ev.get('product_definition_user_asserted')!=model['product_definition']):raise ValueError('evidence product function differs from foreground')
   if (ev.get('inventory_rebuilt_and_verified') or {}).get('inventory_sha256')!=handoff['inventory_sha256'] or (ev.get('inventory_rebuilt_and_verified') or {}).get('manifest_sha256')!=handoff['manifest_sha256']:raise ValueError('evidence report is not bound to this inventory and manifest')
   declared={x['id']:x for x in es.get('sources',[])}
   if set(source_paths)-set(declared):raise ValueError('unknown evidence source id')
-  for sid,p in source_paths.items():
-   if not p.is_file() or sha(p.read_bytes())!=declared[sid]['sha256']:raise ValueError('evidence source hash mismatch: '+sid)
+  for sid in source_paths:
+   if hashes['evidence_source:'+sid]!=declared[sid]['sha256']:raise ValueError('evidence source hash mismatch: '+sid)
   missing=set(declared)-set(source_paths)
   if missing:warnings.append('Evidence source files omitted: '+', '.join(sorted(missing)))
   if es.get('originals'):warnings.append('Original files are not automatically included; declared original locations need independent verification.')
   if not missing and not es.get('originals'):
    from evidence_chain import audit as evidence_audit
-   replay=copy.deepcopy(es)
-   for entry in replay['sources']:entry['path']=str(source_paths[entry['id']])
-   rebuilt=evidence_audit(replay,root,fg,fg_hash,paths['inventory'],paths['inventory_manifest'])
+   evidence_replay=copy.deepcopy(es)
+   for entry in evidence_replay['sources']:entry['path']=str(source_paths[entry['id']])
+   rebuilt=evidence_audit(evidence_replay,outdir,fg,fg_hash,paths['inventory'],paths['inventory_manifest'])
    for key in ('coverage','links','inventory_rebuilt_and_verified','campaign','functional_unit_flows','inventory_traces','issues','status'):
     if rebuilt[key]!=ev.get(key):raise ValueError('evidence audit differs from rebuilt sources: '+key)
    if service=='h2o2_product' and any(rebuilt.get(k)!=ev.get(k) for k in ('functional_unit_type','product_basis','product_definition_user_asserted')):raise ValueError('evidence product function differs from rebuilt sources')
@@ -138,7 +234,7 @@ def assemble(spec,root,outdir,spec_raw=None):
  if 'cycle_service_report' in data:
   if service!='apparent_pollutant_removal':raise ValueError('cycle service review requires a cyclic foreground')
   sr=data['cycle_service_report']
-  if sr.get('spec_sha256')!=sha(paths['cycle_service_spec'].read_bytes()) or sr.get('evidence_report_sha256')!=sha(paths['evidence_report'].read_bytes()):raise ValueError('cycle service report input hash mismatch')
+  if sr.get('spec_sha256')!=hashes['cycle_service_spec'] or sr.get('evidence_report_sha256')!=hashes['evidence_report']:raise ValueError('cycle service report input hash mismatch')
   from cycle_service_review import review as cycle_service_review
   rebuilt=cycle_service_review(data['cycle_service_spec'],fg,fg_hash,data['evidence_report'])
   if any(sr.get(k)!=v for k,v in rebuilt.items()):raise ValueError('cycle service report differs from rebuilt declarations')
@@ -150,8 +246,8 @@ def assemble(spec,root,outdir,spec_raw=None):
  if 'domain_report' in data:
   dr=data['domain_report']
   if dr.get('schema_version')!='piezolca.piezo-boundary-review/1' or dr.get('foreground_sha256')!=fg_hash:raise ValueError('domain report does not match foreground')
-  if 'evidence_report' in paths and dr.get('evidence_report_sha256')!=sha(paths['evidence_report'].read_bytes()):raise ValueError('domain report refers to a different evidence report')
-  if dr.get('protocol_sha256')!=sha(paths['domain_protocol'].read_bytes()) or dr.get('domain_sha256')!=sha(paths['domain_input'].read_bytes()):raise ValueError('domain inputs do not match report')
+  if 'evidence_report' in paths and dr.get('evidence_report_sha256')!=hashes['evidence_report']:raise ValueError('domain report refers to a different evidence report')
+  if dr.get('protocol_sha256')!=hashes['domain_protocol'] or dr.get('domain_sha256')!=hashes['domain_input']:raise ValueError('domain inputs do not match report')
   from piezocatalysis_checks import audit as domain_audit
   rebuilt=domain_audit(data['domain_protocol'],fg,fg_hash,data['evidence_report'],data['domain_input'])
   if any(dr.get(k)!=v for k,v in rebuilt.items()):raise ValueError('domain report differs from rebuilt declarations')
@@ -176,7 +272,7 @@ def assemble(spec,root,outdir,spec_raw=None):
   rev=data['candidate_review'];record=data['candidate_record'];raw=paths['candidate_decisions'].read_bytes();reader=csv.DictReader(io.StringIO(raw.decode('utf-8-sig'),newline=''))
   if set(reader.fieldnames or [])!=set(DECISION_FIELDS) or len(reader.fieldnames)!=len(set(reader.fieldnames)):raise ValueError('invalid candidate decisions columns')
   decisions=list(reader);bare=load_handoff(paths['inventory'],paths['inventory_manifest'])
-  rebuilt,_,_=finalize(rev,decisions,bare,sha(raw),sha(paths['candidate_review'].read_bytes()))
+  rebuilt,_,_=finalize(rev,decisions,bare,sha(raw),hashes['candidate_review'])
   for key in ('schema_version','review_sha256','decisions_sha256','inventory_sha256','manifest_sha256','records','selected_count','activities_without_selection'):
    if rebuilt[key]!=record.get(key):raise ValueError('candidate record differs from reviewed inputs: '+key)
   if plan:
@@ -220,7 +316,7 @@ def assemble(spec,root,outdir,spec_raw=None):
   if any(plot.get(k)!=v for k,v in expected.items()):raise ValueError('stage plot data differs from recomputed coverage and model plan')
   provenance=(plot.get('provenance') or {}).get('inputs') or {}
   for role,key in (('coverage','report'),('model_plan','plan'),('binding','binding')):
-   if (provenance.get(key) or {}).get('sha256')!=sha(paths[role].read_bytes()):raise ValueError('stage plot source hash mismatch: '+role)
+   if (provenance.get(key) or {}).get('sha256')!=hashes[role]:raise ValueError('stage plot source hash mismatch: '+role)
   verify_plot_files(paths['plot_dir'],plot)
   warnings.extend(plot.get('warnings',[]));checks.append('Stage plot data recomputed from supplied coverage, verified plan and binding; rendering files checked by hash.')
  else:warnings.append('Stage plot not supplied.')
@@ -243,12 +339,12 @@ def assemble(spec,root,outdir,spec_raw=None):
   rebuilt=compare_bound(base,alt,fg,data['scenario_source'],data['scenario_contexts'])
   if any(comparison.get(k)!=v for k,v in rebuilt.items()):raise ValueError('bound scenario comparison differs from rebuilt records')
   refs={'baseline':'scenario_baseline_bound','scenario':'scenario_bound','baseline-input':'foreground','scenario-input':'scenario_source','contexts':'scenario_contexts'}
-  if any((comparison.get('input_sha256') or {}).get(k)!=sha(paths[v].read_bytes()) for k,v in refs.items()):raise ValueError('bound scenario comparison input hash mismatch')
+  if any((comparison.get('input_sha256') or {}).get(k)!=hashes[v] for k,v in refs.items()):raise ValueError('bound scenario comparison input hash mismatch')
   if sp.get('schema_version')!='piezolca.plot-data/1' or sp.get('kind')!='scenarios':raise ValueError('invalid scenario plot data')
   expected=scenarios(comparison,fg,data['scenario_source'],(sp.get('category') or {}).get('id'))
   if any(sp.get(k)!=v for k,v in expected.items()):raise ValueError('scenario plot differs from bound comparison')
   refs={'report':'scenario_comparison','baseline_input':'foreground','scenario_input':'scenario_source'}
-  if any(((sp.get('provenance') or {}).get('inputs',{}).get(k) or {}).get('sha256')!=sha(paths[v].read_bytes()) for k,v in refs.items()):raise ValueError('scenario plot input hash mismatch')
+  if any(((sp.get('provenance') or {}).get('inputs',{}).get(k) or {}).get('sha256')!=hashes[v] for k,v in refs.items()):raise ValueError('scenario plot input hash mismatch')
   verify_plot_files(paths['scenario_plot_dir'],sp);warnings.extend(sp.get('warnings',[]));warnings.append('Scenario comparisons use captured models; scientific comparability and omitted background remain subject to review.')
   checks.append('Bound scenario comparison and plot data recomputed; rendered files checked by hash. Neither openLCA nor rendering is rerun.')
  if 'sensitivity_report' in data:
@@ -261,7 +357,7 @@ def assemble(spec,root,outdir,spec_raw=None):
   if sp.get('schema_version')!='piezolca.plot-data/1' or sp.get('kind')!='sensitivity':raise ValueError('invalid sensitivity plot data')
   expected=sensitivity(report,sp.get('route'),(sp.get('category') or {}).get('id'))
   if any(sp.get(k)!=v for k,v in expected.items()):raise ValueError('sensitivity plot differs from rebuilt report')
-  if (((sp.get('provenance') or {}).get('inputs') or {}).get('report') or {}).get('sha256')!=sha(paths['sensitivity_report'].read_bytes()):raise ValueError('sensitivity plot input hash mismatch')
+  if (((sp.get('provenance') or {}).get('inputs') or {}).get('report') or {}).get('sha256')!=hashes['sensitivity_report']:raise ValueError('sensitivity plot input hash mismatch')
   verify_plot_files(paths['sensitivity_plot_dir'],sp);warnings.extend(sp.get('warnings',[]));warnings.append('Sensitivity is a user-supplied additive approximation, not an openLCA recalculation or verified link to this calculation.')
   checks.append('Sensitivity report and plot data rebuilt from supplied additive inputs; rendered files checked by hash, not rerendered. Scientific assumptions remain user asserted.')
  suite_summary=None
@@ -281,7 +377,7 @@ def assemble(spec,root,outdir,spec_raw=None):
    expected=suite_plot(suite_summary,(sp.get('category') or {}).get('id'))
    if sp.get('schema_version')!='piezolca.plot-data/1' or any(sp.get(k)!=v for k,v in expected.items()):
     raise ValueError('suite plot differs from recalculated comparison')
-   if (((sp.get('provenance') or {}).get('inputs') or {}).get('report') or {}).get('sha256')!=sha(paths['scenario_suite'].read_bytes()):
+   if (((sp.get('provenance') or {}).get('inputs') or {}).get('report') or {}).get('sha256')!=hashes['scenario_suite']:
     raise ValueError('suite plot input hash mismatch')
    verify_plot_files(paths['suite_plot_dir'],sp)
   gaps=suite_summary['cases'][0]['unresolved_activity_ids']
@@ -289,21 +385,8 @@ def assemble(spec,root,outdir,spec_raw=None):
    warnings.append('Scenario suite unresolved activities: '+', '.join(gaps))
   checks.append('Scenario suite inputs and bound captures checked; absolute LCIA differences reproduced.')
  warnings=list(dict.fromkeys(str(x) for x in warnings))
- # Only explicitly supplied inputs are copied, and no database is copied or queried.
- outdir.mkdir(parents=True,exist_ok=False);(outdir/'artifacts').mkdir();items=[]
- for role,p in paths.items():
-  if role in PLOT_FOLDERS:
-   folder=PLOT_FOLDERS[role];dest=outdir/'artifacts'/folder;dest.mkdir()
-   for name in ('manifest.json',*PLOT_OUTPUTS):
-    raw=(p/name).read_bytes();(dest/name).write_bytes(raw);items.append({'role':folder+'_'+name,'path':'artifacts/'+folder+'/'+name,'sha256':sha(raw)})
-  else:
-   ext=p.suffix.lower() or '.dat';name=role+ext;raw=p.read_bytes();(outdir/'artifacts'/name).write_bytes(raw);items.append({'role':role,'path':'artifacts/'+name,'sha256':sha(raw)})
- for sid,p in source_paths.items():
-  raw=p.read_bytes();name='evidence-source-'+sid+'.csv';(outdir/'artifacts'/name).write_bytes(raw);items.append({'role':'evidence_source:'+sid,'path':'artifacts/'+name,'sha256':sha(raw)})
  original=spec_raw if spec_raw is not None else json.dumps(spec,ensure_ascii=False,indent=2).encode()
  (outdir/'source-spec.json').write_bytes(original)
- replay=copy.deepcopy(spec);replay['artifacts']={k:('artifacts/'+PLOT_FOLDERS[k] if k in PLOT_FOLDERS else 'artifacts/'+k+(p.suffix.lower() or '.dat')) for k,p in paths.items()}
- replay['evidence_sources']={k:'artifacts/evidence-source-'+k+'.csv' for k in source_paths}
  (outdir/'replay-spec.json').write_text(json.dumps(replay,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
  if calc:
   with (outdir/'lcia-results.csv').open('x',encoding='utf-8-sig',newline='') as f:
@@ -371,7 +454,7 @@ def assemble(spec,root,outdir,spec_raw=None):
   '本交付可能包含商业数据库衍生信息，仅按许可使用；不要在未经审查时对外分享。','']
  (outdir/'README.md').write_text('\n'.join(readme),encoding='utf-8')
  for name in generated_files(paths):
-  items.append({'role':'generated_'+name,'path':name,'sha256':sha((outdir/name).read_bytes())})
+  items.append({'role':'generated_'+name,'path':name,'sha256':file_sha256(outdir/name)})
  manifest={'schema_version':SCHEMA,'title':title,'status':'review_required' if warnings else 'checks_passed_review_still_required','license_note':license_note,
            'functional_unit':model['functional_unit'],'functional_unit_type':service,'product_basis':model.get('product_basis'),'product_definition':model.get('product_definition'),'calculation_functional_unit_user_asserted':calc.get('functional_unit_user_asserted') if calc else None,
            'boundary':model['boundary'],'checks':checks,'warnings':warnings,'files':items,'python_version':sys.version.split()[0],
@@ -396,22 +479,24 @@ def replay_files(replay):
     if (not isinstance(artifacts, dict) or not set(REQUIRED) <= artifacts.keys() <= ROLES
             or not isinstance(evidence_sources, dict)):
         raise ValueError('replay specification has missing or unsupported artifacts')
-    files = {'generated_' + name: name for name in generated_files(artifacts)}
+    files = {}
     for role, path in artifacts.items():
-        if not isinstance(path, str) or not path.startswith('artifacts/'):
+        if not isinstance(path, str) or path != artifact_location(role, path):
             raise ValueError('invalid replay artifact path: ' + role)
         if role in PLOT_FOLDERS:
             folder = PLOT_FOLDERS[role]
-            if path != 'artifacts/' + folder:
-                raise ValueError('invalid replay plot directory: ' + role)
             for name in ('manifest.json', *PLOT_OUTPUTS):
                 files[folder + '_' + name] = path + '/' + name
         else:
             files[role] = path
-    for source, path in evidence_sources.items():
-        if path != 'artifacts/evidence-source-' + source + '.csv':
+    locations = evidence_locations(evidence_sources)
+    if locations and not {'evidence_spec', 'evidence_report'} <= artifacts.keys():
+        raise ValueError('evidence sources require an evidence spec and report')
+    for source, path in locations.items():
+        if evidence_sources[source] != path:
             raise ValueError('invalid replay evidence source path: ' + source)
         files['evidence_source:' + source] = path
+    files.update(('generated_' + name, name) for name in generated_files(artifacts))
     return files
 
 
@@ -428,15 +513,26 @@ def study_declaration(spec):
     return declaration
 
 
+def packaged_file(directory, relative):
+    path = directory / relative
+    try:
+        resolved = path.resolve()
+    except (OSError, RuntimeError) as exc:
+        raise ValueError('delivery file missing or changed: ' + relative) from exc
+    if resolved != path or not path.is_file():
+        raise ValueError('delivery file missing or changed: ' + relative)
+    return path
+
+
 def verify(directory):
     directory = directory.resolve()
-    manifest = json_read(directory / 'delivery-manifest.json')
+    manifest = json_read(packaged_file(directory, 'delivery-manifest.json'))
     if (not isinstance(manifest, dict) or manifest.get('schema_version') != SCHEMA
             or not isinstance(manifest.get('files'), list)):
         raise ValueError('unsupported delivery manifest')
     paths = {}
     seen = set()
-    specs = {}
+    hashes = {}
     for item in manifest['files']:
         role = item.get('role') if isinstance(item, dict) else None
         if not isinstance(role, str) or role in paths:
@@ -447,24 +543,29 @@ def verify(directory):
                 or path.as_posix() != rel or rel in seen):
             raise ValueError('invalid or duplicate delivery path')
         seen.add(rel)
-        file = (directory / path).resolve()
-        if not file.is_relative_to(directory) or not file.is_file():
-            raise ValueError('delivery file missing or changed: ' + rel)
-        raw = file.read_bytes()
-        if sha(raw) != item.get('sha256'):
-            raise ValueError('delivery file missing or changed: ' + rel)
         paths[role] = rel
-        if rel in ('source-spec.json', 'replay-spec.json') and role == 'generated_' + rel:
-            specs[rel] = json.loads(raw)
-    if len(specs) != 2:
-        raise ValueError('delivery manifest has missing or duplicate artifact roles')
-    source, replay = (specs[name] for name in ('source-spec.json', 'replay-spec.json'))
+        hashes[role] = item.get('sha256')
+    specs = []
+    for name in ('source-spec.json', 'replay-spec.json'):
+        role = 'generated_' + name
+        if paths.get(role) != name:
+            raise ValueError('delivery manifest has missing or duplicate artifact roles')
+        raw = packaged_file(directory, name).read_bytes()
+        if sha(raw) != hashes[role]:
+            raise ValueError('delivery file missing or changed: ' + name)
+        specs.append(decode_json(raw))
+    source, replay = specs
     expected = replay_files(replay)
     if paths != expected:
         roles = sorted(role for role in paths.keys() | expected.keys() if paths.get(role) != expected.get(role))
         raise ValueError('delivery manifest differs from replay specification: ' + ', '.join(roles))
     if study_declaration(source) != study_declaration(replay):
         raise ValueError('delivery source and replay specifications describe different inputs or study metadata')
+    for role, rel in paths.items():
+        if role in ('generated_source-spec.json', 'generated_replay-spec.json'):
+            continue
+        if file_sha256(packaged_file(directory, rel)) != hashes[role]:
+            raise ValueError('delivery file missing or changed: ' + rel)
     return {'verified_files': len(paths), 'status': 'hashes_match',
             'note': 'Hash consistency is not a digital signature or proof of scientific validity.'}
 
@@ -474,7 +575,7 @@ def main():
  v=sub.add_parser('verify');v.add_argument('directory',type=Path);args=p.parse_args()
  try:
   if args.command=='assemble':
-   raw=args.spec.read_bytes();spec=json.loads(raw,parse_constant=lambda v: (_ for _ in ()).throw(ValueError('invalid JSON number '+v)))
+   raw=args.spec.read_bytes();spec=decode_json(raw)
    report=assemble(spec,args.spec.resolve().parent,args.output_dir,raw);print(json.dumps({'output':str(args.output_dir),'status':report['status'],'warnings':len(report['warnings'])},ensure_ascii=False))
   else:print(json.dumps(verify(args.directory),ensure_ascii=False))
   return 0

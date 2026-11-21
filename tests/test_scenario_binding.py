@@ -49,6 +49,16 @@ class BindingTests(unittest.TestCase):
   with self.assertRaisesRegex(ValueError, 'ambiguous'):
    check_links(plan, report, binding)
 
+ def test_duplicate_stage_exchange_id_is_ambiguous_even_with_different_flows(self):
+  report, plan, binding = fixture()
+  report['calculation']['setup'].update(target={'@id':'system'}, unit={'@id':'unit'}, flowProperty={'@id':'property'})
+  binding.update(unit_uuid='unit', property_uuid='property')
+  rows = report['link_review']['technical_exchanges']
+  self.assertEqual(check_links(plan, report, binding)['checked_activities'], 2)
+  rows.append(dict(rows[0], flow={'@id':'another-flow'}))
+  with self.assertRaisesRegex(ValueError, 'ambiguous'):
+   check_links(plan, report, binding)
+
  def test_untracked_exchange_and_nonunit_root_blocked(self):
   report,plan,b=fixture();report['calculation']['setup'].update(target={'@id':'system'},unit={'@id':'unit'},flowProperty={'@id':'property'});b.update(unit_uuid='unit',property_uuid='property')
   altered=copy.deepcopy(report);altered['link_review']['technical_exchanges'].append({'process':{'@id':'x'},'exchange_internal_id':999})

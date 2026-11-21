@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Capture a cyclic scenario's preflight, actual exchanges and calculation from one read-only session."""
 import argparse
+from collections import defaultdict
 from contextlib import ExitStack
 import hashlib
 import json
@@ -68,73 +69,128 @@ def check_system_reference(system,root_process,binding):
     return {'ref_process':binding['root_uuid'],'reference_exchange_id':rid,'reference_flow':flow,'target_unit':binding['unit_uuid'],'target_flow_property':binding['property_uuid']}
 
 
-def check_links(plan,coverage,binding,*,strict_basis=False,stage_references=None):
-    calc=coverage['calculation'];target=(calc.get('target') or {}).get('@id')
-    if not target or target!=binding.get('system_uuid') or target!=(calc['setup'].get('target') or {}).get('@id'):raise ValueError('calculation system differs from binding')
-    if isinstance(calc['setup'].get('amount'),bool) or calc['setup'].get('amount')!=1:raise ValueError('exactly one declared functional unit required')
-    if not binding.get('unit_uuid') or binding['unit_uuid']!=(calc['setup'].get('unit') or {}).get('@id') or not binding.get('property_uuid') or binding['property_uuid']!=(calc['setup'].get('flowProperty') or {}).get('@id'):raise ValueError('calculation unit or flow property differs from binding')
-    ids=binding.get('stages');root=binding.get('root_uuid');rows=coverage['link_review']['technical_exchanges']
-    if not isinstance(ids,list) or not ids or len(ids)!=len(set(ids)):raise ValueError('invalid foreground stage list')
-    if strict_basis and (not isinstance(stage_references, dict) or set(stage_references) != set(ids)):
+def check_links(plan, coverage, binding, *, strict_basis=False, stage_references=None):
+    calc = coverage['calculation']
+    setup = calc['setup']
+    target = ident(calc.get('target'))
+    if not target or target != binding.get('system_uuid') or target != ident(setup.get('target')):
+        raise ValueError('calculation system differs from binding')
+    if isinstance(setup.get('amount'), bool) or setup.get('amount') != 1:
+        raise ValueError('exactly one declared functional unit required')
+    for field, key in (('unit', 'unit_uuid'), ('flowProperty', 'property_uuid')):
+        if not binding.get(key) or binding[key] != ident(setup.get(field)):
+            raise ValueError('calculation unit or flow property differs from binding')
+    ids = binding.get('stages')
+    if not isinstance(ids, list) or not ids or len(ids) != len(set(ids)):
+        raise ValueError('invalid foreground stage list')
+    stage_ids = set(ids)
+    if strict_basis and (not isinstance(stage_references, dict) or set(stage_references) != stage_ids):
         raise ValueError('stage reference checks are unavailable; recapture the scenario')
-    root_rows=[x for x in rows if ident(x.get('process'))==root]
-    if len(root_rows)!=len(ids):raise ValueError('root stage exchanges do not match declared stages')
-    providers=[]
-    for x in root_rows:
-        ls=x.get('links') or []
-        if x.get('is_input') is not True or not same(x.get('amount'),1) or x.get('status')!='linked' or len(ls)!=1:raise ValueError('root stage link is invalid')
-        provider = ident(ls[0].get('provider'))
+
+    root = binding.get('root_uuid')
+    root_rows = []
+    exchanges = {}
+    by_flow = defaultdict(list)
+    for exchange in coverage['link_review']['technical_exchanges']:
+        process_id = ident(exchange.get('process'))
+        if process_id == root:
+            root_rows.append(exchange)
+        if process_id in stage_ids:
+            key = (process_id, exchange.get('exchange_internal_id'))
+            if key in exchanges:
+                raise ValueError('actual foreground exchange ID is ambiguous: ' + str(key))
+            exchanges[key] = exchange
+            by_flow[process_id, ident(exchange.get('flow'))].append(key)
+
+    if len(root_rows) != len(stage_ids):
+        raise ValueError('root stage exchanges do not match declared stages')
+    providers = []
+    for exchange in root_rows:
+        links = exchange.get('links') or []
+        if (exchange.get('is_input') is not True or not same(exchange.get('amount'), 1)
+                or exchange.get('status') != 'linked' or len(links) != 1):
+            raise ValueError('root stage link is invalid')
+        provider = ident(links[0].get('provider'))
         if strict_basis:
-            actual = {'flow_uuid': ident(x.get('flow')), 'unit_uuid': ident(x.get('unit')),
-                      'flow_property_uuid': ident(x.get('flow_property'))}
-            if stage_references.get(provider) != actual or ident(ls[0].get('flow')) != actual['flow_uuid']:
+            actual = {'flow_uuid': ident(exchange.get('flow')), 'unit_uuid': ident(exchange.get('unit')),
+                      'flow_property_uuid': ident(exchange.get('flow_property'))}
+            if stage_references.get(provider) != actual or ident(links[0].get('flow')) != actual['flow_uuid']:
                 raise ValueError('root stage link differs from provider reference exchange')
         providers.append(provider)
-    if len(set(providers))!=len(providers) or set(providers)!=set(ids):raise ValueError('root stage providers differ')
-    used=set();stage_map={};unresolved=[]
+    if len(set(providers)) != len(providers) or set(providers) != stage_ids:
+        raise ValueError('root stage providers differ')
+
+    activities = binding.get('activities', [])
+    activity_index = {item.get('activity_id'): item for item in activities}
+    if len(activity_index) != len(activities):
+        raise ValueError('binding contains unused or duplicate activities')
+    used = set()
+    stage_map = {}
+    unresolved = []
     for row in plan['rows']:
-        if row['status']=='excluded':continue
-        found=[x for x in binding.get('activities',[]) if x.get('activity_id')==row['activity_id']]
-        if len(found)!=1:raise ValueError(row['activity_id']+': missing or duplicate binding')
-        rec=found[0];pid=rec.get('process_uuid')
+        if row['status'] == 'excluded':
+            continue
+        activity_id = row['activity_id']
+        rec = activity_index.get(activity_id)
+        if rec is None:
+            raise ValueError(activity_id + ': missing or duplicate binding')
+        process_id = rec.get('process_uuid')
         exchange_id = rec.get('exchange_internal_id')
         if (strict_basis or 'exchange_internal_id' in rec) and (type(exchange_id) is not int or exchange_id <= 0):
-            raise ValueError(row['activity_id'] + ': invalid openLCA internal exchange ID')
-        if pid not in ids or rec.get('is_input')!=(row['direction']=='input'):raise ValueError(row['activity_id']+': stage or direction differs')
-        if stage_map.setdefault(pid,row['stage'])!=row['stage']:raise ValueError('foreground process mixes declared stages')
-        if row['status']=='unresolved':
-            unresolved.append(row['activity_id'])
-            if rec.get('provider_uuid') is not None:raise ValueError(row['activity_id']+': unresolved activity must not have provider')
+            raise ValueError(activity_id + ': invalid openLCA internal exchange ID')
+        if process_id not in stage_ids or rec.get('is_input') != (row['direction'] == 'input'):
+            raise ValueError(activity_id + ': stage or direction differs')
+        if stage_map.setdefault(process_id, row['stage']) != row['stage']:
+            raise ValueError('foreground process mixes declared stages')
+        if row['status'] == 'unresolved':
+            unresolved.append(activity_id)
+            if rec.get('provider_uuid') is not None:
+                raise ValueError(activity_id + ': unresolved activity must not have provider')
             from audit_and_scale_inventory import unit_factor
-            expected=row['amount_per_functional_unit']*unit_factor(row['unit'],rec['unit'])
-            state='unlinked_candidate'
-        elif row['status']=='preflight_matches_review_still_required' and not row['issues']:
-            expected=row['dataset_amount_per_functional_unit'];actual=row['actual_reference']
-            if rec.get('provider_uuid')!=actual['process_uuid'] or rec.get('flow_uuid')!=actual['reference_flow_uuid'] or rec.get('unit')!=actual['unit_name'] or actual['reference_is_input']==rec['is_input']:raise ValueError(row['activity_id']+': provider reference differs')
-            state='linked'
-        else:raise ValueError(row['activity_id']+': invalid preflight status')
-        if expected is None or not same(rec['amount'],expected):raise ValueError(row['activity_id']+': amount differs from plan')
-        matches=[]
-        for x in rows:
-            key=(ident(x.get('process')),x.get('exchange_internal_id'))
-            if key in used or key[0]!=pid or ident(x.get('flow'))!=rec['flow_uuid'] or x.get('is_input')!=rec['is_input'] or (x.get('unit') or {}).get('name')!=rec['unit'] or not same(x.get('amount'),expected) or x.get('status')!=state:continue
-            if exchange_id is not None and key[1] != exchange_id:
+            expected = row['amount_per_functional_unit'] * unit_factor(row['unit'], rec['unit'])
+            state = 'unlinked_candidate'
+        elif row['status'] == 'preflight_matches_review_still_required' and not row['issues']:
+            expected = row['dataset_amount_per_functional_unit']
+            actual = row['actual_reference']
+            if (rec.get('provider_uuid') != actual['process_uuid'] or rec.get('flow_uuid') != actual['reference_flow_uuid']
+                    or rec.get('unit') != actual['unit_name'] or actual['reference_is_input'] == rec['is_input']):
+                raise ValueError(activity_id + ': provider reference differs')
+            state = 'linked'
+        else:
+            raise ValueError(activity_id + ': invalid preflight status')
+        if expected is None or not same(rec['amount'], expected):
+            raise ValueError(activity_id + ': amount differs from plan')
+
+        # Older bindings omit the exchange ID. Preserve the unique-match rule for those captures.
+        keys = ([(process_id, exchange_id)] if exchange_id is not None
+                else by_flow.get((process_id, rec['flow_uuid']), []))
+        matches = []
+        for key in keys:
+            exchange = exchanges.get(key)
+            if key in used or exchange is None:
                 continue
-            if state == 'linked' and (strict_basis or row['activity_id'] == TERMINAL_CATALYST_ACTIVITY):
-                if (ident(x.get('unit')) != actual['unit_uuid']
-                        or ident(x.get('flow_property')) != actual['flow_property_uuid']
-                        or (row['activity_id'] == TERMINAL_CATALYST_ACTIVITY
-                            and (x.get('flow') or {}).get('flowType') != 'WASTE_FLOW')):
+            if (ident(exchange.get('flow')) != rec['flow_uuid'] or exchange.get('is_input') != rec['is_input']
+                    or (exchange.get('unit') or {}).get('name') != rec['unit']
+                    or not same(exchange.get('amount'), expected) or exchange.get('status') != state):
+                continue
+            if state == 'linked' and (strict_basis or activity_id == TERMINAL_CATALYST_ACTIVITY):
+                if (ident(exchange.get('unit')) != actual['unit_uuid']
+                        or ident(exchange.get('flow_property')) != actual['flow_property_uuid']
+                        or (activity_id == TERMINAL_CATALYST_ACTIVITY
+                            and (exchange.get('flow') or {}).get('flowType') != 'WASTE_FLOW')):
                     continue
-            ls=x.get('links') or []
-            if state=='linked' and (len(ls)!=1 or ident(ls[0].get('provider'))!=rec['provider_uuid']):continue
+            links = exchange.get('links') or []
+            if state == 'linked' and (len(links) != 1 or ident(links[0].get('provider')) != rec['provider_uuid']):
+                continue
             matches.append(key)
-        if len(matches)!=1:raise ValueError(row['activity_id']+': actual exchange or provider is missing/ambiguous')
+        if len(matches) != 1:
+            raise ValueError(activity_id + ': actual exchange or provider is missing/ambiguous')
         used.add(matches[0])
-    extras=[x for x in rows if ident(x.get('process')) in ids and (ident(x.get('process')),x.get('exchange_internal_id')) not in used]
-    if extras:raise ValueError('unaccounted foreground technical exchanges')
-    if len(binding.get('activities',[]))!=len(used):raise ValueError('binding contains unused or duplicate activities')
-    return {'checked_activities':len(used),'unresolved_activity_ids':unresolved}
+    if exchanges.keys() - used:
+        raise ValueError('unaccounted foreground technical exchanges')
+    if len(activities) != len(used):
+        raise ValueError('binding contains unused or duplicate activities')
+    return {'checked_activities': len(used), 'unresolved_activity_ids': unresolved}
 
 
 def check_fixed_foreground(processes, binding):
