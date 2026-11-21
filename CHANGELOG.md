@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased (v1.7.2 candidate)
+## 1.7.2 — 2026-11-22
 
 - Validate the exact files included in a research delivery and publish the complete directory in one step. A failed assembly can be retried at the same output path.
 - Require an evidence specification and report for attached evidence sources. Check portable artifact names and reject symbolic links when verifying a package.
