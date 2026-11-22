@@ -15,9 +15,11 @@ import sys
 import tempfile
 import time
 
-GUARD_HASH = '6ebc13b648081c0718dd20a5e17fcb773c7c692cbcfa5d5135e1d9fbc0c92f20'
+GUARD_HASH = 'a0bd2aceb02c2c076046c759e51b9d701e89f4922f68dddb44c92e50aa6724a7'
 IPC_HASH = 'ddc9ebb829cbc2c70895c24ffd73cc2f0bea0273371071986fe0069abb4c3207'
 ASM_HASH = '6f3828a215c920059a5efa2fb55c233d6c54ec5cadca99ce1b1bdd10077c7ddd'
+CORE_HASH = '2504f24f5d3274b1e04ea714231699de9408a038491fc89aed12973c123e869e'
+TROVE_HASH = '3c8616203d61a12a7e3487e8b34f3c198c2b5ba9e90da0c7ea32d99cd4958012'
 
 
 class LaunchError(ValueError):
@@ -34,6 +36,13 @@ def _digest_stream(stream):
     for chunk in iter(lambda: stream.read(1024 * 1024), b''):
         value.update(chunk)
     return value.hexdigest()
+
+
+def snapshot_agent_argument(libs):
+    pinned = ((libs / 'olca-core-2.7.0.jar', CORE_HASH), (libs / 'trove4j-3.0.3.jar', TROVE_HASH))
+    if all(path.is_file() and digest(path) == expected for path, expected in pinned):
+        return '=indexed-snapshots'
+    return ''
 
 
 def validate_inputs(app, workspace, database):
@@ -131,7 +140,8 @@ def launch(app, workspace, database):
         with socket.socket() as reservation:
             reservation.bind(('127.0.0.1', 0))
             port = reservation.getsockname()[1]
-        command = [str(java), '-Xmx3584M', '-javaagent:' + str(guard), '-cp', str(libs / '*'),
+        agent = '-javaagent:' + str(guard) + snapshot_agent_argument(libs)
+        command = [str(java), '-Xmx3584M', agent, '-cp', str(libs / '*'),
                    'org.openlca.ipc.Server', '-data', str(data), '-db', database, '-port', str(port), '--readonly']
         log_path = root / 'server.log'
         with log_path.open('w+b') as logfile:

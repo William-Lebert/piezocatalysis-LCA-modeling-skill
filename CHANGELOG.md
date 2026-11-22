@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased (v1.7.3 candidate)
+
+- Use indexed exchange ID lookups for product-system snapshots in the verified macOS openLCA 2.7.0 launcher. Preserve both snapshot reads, upstream JSON output, and the original query for larger exchange sets and other compatible builds.
+
 ## 1.7.2 — 2026-11-22
 
 - Validate the exact files included in a research delivery and publish the complete directory in one step. A failed assembly can be retried at the same output path.

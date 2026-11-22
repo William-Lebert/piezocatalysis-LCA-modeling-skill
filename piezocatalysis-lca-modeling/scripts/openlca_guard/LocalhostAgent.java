@@ -37,11 +37,14 @@ public final class LocalhostAgent {
     }, "piezolca-parent-watch");
     parentWatch.setDaemon(true);
     parentWatch.start();
+    boolean indexedSnapshots = "indexed-snapshots".equals(args);
     instrumentation.addTransformer(new ClassFileTransformer() {
       @Override public byte[] transform(ClassLoader loader, String className, Class<?> old,
           ProtectionDomain domain, byte[] code) {
-        if (!"org/openlca/ipc/Server".equals(className)) return null;
+        boolean snapshotWriter = indexedSnapshots && SnapshotQuery.WRITER.equals(className);
+        if (!snapshotWriter && !"org/openlca/ipc/Server".equals(className)) return null;
         try {
+          if (snapshotWriter) return SnapshotQuery.transform(code);
           final int[] changed = {0, 0};
           ClassReader reader = new ClassReader(code);
           ClassWriter writer = new ClassWriter(reader, ClassWriter.COMPUTE_MAXS);

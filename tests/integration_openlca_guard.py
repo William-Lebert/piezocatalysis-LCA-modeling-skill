@@ -69,6 +69,10 @@ def main():
             proc_ref = next(x for x in descriptors(client, 'Process') if x['name'] == 'Synthetic treatment process')
             proc = client.call('data/get', {'@type':'Process', '@id':proc_ref['@id']})
             ref = next(x for x in proc['exchanges'] if x.get('isQuantitativeReference'))
+            system = client.call('data/get', {'@type': 'ProductSystem', '@id': ids['SYSTEM']})
+            assert system['refProcess']['@id'] == proc['@id']
+            assert system['refExchange']['internalId'] == ref['internalId']
+            assert system['refExchange']['flow']['@id'] == ref['flow']['@id']
             meth = client.call('data/get', {'@type':'ImpactMethod', '@id':ids['METHOD']})
             cat = client.call('data/get', {'@type':'ImpactCategory', '@id':meth['impactCategories'][0]['@id']})
             factor = cat['impactFactors'][0]
