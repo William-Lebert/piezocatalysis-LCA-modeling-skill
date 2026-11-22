@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased (v1.7.3 candidate)
+## 1.7.3 — 2026-11-22
 
 - Use indexed exchange ID lookups for product-system snapshots in the verified macOS openLCA 2.7.0 launcher. Preserve both snapshot reads, upstream JSON output, and the original query for larger exchange sets and other compatible builds.
 

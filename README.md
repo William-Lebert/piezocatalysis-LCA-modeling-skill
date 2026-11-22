@@ -2,11 +2,11 @@
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23813629.svg)](https://doi.org/10.5281/zenodo.23813629)
 
-Version 1.7.2.
+Version 1.7.3.
 
-版本 1.7.2。
+版本 1.7.3。
 
-本版更新与回滚方法见 [v1.7.2 维护版说明](docs/RELEASE_v1.7.2_zh.md)。
+本版更新与回滚方法见 [v1.7.3 维护版说明](docs/RELEASE_v1.7.3_zh.md)。
 
 This repository provides a research Skill for agents performing life-cycle assessment of piezocatalysis, photocatalysis, and piezo-photocatalysis systems. Its scripts, templates, and references support software-neutral modeling and openLCA or SimaPro workflows.
 
@@ -84,6 +84,10 @@ The source DOCX and licensed LCA databases are intentionally not included.
 If you use this software in research, please cite the specific version used.
 
 如果您在科研工作中使用本软件，请引用实际使用的具体版本。
+
+### Version v1.7.3
+
+Pu, X. (2026). *Piezocatalysis LCA Modeling Skill (Version v1.7.3)* [Computer software]. GitHub. [Source commit](https://github.com/William-Lebert/piezocatalysis-LCA-modeling-skill/commit/7c6ee0cc26dfeaba2a620b8baa0ad2b5f3d655de).
 
 ### Version v1.7.2
 

@@ -1,4 +1,4 @@
-# v1.7.3 维护候选说明
+# v1.7.3 维护版说明
 
 openLCA 2.7.0 读取产品系统时，JSON 序列化会扫描整个交换表，以找出系统引用的交换编号。同一个情景在计算前后各读一次快照，因此会重复扫描。隔离的 BiOCl 基准库有 42,952,270 条交换记录，而该产品系统只引用了 7 个交换 ID。Derby 执行计划确认旧查询走全表扫描，优化查询走索引。[openLCA 2.7.0 源码](https://github.com/GreenDelta/olca-modules/blob/v2.7.0/olca-core/src/main/java/org/openlca/jsonld/output/ProductSystemWriter.java#L105-L127)
 
