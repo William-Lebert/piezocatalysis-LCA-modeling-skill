@@ -42,9 +42,11 @@ public final class LocalhostAgent {
       @Override public byte[] transform(ClassLoader loader, String className, Class<?> old,
           ProtectionDomain domain, byte[] code) {
         boolean snapshotWriter = indexedSnapshots && SnapshotQuery.WRITER.equals(className);
-        if (!snapshotWriter && !"org/openlca/ipc/Server".equals(className)) return null;
+        boolean descriptors = indexedSnapshots && DescriptorLookup.JSON_REFS.equals(className);
+        if (!snapshotWriter && !descriptors && !"org/openlca/ipc/Server".equals(className)) return null;
         try {
           if (snapshotWriter) return SnapshotQuery.transform(code);
+          if (descriptors) return DescriptorLookup.transform(code);
           final int[] changed = {0, 0};
           ClassReader reader = new ClassReader(code);
           ClassWriter writer = new ClassWriter(reader, ClassWriter.COMPUTE_MAXS);

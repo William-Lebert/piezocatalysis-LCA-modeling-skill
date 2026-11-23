@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased (v1.7.4 candidate)
+
+- Look up a small number of openLCA descriptors by ID in the verified local guard, with the upstream full map used for larger reference sets.
+- Reuse a bounded set of entity responses within a guarded scenario suite. Read the product system and its parameters before and after each calculation, and use fresh reads for external IPC.
+
 ## 1.7.3 — 2026-11-22
 
 - Use indexed exchange ID lookups for product-system snapshots in the verified macOS openLCA 2.7.0 launcher. Preserve both snapshot reads, upstream JSON output, and the original query for larger exchange sets and other compatible builds.

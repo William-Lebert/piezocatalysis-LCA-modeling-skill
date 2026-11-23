@@ -3,10 +3,11 @@ from copy import deepcopy
 from pathlib import Path
 import sys
 import unittest
+from unittest.mock import Mock, patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'piezocatalysis-lca-modeling/scripts'))
 from scenario_binding import check_fixed_foreground, check_links
-from scenario_suite import activity_changes, check_recalculation, run, without_changes
+from scenario_suite import _CloneEntityReads, activity_changes, check_recalculation, run, without_changes
 
 
 def activity():
@@ -26,6 +27,47 @@ def case(row, **change):
 
 
 class ScenarioSuiteTests(unittest.TestCase):
+    def test_clone_reuses_only_successful_entity_reads_and_keeps_snapshots_live(self):
+        client = Mock()
+        client.call.side_effect = lambda method, params: {**params, 'items': []}
+        cache = _CloneEntityReads(client)
+        for kind in ('Process', 'ImpactMethod', 'ImpactCategory', 'Location'):
+            params = {'@type': kind, '@id': 'shared'}
+            cache.call('data/get', params)['items'].append('caller mutation')
+            self.assertEqual(cache.call('data/get', params)['items'], [])
+        for method in ('data/get', 'data/get/parameters'):
+            params = {'@type': 'ProductSystem', '@id': 'system'}
+            cache.call(method, params)
+            cache.call(method, params)
+        self.assertEqual(client.call.call_count, 8)
+        client.call.side_effect = None
+        client.call.return_value = {'@type': 'Process', '@id': 'mismatch'}
+        for _ in range(2):
+            cache.call('data/get', {'@type': 'Process', '@id': 'missing'})
+        self.assertEqual(client.call.call_count, 10)
+
+    def test_clone_cache_bounds_entries_and_external_runs_keep_fresh_reads(self):
+        client = Mock()
+        client.call.side_effect = lambda method, params: dict(params)
+        cache = _CloneEntityReads(client)
+        cache.MAX_ENTRIES = 1
+        for uid in ('a', 'b', 'a'):
+            cache.call('data/get', {'@type': 'Process', '@id': uid})
+        self.assertEqual(client.call.call_count, 3)
+        uid = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
+        config = dict.fromkeys(('wait_seconds', 'software_version', 'database_label',
+                                'database_version', 'system_model', 'functional_unit', 'unit_label',
+                                'mapping_database'), 'synthetic')
+        config.update(method_id=uid, category_id=uid, flow_ids=[uid])
+        from scenario_suite import FILES
+        spec = {'inputs': dict.fromkeys(FILES, ''), 'binding': dict.fromkeys(
+            ('system_uuid', 'unit_uuid', 'property_uuid'), uid)}
+        with patch('scenario_suite.capture') as capture, patch('scenario_suite.summarize'):
+            run(client, config, [spec])
+            self.assertIs(capture.call_args.args[0], client)
+            run(client, config, [spec], reuse_clone_entities=True)
+            self.assertIsInstance(capture.call_args.args[0], _CloneEntityReads)
+
     def test_energy_change_must_match_declared_scope(self):
         source = {'power': {'value': 10}, 'duration': 60}
         alt = {'power': {'value': 12}, 'duration': 60}

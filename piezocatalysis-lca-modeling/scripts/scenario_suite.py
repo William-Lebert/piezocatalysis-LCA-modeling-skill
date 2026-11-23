@@ -3,6 +3,7 @@
 
 import argparse
 import csv
+from collections import OrderedDict
 from contextlib import ExitStack
 from copy import deepcopy
 import hashlib
@@ -231,7 +232,45 @@ def summarize(bundle):
             'cases': rows, 'ranking_permitted': False, 'status': 'review_required'}
 
 
-def run(client, configuration, cases):
+class _CloneEntityReads:
+    """Bounded cache of successful entity reads within one guarded clone run."""
+
+    KINDS = frozenset(('Process', 'ImpactMethod', 'ImpactCategory', 'Location'))
+    MAX_BYTES = 8 * 1024 * 1024
+    MAX_ENTRIES = 64
+
+    def __init__(self, client):
+        self.client = client
+        self.entries = OrderedDict()
+        self.size = 0
+
+    def call(self, method, params):
+        if method != 'data/get' or params.keys() != {'@type', '@id'}:
+            return self.client.call(method, params)
+        kind, uid = params['@type'], params['@id']
+        if not isinstance(kind, str) or kind not in self.KINDS or not isinstance(uid, str):
+            return self.client.call(method, params)
+        key = (kind, uid)
+        if key in self.entries:
+            self.entries.move_to_end(key)
+            return json.loads(self.entries[key])
+        value = self.client.call(method, params)
+        if not isinstance(value, dict) or value.get('@type') != kind or ident(value) != uid:
+            return value
+        # Serialized entries avoid retaining shared mutable dictionaries across captures.
+        encoded = json.dumps(value, separators=(',', ':')).encode('utf-8')
+        if len(encoded) <= self.MAX_BYTES:
+            while (self.size + len(encoded) > self.MAX_BYTES or len(self.entries) >= self.MAX_ENTRIES):
+                self.size -= len(self.entries.popitem(last=False)[1])
+            self.entries[key] = encoded
+            self.size += len(encoded)
+        return value
+
+
+def run(client, configuration, cases, *, reuse_clone_entities=False):
+    """Reuse entities only when the caller opened a private guarded database clone."""
+    if reuse_clone_entities:
+        client = _CloneEntityReads(client)
     for key in ('method_id', 'category_id'):
         valid_uuid(configuration[key])
     flow_ids = selected_flow_ids(configuration)
@@ -357,7 +396,8 @@ def main():
                     from openlca_local_launch import launch
                     port = stack.enter_context(launch(args.openlca_app, args.workspace,
                                                       data['configuration']['database_label']))
-                result = run(Client(port, 180), data['configuration'], cases)
+                result = run(Client(port, 180), data['configuration'], cases,
+                             reuse_clone_entities=args.workspace is not None)
             if args.action == 'rerun':
                 check_recalculation(data, result)
         payload = json.dumps(result, ensure_ascii=False, indent=2, allow_nan=False)+'\n'
