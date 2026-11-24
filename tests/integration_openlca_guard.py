@@ -109,6 +109,19 @@ def main():
             result = calculate(Client(port), args)
             assert abs(result['impacts'][0]['amount'] - 3.2) < 1e-8
             assert result['impacts'][0]['reconciliation']['within_tolerance'] is True
+            # Reuse the same IPC worker across two calculations on the same system.
+            # References can be shared, but scaled impacts and contributions are recalculated.
+            args.amount = 2
+            repeated = calculate(client, args)
+            first_impact = result['impacts'][0]
+            second_impact = repeated['impacts'][0]
+            assert first_impact['category'] == second_impact['category']
+            assert abs(second_impact['amount'] - 2 * first_impact['amount']) < 1e-8
+            assert len(second_impact['contributions']) == len(first_impact['contributions']) > 0
+            for first, second in zip(first_impact['contributions'], second_impact['contributions']):
+                assert first['techFlow'] == second['techFlow']
+                assert abs(second['amount'] - 2 * first['amount']) < 1e-8
+
         with socket.socket() as conn:
             conn.settimeout(1)
             assert conn.connect_ex(('127.0.0.1', port)) != 0, 'server did not stop'

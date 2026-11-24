@@ -43,10 +43,12 @@ public final class LocalhostAgent {
           ProtectionDomain domain, byte[] code) {
         boolean snapshotWriter = indexedSnapshots && SnapshotQuery.WRITER.equals(className);
         boolean descriptors = indexedSnapshots && DescriptorLookup.JSON_REFS.equals(className);
-        if (!snapshotWriter && !descriptors && !"org/openlca/ipc/Server".equals(className)) return null;
+        boolean resultRefs = indexedSnapshots && ResultReferences.SERVICE.equals(className);
+        if (!snapshotWriter && !descriptors && !resultRefs && !"org/openlca/ipc/Server".equals(className)) return null;
         try {
           if (snapshotWriter) return SnapshotQuery.transform(code);
           if (descriptors) return DescriptorLookup.transform(code);
+          if (resultRefs) return ResultReferences.transform(code);
           final int[] changed = {0, 0};
           ClassReader reader = new ClassReader(code);
           ClassWriter writer = new ClassWriter(reader, ClassWriter.COMPUTE_MAXS);

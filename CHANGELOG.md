@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased (v1.7.5 candidate)
+
+- Reuse result-reference metadata in the verified local openLCA guard for up to 32 calls per worker and database, while encoding each calculation's values separately.
+- Verify repeated calculations in the same guarded session produce fresh LCIA impacts and contributions.
+
 ## Unreleased (v1.7.4 candidate)
 
 - Look up a small number of openLCA descriptors by ID in the verified local guard, with the upstream full map used for larger reference sets.
