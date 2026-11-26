@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased (1.7.6 candidate)
+## 1.7.6 — 2026-11-26
 
 - Apply the calculation readiness budget to openLCA IPC status polling, discard ready responses received after the deadline, and attempt to dispose of the result after a timeout.
 - Validate the readiness budget before making calculation IPC calls, including when a saved scenario suite supplies the value.
