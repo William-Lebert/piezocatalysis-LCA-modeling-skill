@@ -1,10 +1,8 @@
 # Changelog
 
-## Unreleased (1.7.8 candidate)
+## 1.7.8 — 2026-11-27
 
 - Reuse bounded raw characterization-factor rows for matching impact categories in the verified local openLCA guard. Run the upstream factor evaluation for each calculation, with the original scan for large or ambiguous selections.
-
-## Unreleased (1.7.7 candidate)
 
 - In the verified local openLCA guard, look up product-system technology descriptors by ID using the existing bounded lookup.
 - Reuse foreground and snapshot digests within a capture and validate each bundle once per scenario-suite rerun.
