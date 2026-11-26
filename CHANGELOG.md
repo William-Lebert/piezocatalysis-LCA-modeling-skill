@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased (1.7.10 candidate)
+
+- Wait for an openLCA calculation that is still scheduled to settle before disposing it. Bound that cleanup wait and surface an incomplete wait to the caller.
+- Add a manual IPC integration check for a shared fictional database, covering LCIA, snapshots, readiness timeout and result disposal after recovery.
+
 ## 1.7.9 — 2026-11-27
 
 - Add a single local entry point for timed scenario reruns and exact LCIA, inventory and snapshot comparison across two Skill copies. [Benchmark guide](docs/openlca-regression-benchmark.md)

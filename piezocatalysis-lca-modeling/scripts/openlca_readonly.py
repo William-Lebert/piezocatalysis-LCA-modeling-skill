@@ -27,6 +27,7 @@ KINDS = ('ProductSystem', 'ImpactMethod', 'Process', 'Flow', 'FlowProperty')
 MAX_RESPONSE = 32 * 1024 * 1024
 DEFAULT_CANDIDATE_PORTS = (8080, 18808)
 RESULT_WAIT_TIMEOUT = 'calculation timed out while waiting for result'
+RESULT_CLEANUP_WAIT_SECONDS = 30
 
 
 class IPCError(Exception):
@@ -186,6 +187,37 @@ def get_impacts(client: Client, result_id: str) -> tuple[list, list]:
     return impacts, warnings
 
 
+def _result_state(client: Client, result_id: str, deadline: float) -> dict:
+    if time.monotonic() >= deadline:
+        raise IPCError(RESULT_WAIT_TIMEOUT)
+    params = {'@id': result_id}
+    call_before = getattr(client, 'call_before', None)
+    if call_before is None:
+        state = client.call('result/state', params)
+    else:
+        state = call_before('result/state', params, deadline)
+    if time.monotonic() >= deadline:
+        raise IPCError(RESULT_WAIT_TIMEOUT)
+    if not isinstance(state, dict) or state.get('@id') != result_id:
+        raise IPCError('result/state: invalid or mismatched result ID')
+    return state
+
+
+def _dispose_result(client: Client, result_id: str, state: dict) -> None:
+    try:
+        # openLCA can publish a result after an early disposal of a scheduled calculation.
+        if state.get('isScheduled') is True:
+            deadline = time.monotonic() + RESULT_CLEANUP_WAIT_SECONDS
+            while state.get('isScheduled') is True:
+                state = _result_state(client, result_id, deadline)
+                if state.get('isScheduled') is True:
+                    time.sleep(min(0.2, max(0, deadline - time.monotonic())))
+    except (IPCError, ValueError) as exc:
+        raise IPCError(f'could not confirm calculation settled before disposal: {exc}') from exc
+    finally:
+        client.call('result/dispose', {'@id': result_id})
+
+
 def calculate(client: Client, args) -> dict:
     wait_seconds = numeric(args.wait_seconds, 'wait_seconds')
     if wait_seconds <= 0:
@@ -207,23 +239,12 @@ def calculate(client: Client, args) -> dict:
         deadline = time.monotonic() + wait_seconds
         # Leave time for a first status request even when the budget is shorter than the poll interval.
         delay = min(0.2, wait_seconds / 2)
-        call_before = getattr(client, 'call_before', None)
         while not state.get('error') and state.get('isReady') is not True:
             remaining = deadline - time.monotonic()
             if remaining <= 0:
                 raise IPCError(RESULT_WAIT_TIMEOUT)
             time.sleep(min(delay, remaining))
-            if time.monotonic() >= deadline:
-                raise IPCError(RESULT_WAIT_TIMEOUT)
-            params = {'@id': result_id}
-            if call_before is None:
-                state = client.call('result/state', params)
-            else:
-                state = call_before('result/state', params, deadline)
-            if time.monotonic() >= deadline:
-                raise IPCError(RESULT_WAIT_TIMEOUT)
-            if not isinstance(state, dict) or state.get('@id') != result_id:
-                raise IPCError('result/state: invalid or mismatched result ID')
+            state = _result_state(client, result_id, deadline)
             delay = 0.2
         if state.get('error'):
             raise IPCError(f'calculation failed: {state["error"]}')
@@ -257,7 +278,7 @@ def calculate(client: Client, args) -> dict:
         raise
     finally:
         try:
-            client.call('result/dispose', {'@id': result_id})
+            _dispose_result(client, result_id, state)
         except (IPCError, ValueError) as exc:
             message = f'failed to dispose result {result_id}: {exc}'
             if failure is None:

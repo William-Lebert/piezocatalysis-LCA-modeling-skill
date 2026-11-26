@@ -38,7 +38,10 @@ class Handler(BaseHTTPRequestHandler):
                 typ=params['@type']; ident={'ProductSystem':SYSTEM,'ImpactMethod':METHOD}.get(typ)
                 result=[{'@type':typ,'@id':ident,'name':'synthetic '+typ}] if ident else []
             elif method == 'data/get/parameters': result=[{'name':'power','value':2.0}]
-            elif method == 'result/calculate': result={'@id':'result-synthetic','isReady':False}
+            elif method == 'result/calculate':
+                result = {'@id': 'result-synthetic', 'isReady': False}
+                if self.server.fail in ('queued-result', 'stuck-queued'):
+                    result['isScheduled'] = True
             elif method == 'result/state':
                 self.server.states += 1
                 if self.server.fail == 'slow-state':
@@ -47,6 +50,9 @@ class Handler(BaseHTTPRequestHandler):
                     if disposed.wait(2):
                         received.set()
                 result={'@id':'result-synthetic','isReady':self.server.fail != 'never-ready'}
+                if self.server.fail in ('queued-result', 'stuck-queued'):
+                    pending = self.server.fail == 'stuck-queued' or self.server.states < 2
+                    result.update(isScheduled=pending, isReady=not pending)
                 if self.server.fail == 'state-error': result['error']='synthetic calculation failed'
             elif method == 'result/total-impacts':
                 result=[] if self.server.fail == 'empty-impacts' else [{'impactCategory':CAT,'amount':1e-13 if self.server.fail == 'tiny-mismatch' else 3.2}]
@@ -58,6 +64,8 @@ class Handler(BaseHTTPRequestHandler):
                 env_flow = {} if self.server.fail == 'missing-inventory-flow' else {'flow': INVENTORY_FLOW, 'isInput': False}
                 result=[{'enviFlow':env_flow,'amount':0.5}]
             elif method == 'result/dispose':
+                if self.server.fail == 'queued-result':
+                    self.server.disposed_before_ready = self.server.states < 2
                 self.server.disposed.set()
                 result = 'ok'
             else: raise AssertionError(method)
@@ -85,6 +93,7 @@ class ReadOnlyTests(unittest.TestCase):
         self.server.states = 0
         self.server.disposed = threading.Event()
         self.server.state_disposal_observed = threading.Event()
+        self.server.disposed_before_ready = None
     def invoke(self, *args):
         return subprocess.run([sys.executable, str(SCRIPT), '--port', str(self.server.server_port), *args],text=True,capture_output=True)
     def calc(self, *extra):
@@ -192,6 +201,29 @@ class ReadOnlyTests(unittest.TestCase):
             'result/state', 'result/dispose',
         ])
         self.assertTrue(self.server.state_disposal_observed.wait(1))
+
+    def test_timeout_waits_for_a_scheduled_result_before_disposal(self):
+        self.server.fail = 'queued-result'
+        result = self.calc('--wait-seconds', '0.000001')
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('calculation timed out', result.stderr)
+        self.assertEqual(result.stdout, '')
+        self.assertIs(self.server.disposed_before_ready, False)
+        self.assertEqual([call['method'] for call in self.server.calls[-3:]],
+                         ['result/state', 'result/state', 'result/dispose'])
+
+    def test_unsettled_result_still_gets_bounded_best_effort_disposal(self):
+        spec = importlib.util.spec_from_file_location('olca_readonly', SCRIPT)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        self.server.fail = 'stuck-queued'
+        args = SimpleNamespace(system_id=SYSTEM, method_id=METHOD, unit_id=UNIT,
+                               flow_property_id=PROPERTY, amount=1, wait_seconds=0.000001)
+        with patch.object(module, 'RESULT_CLEANUP_WAIT_SECONDS', 0.05):
+            with self.assertRaisesRegex(module.IPCError, 'timed out.*could not confirm calculation settled'):
+                module.calculate(module.Client(self.server.server_port), args)
+        self.assertEqual(self.server.calls[-1]['method'], 'result/dispose')
+        self.assertGreaterEqual(self.server.states, 1)
 
     def test_invalid_wait_budget_is_rejected_before_ipc(self):
         spec = importlib.util.spec_from_file_location('olca_readonly', SCRIPT)

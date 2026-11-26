@@ -23,6 +23,18 @@ def process_queries(trace):
     return sum('where d.id = ?' in sql for sql in descriptors), sum(' where ' not in sql for sql in descriptors)
 
 
+def read_fixture_snapshot(client, ids):
+    def entity(kind, uid):
+        return client.call('data/get', {'@type': kind, '@id': uid})
+
+    system = entity('ProductSystem', ids['SYSTEM'])
+    return {'system': system,
+            'processes': {ref['@id']: entity('Process', ref['@id']) for ref in system['processes']},
+            'method': entity('ImpactMethod', ids['METHOD']),
+            'category': entity('ImpactCategory', ids['CATEGORY']),
+            'parameters': client.call('data/get/parameters', {'@type': 'ProductSystem', '@id': ids['SYSTEM']})}
+
+
 def observe(app, workspace, ids, trace, agent_option):
     spawn = subprocess.Popen
 
@@ -37,23 +49,12 @@ def observe(app, workspace, ids, trace, agent_option):
         with launch(app, workspace, 'descriptor_fallback') as port:
             client = Client(port, timeout=30)
 
-            def entity(kind, uid):
-                return client.call('data/get', {'@type': kind, '@id': uid})
-
-            def snapshot():
-                system = entity('ProductSystem', ids['SYSTEM'])
-                return {'system': system,
-                        'processes': {ref['@id']: entity('Process', ref['@id']) for ref in system['processes']},
-                        'method': entity('ImpactMethod', ids['METHOD']),
-                        'category': entity('ImpactCategory', ids['CATEGORY']),
-                        'parameters': client.call('data/get/parameters', {'@type': 'ProductSystem', '@id': ids['SYSTEM']})}
-
             args = SimpleNamespace(system_id=ids['SYSTEM'], method_id=ids['METHOD'], unit_id=ids['UNIT'],
                                    flow_property_id=ids['PROPERTY'], amount=1, wait_seconds=30,
                                    software_version='2.7.0', database_label='descriptor_fallback',
                                    database_version='synthetic', system_model='synthetic', unit_label='kg',
                                    functional_unit='1 kg synthetic service', include_total_flows=True)
-            before = snapshot()
+            before = read_fixture_snapshot(client, ids)
             assert len({link['provider']['@id'] for link in before['system']['processLinks']}) == 33
             assert len(before['processes']) == 34
             offset = trace.stat().st_size
@@ -61,7 +62,7 @@ def observe(app, workspace, ids, trace, agent_option):
             with trace.open('rb') as stream:
                 stream.seek(offset)
                 queries = process_queries(stream.read().decode())
-            after = snapshot()
+            after = read_fixture_snapshot(client, ids)
             assert before == after and digest(before) == digest(after)
     for key in ('calculated_at_utc', 'result_id'):
         del result[key]
