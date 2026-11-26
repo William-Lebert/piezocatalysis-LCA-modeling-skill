@@ -16,7 +16,7 @@ from types import SimpleNamespace
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS = ROOT / 'piezocatalysis-lca-modeling/scripts'
 sys.path.insert(0, str(SCRIPTS))
-from openlca_local_launch import launch
+from openlca_local_launch import launch, snapshot_agent_argument
 from openlca_readonly import Client, calculate, discover_local
 
 APP = Path('/Applications/openLCA.app')
@@ -42,6 +42,29 @@ def rpc(port, method, params):
         return json.loads(c.getresponse().read())
     finally:
         c.close()
+
+
+
+def verify_impact_factor_queries(temp):
+    agent_option = snapshot_agent_argument(LIBS)
+    if not agent_option:
+        return
+    guard = SCRIPTS / 'openlca_guard' / 'localhost-agent.jar'
+    fixture = ROOT / 'tests' / 'fixtures' / 'verify_openlca_impact_factors.py'
+    command = [str(JAVA), '-Xmx1400M', '-javaagent:' + str(guard) + agent_option,
+               '-cp', str(LIBS / '*'), 'org.python.util.jython', str(fixture),
+               str(temp / 'impact_factor_cases')]
+    # The guard keeps the child alive while the parent's end of stdin is open.
+    reader, writer = os.pipe()
+    try:
+        result = subprocess.run(command, stdin=reader, cwd=temp, capture_output=True, text=True, timeout=60)
+    finally:
+        os.close(reader)
+        os.close(writer)
+    if result.returncode:
+        raise RuntimeError('impact factor fixture failed: ' + result.stderr[-1500:])
+    assert 'FALLBACK selected rows and duplicate fallback verified' in result.stdout
+    print('PASS: regional defaults, recalculated formula factors and duplicate fallback')
 
 
 def main():
@@ -211,6 +234,7 @@ def main():
         print('PASS: local-only listener; write methods rejected; process stopped; CLI autostart succeeded')
         print('PASS: guarded server stopped after parent was killed')
         print('PASS: candidate lookup against real synthetic openLCA process')
+        verify_impact_factor_queries(Path(temp))
 
 
 if __name__ == '__main__':

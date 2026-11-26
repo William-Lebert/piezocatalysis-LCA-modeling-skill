@@ -45,11 +45,14 @@ public final class LocalhostAgent {
         boolean descriptors = indexedSnapshots && (DescriptorLookup.JSON_REFS.equals(className)
             || DescriptorLookup.TECH_INDEX.equals(className));
         boolean resultRefs = indexedSnapshots && ResultReferences.SERVICE.equals(className);
-        if (!snapshotWriter && !descriptors && !resultRefs && !"org/openlca/ipc/Server".equals(className)) return null;
+        boolean impactFactors = indexedSnapshots && ImpactFactorQuery.BUILDER.equals(className);
+        if (!snapshotWriter && !descriptors && !resultRefs && !impactFactors
+            && !"org/openlca/ipc/Server".equals(className)) return null;
         try {
           if (snapshotWriter) return SnapshotQuery.transform(code);
           if (descriptors) return DescriptorLookup.transform(className, code);
           if (resultRefs) return ResultReferences.transform(code);
+          if (impactFactors) return ImpactFactorQuery.transform(code);
           final int[] changed = {0, 0};
           ClassReader reader = new ClassReader(code);
           ClassWriter writer = new ClassWriter(reader, ClassWriter.COMPUTE_MAXS);

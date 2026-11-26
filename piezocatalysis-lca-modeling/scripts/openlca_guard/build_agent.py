@@ -32,7 +32,8 @@ def main():
             raise SystemExit('build dependency checksum mismatch: ' + path.name)
     classpath = os.pathsep.join(str(path) for path in (args.asm, args.core, args.trove))
     sources = [Path(__file__).with_name(name) for name in
-               ('LocalhostAgent.java', 'SnapshotQuery.java', 'DescriptorLookup.java', 'ResultReferences.java')]
+               ('LocalhostAgent.java', 'SnapshotQuery.java', 'DescriptorLookup.java', 'ResultReferences.java',
+                'ImpactFactorQuery.java')]
     with tempfile.TemporaryDirectory(prefix='piezolca-guard-build-') as temp:
         subprocess.run([str(args.java), '-jar', str(args.compiler), '-1.8', '-cp', classpath,
                         '-d', temp, *(str(source) for source in sources)], check=True)

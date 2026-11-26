@@ -10,11 +10,13 @@ The same lookup also serves the technology index of a prepared product system. T
 
 The result encoder reuses one descriptor resolver per IPC worker for up to 32 calls on the same private database clone. The resolver holds reference metadata. Each RPC still reads its calculation's values and builds its own response. [openLCA result encoder](https://github.com/GreenDelta/olca-modules/blob/v2.7.0/olca-core/src/main/java/org/openlca/core/services/JsonResultService.java)
 
+The same hash-checked runtime reads raw characterization factors for the active impact categories once per matching category set and calculation worker. The database, category IDs and a single bounded row set define the reuse scope. The upstream factor handler evaluates formulas, location defaults, conversions and uncertainty for each calculation. Larger selections and duplicate factor keys use the upstream scan. The bounds are 64 categories and 16,384 result rows. [openLCA factor builder](https://github.com/GreenDelta/olca-modules/blob/v2.7.0/olca-core/src/main/java/org/openlca/core/matrix/ImpactBuilder.java)
+
 The openLCA executable and its Java libraries are external dependencies from the user's verified installation. `localhost-agent.jar` contains only this project's compiled classes and manifest. Localhost access is unauthenticated.
 
 ## Reproduce the agent binary
 
-`LocalhostAgent.java`, `SnapshotQuery.java`, `DescriptorLookup.java` and `ResultReferences.java` are the sources. The builder verifies the separately obtained Eclipse ECJ compiler version 3.42.0 and the installed ASM, olca-core and Trove JARs against pinned SHA-256 values. These dependencies are obtained separately.
+`LocalhostAgent.java`, `SnapshotQuery.java`, `DescriptorLookup.java`, `ResultReferences.java` and `ImpactFactorQuery.java` are the sources. The builder verifies the separately obtained Eclipse ECJ compiler version 3.42.0 and the installed ASM, olca-core and Trove JARs against pinned SHA-256 values. These dependencies are obtained separately.
 
 ```sh
 olca_libs=/Applications/openLCA.app/Contents/Eclipse/plugins/olca-app_2.7.0/libs
@@ -27,4 +29,4 @@ python3 piezocatalysis-lca-modeling/scripts/openlca_guard/build_agent.py \
   --output /tmp/localhost-agent-rebuilt.jar
 ```
 
-Expected SHA-256 is `f8e6cef44921e8c479439acc77d2f8a658a0b3b78eaf8cdca7a2367642f0e8db`. Verify with `shasum -a 256 /tmp/localhost-agent-rebuilt.jar`. The script requires a new output file. After editing the sources, review the rebuilt JAR, update the pinned guard hash in the launcher, and rerun the real software integration tests.
+Expected SHA-256 is `d20c7b748e844d17f0dd9e7bab0f043e1ae4be5b0a71fe378c2a05eadd72aee5`. Verify with `shasum -a 256 /tmp/localhost-agent-rebuilt.jar`. The script requires a new output file. After editing the sources, review the rebuilt JAR, update the pinned guard hash in the launcher, and rerun the real software integration tests.
