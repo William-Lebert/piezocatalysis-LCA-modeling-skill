@@ -273,8 +273,7 @@ class _CloneEntityReads:
         return value
 
 
-def run(client, configuration, cases, *, reuse_clone_entities=False):
-    """Reuse entities only when the caller opened a private guarded database clone."""
+def _capture_suite(client, configuration, cases, *, reuse_clone_entities):
     if reuse_clone_entities:
         client = _CloneEntityReads(client)
     for key in ('method_id', 'category_id'):
@@ -297,18 +296,28 @@ def run(client, configuration, cases, *, reuse_clone_entities=False):
             captured = capture(client, *(paths[k] for k in FILES), binding, args,
                                configuration['category_id'], flow_ids, strict_basis=True)
             records.append({**case, 'capture': captured})
-    bundle = {'schema_version': SCHEMA, 'configuration': configuration, 'cases': records}
+    return {'schema_version': SCHEMA, 'configuration': configuration, 'cases': records}
+
+
+def run(client, configuration, cases, *, reuse_clone_entities=False):
+    """Capture and validate a suite. Reuse entities only inside a private guarded clone."""
+    bundle = _capture_suite(client, configuration, cases, reuse_clone_entities=reuse_clone_entities)
     summarize(bundle)
     return bundle
 
 
 def check_recalculation(reference, current):
+    _check_recalculation(reference, current)
+
+
+def _check_recalculation(reference, current, *, prior=None):
     if (reference['configuration'] != current['configuration']
             or len(reference['cases']) != len(current['cases'])
             or any(old[k] != new[k] for old, new in zip(reference['cases'], current['cases'])
                    for k in ('id', 'change', 'inputs', 'binding'))):
         raise ValueError('recalculation case declarations or inputs differ')
-    prior = summarize(reference)
+    if prior is None:
+        prior = summarize(reference)
     fresh = summarize(current)
     for old, new in zip(reference['cases'], current['cases']):
         for key in ('snapshot_sha256', 'provider_snapshot_hashes'):
@@ -386,6 +395,7 @@ def main():
         else:
             if data['schema_version'] != SCHEMA:
                 raise ValueError('unsupported scenario suite schema')
+            prior = None
             if args.action == 'capture':
                 cases = []
                 for case in data['cases']:
@@ -394,7 +404,7 @@ def main():
                     cases.append({'id': case['id'], 'change': case.get('change'), 'inputs': inputs,
                                   'binding': read_json((base / case['binding']).read_bytes())})
             else:
-                summarize(data)
+                prior = summarize(data)
                 cases = [{k: c[k] for k in ('id', 'change', 'inputs', 'binding')} for c in data['cases']]
             with ExitStack() as stack:
                 port = args.port
@@ -402,10 +412,12 @@ def main():
                     from openlca_local_launch import launch
                     port = stack.enter_context(launch(args.openlca_app, args.workspace,
                                                       data['configuration']['database_label']))
-                result = run(Client(port, 180), data['configuration'], cases,
-                             reuse_clone_entities=args.workspace is not None)
-            if args.action == 'rerun':
-                check_recalculation(data, result)
+                result = _capture_suite(Client(port, 180), data['configuration'], cases,
+                                        reuse_clone_entities=args.workspace is not None)
+            if prior is None:
+                summarize(result)
+            else:
+                _check_recalculation(data, result, prior=prior)
         payload = json.dumps(result, ensure_ascii=False, indent=2, allow_nan=False)+'\n'
         with args.output.open('x', encoding='utf-8') as stream:
             stream.write(payload)

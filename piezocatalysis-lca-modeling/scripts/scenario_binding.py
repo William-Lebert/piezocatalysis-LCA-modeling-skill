@@ -226,7 +226,8 @@ def check_fixed_foreground(processes, binding):
 def capture(client,source_path,inventory,manifest,mapping,assignments,binding,args,category_id,flow_ids,*,strict_basis=False):
     raw=source_path.read_bytes();source=json.loads(raw,parse_constant=lambda x: (_ for _ in ()).throw(ValueError('invalid JSON number '+x)));model,service=build_foreground(source)
     h=load_handoff(inventory,manifest,mapping,assignments)
-    if h['input_sha256']!=hashlib.sha256(raw).hexdigest() or h['functional_unit']!=model['functional_unit'] or h['boundary']!=model['boundary'] or h['functional_unit_type']!=service:raise ValueError('inventory manifest differs from foreground')
+    foreground_sha256 = hashlib.sha256(raw).hexdigest()
+    if h['input_sha256']!=foreground_sha256 or h['functional_unit']!=model['functional_unit'] or h['boundary']!=model['boundary'] or h['functional_unit_type']!=service:raise ValueError('inventory manifest differs from foreground')
     if service == 'h2o2_product' and any(h.get(key) != model[key] for key in ('product_basis', 'product_definition')):
         raise ValueError('inventory product definition differs from foreground')
     expected={x['activity_id']:x for x in model['functional_unit_flows']};actual={x['activity_id']:x for x in h['rows']}
@@ -257,7 +258,8 @@ def capture(client,source_path,inventory,manifest,mapping,assignments,binding,ar
     args.include_total_flows=True
     calc=calculate(client,args)
     after=snapshot()
-    if digest(before)!=digest(after):raise ValueError('system, processes, method, selected category or parameters changed during calculation')
+    snapshot_sha256 = digest(before)
+    if snapshot_sha256!=digest(after):raise ValueError('system, processes, method, selected category or parameters changed during calculation')
     if preflight(h,client,args.mapping_database,system_processes=after['processes'])!=plan:
         raise ValueError('mapping preflight changed during calculation')
     coverage=analyze(calc,before['system'],before['processes'],before['category'],flow_ids)
@@ -265,7 +267,7 @@ def capture(client,source_path,inventory,manifest,mapping,assignments,binding,ar
     provider_ids={r['actual_reference']['process_uuid'] for r in plan['rows'] if r.get('actual_reference')}
     providers={pid:before['processes'].get(pid) for pid in provider_ids}
     if any(v is None for v in providers.values()):raise ValueError('mapped provider missing from system snapshot')
-    return {'schema_version':'piezolca.bound-scenario/2','foreground_sha256':hashlib.sha256(raw).hexdigest(),'foreground_semantic_sha256':digest(source),'inventory_sha256':h['inventory_sha256'],'manifest_sha256':h['manifest_sha256'],'mapping_sha256':h['mapping_sha256'],'assignments_sha256':h['assignments_sha256'],'binding':binding,'binding_sha256':digest(binding),'system_reference':reference,'snapshot_sha256':digest(before),'provider_snapshots_sha256':digest(providers),'provider_snapshot_hashes':{pid:digest(p) for pid,p in providers.items()},'method_snapshot_sha256':digest(before['method']),'category_snapshot_sha256':digest(before['category']),'strict_exchange_basis':strict_basis,'stage_references':stage_references,'parameters_at_calculation':before['parameters'],'parameters_sha256':digest(before['parameters']),'parameter_overrides':calc['setup'].get('parameters',[]),'plan':plan,'plan_sha256':digest(plan),'coverage':coverage,'coverage_sha256':digest(coverage),'calculation_sha256':digest(calc),'link_check':links,'status':'observed_in_session_review_required','note':'Snapshot comparison covers the listed system/processes, method, selected category and parameters, not every LCIA category or licensed database file. Database and functional-unit labels are user assertions; human scientific review remains required.'}
+    return {'schema_version':'piezolca.bound-scenario/2','foreground_sha256':foreground_sha256,'foreground_semantic_sha256':digest(source),'inventory_sha256':h['inventory_sha256'],'manifest_sha256':h['manifest_sha256'],'mapping_sha256':h['mapping_sha256'],'assignments_sha256':h['assignments_sha256'],'binding':binding,'binding_sha256':digest(binding),'system_reference':reference,'snapshot_sha256':snapshot_sha256,'provider_snapshots_sha256':digest(providers),'provider_snapshot_hashes':{pid:digest(p) for pid,p in providers.items()},'method_snapshot_sha256':digest(before['method']),'category_snapshot_sha256':digest(before['category']),'strict_exchange_basis':strict_basis,'stage_references':stage_references,'parameters_at_calculation':before['parameters'],'parameters_sha256':digest(before['parameters']),'parameter_overrides':calc['setup'].get('parameters',[]),'plan':plan,'plan_sha256':digest(plan),'coverage':coverage,'coverage_sha256':digest(coverage),'calculation_sha256':digest(calc),'link_check':links,'status':'observed_in_session_review_required','note':'Snapshot comparison covers the listed system/processes, method, selected category and parameters, not every LCIA category or licensed database file. Database and functional-unit labels are user assertions; human scientific review remains required.'}
 
 
 def compare_bound(left,right,left_source,right_source,contexts):

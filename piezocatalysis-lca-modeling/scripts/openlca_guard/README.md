@@ -6,6 +6,8 @@ The guard supports the exact signed runtime checked by `openlca_local_launch.py`
 
 In that same pinned runtime, `DescriptorLookup.java` changes the writer's descriptor map to load individual references using the existing DAO's ID lookup. After 32 distinct lookups for one entity type in an export, it loads the original full map. The JSON export still supplies its own fields and content. [openLCA descriptor resolver](https://github.com/GreenDelta/olca-modules/blob/v2.7.0/olca-core/src/main/java/org/openlca/jsonld/output/JsonRefs.java)
 
+The same lookup also serves the technology index of a prepared product system. The original link traversal requests process, product-system, result and flow descriptors by their internal IDs. Each map keeps at most 32 point lookups before falling back to the DAO's full map. Each calculation builds its own technology index and associated maps. [openLCA technology index](https://github.com/GreenDelta/olca-modules/blob/v2.7.0/olca-core/src/main/java/org/openlca/core/matrix/index/TechIndex.java#L122-L151)
+
 The result encoder reuses one descriptor resolver per IPC worker for up to 32 calls on the same private database clone. The resolver holds reference metadata. Each RPC still reads its calculation's values and builds its own response. [openLCA result encoder](https://github.com/GreenDelta/olca-modules/blob/v2.7.0/olca-core/src/main/java/org/openlca/core/services/JsonResultService.java)
 
 The openLCA executable and its Java libraries are external dependencies from the user's verified installation. `localhost-agent.jar` contains only this project's compiled classes and manifest. Localhost access is unauthenticated.
@@ -25,4 +27,4 @@ python3 piezocatalysis-lca-modeling/scripts/openlca_guard/build_agent.py \
   --output /tmp/localhost-agent-rebuilt.jar
 ```
 
-Expected SHA-256 is `f13012a8d14aa4d2121bebce2199003e4b80604876299731d9f2253e49e289bb`. Verify with `shasum -a 256 /tmp/localhost-agent-rebuilt.jar`. The script requires a new output file. After editing the sources, review the rebuilt JAR, update the pinned guard hash in the launcher, and rerun the real software integration tests.
+Expected SHA-256 is `f8e6cef44921e8c479439acc77d2f8a658a0b3b78eaf8cdca7a2367642f0e8db`. Verify with `shasum -a 256 /tmp/localhost-agent-rebuilt.jar`. The script requires a new output file. After editing the sources, review the rebuilt JAR, update the pinned guard hash in the launcher, and rerun the real software integration tests.
