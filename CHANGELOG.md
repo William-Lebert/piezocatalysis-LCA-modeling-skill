@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased (1.7.9 candidate)
+
+- Add a single local entry point for timed scenario reruns and exact LCIA, inventory and snapshot comparison across two Skill copies.
+- Verify the descriptor lookup fallback on a real openLCA fixture with 33 linked suppliers.
+- Shorten the README and align its software citation with the formal Zenodo archive.
+
 ## 1.7.8 — 2026-11-27
 
 - Reuse bounded raw characterization-factor rows for matching impact categories in the verified local openLCA guard. Run the upstream factor evaluation for each calculation, with the original scan for large or ambiguous selections.
