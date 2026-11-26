@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased (1.7.6 candidate)
+
+- Apply the calculation readiness budget to openLCA IPC status polling, discard ready responses received after the deadline, and attempt to dispose of the result after a timeout.
+- Validate the readiness budget before making calculation IPC calls, including when a saved scenario suite supplies the value.
+
 ## 1.7.5 — 2026-11-24
 
 - Reuse result-reference metadata in the verified local openLCA guard for up to 32 calls per worker and database, while encoding each calculation's values separately.

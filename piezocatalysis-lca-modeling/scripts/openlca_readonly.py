@@ -8,10 +8,12 @@ from __future__ import annotations
 
 import argparse
 from contextlib import ExitStack
+from contextvars import ContextVar
 from datetime import datetime, timezone
 import http.client
 import json
 import math
+import socket
 import sys
 import time
 import uuid
@@ -24,6 +26,7 @@ ALLOWED_METHODS = frozenset({'data/get', 'data/get/descriptors', 'data/get/param
 KINDS = ('ProductSystem', 'ImpactMethod', 'Process', 'Flow', 'FlowProperty')
 MAX_RESPONSE = 32 * 1024 * 1024
 DEFAULT_CANDIDATE_PORTS = (8080, 18808)
+RESULT_WAIT_TIMEOUT = 'calculation timed out while waiting for result'
 
 
 class IPCError(Exception):
@@ -39,6 +42,15 @@ class Client:
         if not 1 <= port <= 65535 or not math.isfinite(timeout) or timeout <= 0:
             raise ValueError('invalid port or timeout')
         self.port, self.timeout, self.next_id = port, timeout, 1
+        self._deadline = ContextVar('openlca_call_deadline', default=None)
+
+    def call_before(self, method: str, params: dict, deadline: float):
+        """Apply a calculation's polling deadline to this request only."""
+        token = self._deadline.set(deadline)
+        try:
+            return self.call(method, params)
+        finally:
+            self._deadline.reset(token)
 
     def call(self, method: str, params: dict):
         if method not in ALLOWED_METHODS:
@@ -46,7 +58,11 @@ class Client:
         request_id = self.next_id
         self.next_id += 1
         data = json.dumps({'jsonrpc': '2.0', 'id': request_id, 'method': method, 'params': params}, allow_nan=False).encode()
-        connection = http.client.HTTPConnection('127.0.0.1', self.port, timeout=self.timeout)
+        deadline = self._deadline.get()
+        timeout = self.timeout if deadline is None else min(self.timeout, deadline - time.monotonic())
+        if timeout <= 0:
+            raise IPCError(RESULT_WAIT_TIMEOUT)
+        connection = http.client.HTTPConnection('127.0.0.1', self.port, timeout=timeout)
         try:
             connection.request('POST', '/', body=data, headers={'Content-Type': 'application/json'})
             response = connection.getresponse()
@@ -59,6 +75,8 @@ class Client:
                 raise ValueError(f'invalid JSON number {value}')
             payload = json.loads(raw, parse_constant=bad_constant)
         except (OSError, http.client.HTTPException, ValueError, UnicodeError) as exc:
+            if timeout < self.timeout and isinstance(exc, (TimeoutError, socket.timeout)):
+                raise IPCError(RESULT_WAIT_TIMEOUT) from exc
             raise IPCError(f'{method}: connection or JSON error: {exc}') from exc
         finally:
             connection.close()
@@ -169,6 +187,9 @@ def get_impacts(client: Client, result_id: str) -> tuple[list, list]:
 
 
 def calculate(client: Client, args) -> dict:
+    wait_seconds = numeric(args.wait_seconds, 'wait_seconds')
+    if wait_seconds <= 0:
+        raise IPCError('wait_seconds must be greater than zero')
     system = known_ref(client, 'ProductSystem', args.system_id)
     method = known_ref(client, 'ImpactMethod', args.method_id)
     setup = {'target': {'@type': 'ProductSystem', '@id': args.system_id},
@@ -183,18 +204,29 @@ def calculate(client: Client, args) -> dict:
     result_id = state['@id']
     failure = None
     try:
-        deadline = time.monotonic() + args.wait_seconds
-        while True:
-            if state.get('error'):
-                raise IPCError(f'calculation failed: {state["error"]}')
-            if state.get('isReady') is True:
-                break
+        deadline = time.monotonic() + wait_seconds
+        # Leave time for a first status request even when the budget is shorter than the poll interval.
+        delay = min(0.2, wait_seconds / 2)
+        call_before = getattr(client, 'call_before', None)
+        while not state.get('error') and state.get('isReady') is not True:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise IPCError(RESULT_WAIT_TIMEOUT)
+            time.sleep(min(delay, remaining))
             if time.monotonic() >= deadline:
-                raise IPCError('calculation timed out while waiting for result')
-            time.sleep(min(0.2, max(0, deadline - time.monotonic())))
-            state = client.call('result/state', {'@id': result_id})
+                raise IPCError(RESULT_WAIT_TIMEOUT)
+            params = {'@id': result_id}
+            if call_before is None:
+                state = client.call('result/state', params)
+            else:
+                state = call_before('result/state', params, deadline)
+            if time.monotonic() >= deadline:
+                raise IPCError(RESULT_WAIT_TIMEOUT)
             if not isinstance(state, dict) or state.get('@id') != result_id:
                 raise IPCError('result/state: invalid or mismatched result ID')
+            delay = 0.2
+        if state.get('error'):
+            raise IPCError(f'calculation failed: {state["error"]}')
         impacts, warnings = get_impacts(client, result_id)
         total_flows = None
         if getattr(args, 'include_total_flows', False):

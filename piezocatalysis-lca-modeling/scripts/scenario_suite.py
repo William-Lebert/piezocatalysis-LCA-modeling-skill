@@ -244,6 +244,12 @@ class _CloneEntityReads:
         self.entries = OrderedDict()
         self.size = 0
 
+    def call_before(self, method, params, deadline):
+        call_before = getattr(self.client, 'call_before', None)
+        if call_before is None:
+            return self.client.call(method, params)
+        return call_before(method, params, deadline)
+
     def call(self, method, params):
         if method != 'data/get' or params.keys() != {'@type', '@id'}:
             return self.client.call(method, params)

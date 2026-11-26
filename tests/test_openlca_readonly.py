@@ -41,6 +41,11 @@ class Handler(BaseHTTPRequestHandler):
             elif method == 'result/calculate': result={'@id':'result-synthetic','isReady':False}
             elif method == 'result/state':
                 self.server.states += 1
+                if self.server.fail == 'slow-state':
+                    disposed = self.server.disposed
+                    received = self.server.state_disposal_observed
+                    if disposed.wait(2):
+                        received.set()
                 result={'@id':'result-synthetic','isReady':self.server.fail != 'never-ready'}
                 if self.server.fail == 'state-error': result['error']='synthetic calculation failed'
             elif method == 'result/total-impacts':
@@ -52,10 +57,21 @@ class Handler(BaseHTTPRequestHandler):
             elif method == 'result/total-flows':
                 env_flow = {} if self.server.fail == 'missing-inventory-flow' else {'flow': INVENTORY_FLOW, 'isInput': False}
                 result=[{'enviFlow':env_flow,'amount':0.5}]
-            elif method == 'result/dispose': result='ok'
+            elif method == 'result/dispose':
+                self.server.disposed.set()
+                result = 'ok'
             else: raise AssertionError(method)
             response={'jsonrpc':'2.0','id':True if self.server.fail == 'boolean-id' else req['id'],'result':result}
-        raw=json.dumps(response).encode(); self.send_response(200); self.send_header('Content-Type','application/json'); self.send_header('Content-Length',str(len(raw))); self.end_headers(); self.wfile.write(raw)
+        raw = json.dumps(response).encode()
+        self.send_response(200)
+        self.send_header('Content-Type', 'application/json')
+        self.send_header('Content-Length', str(len(raw)))
+        try:
+            self.end_headers()
+            self.wfile.write(raw)
+        except (BrokenPipeError, ConnectionResetError):
+            if method != 'result/state':
+                raise
 
 class ReadOnlyTests(unittest.TestCase):
     @classmethod
@@ -63,7 +79,12 @@ class ReadOnlyTests(unittest.TestCase):
         cls.server=FakeServer(); cls.thread=threading.Thread(target=cls.server.serve_forever,daemon=True);cls.thread.start()
     @classmethod
     def tearDownClass(cls): cls.server.shutdown();cls.server.server_close();cls.thread.join()
-    def setUp(self): self.server.calls=[];self.server.fail='';self.server.states=0
+    def setUp(self):
+        self.server.calls = []
+        self.server.fail = ''
+        self.server.states = 0
+        self.server.disposed = threading.Event()
+        self.server.state_disposal_observed = threading.Event()
     def invoke(self, *args):
         return subprocess.run([sys.executable, str(SCRIPT), '--port', str(self.server.server_port), *args],text=True,capture_output=True)
     def calc(self, *extra):
@@ -160,6 +181,33 @@ class ReadOnlyTests(unittest.TestCase):
             '--functional-unit','test','--wait-seconds','0.05')
         self.assertNotEqual(r.returncode,0);self.assertIn('timed out',r.stderr)
         self.assertEqual(self.server.calls[-1]['method'],'result/dispose')
+    def test_slow_ready_response_times_out_and_disposes(self):
+        self.server.fail = 'slow-state'
+        result = self.calc('--wait-seconds', '0.5')
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('timed out', result.stderr)
+        self.assertEqual(result.stdout, '')
+        self.assertEqual([call['method'] for call in self.server.calls], [
+            'data/get/descriptors', 'data/get/descriptors', 'result/calculate',
+            'result/state', 'result/dispose',
+        ])
+        self.assertTrue(self.server.state_disposal_observed.wait(1))
+
+    def test_invalid_wait_budget_is_rejected_before_ipc(self):
+        spec = importlib.util.spec_from_file_location('olca_readonly', SCRIPT)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        client = module.Client(self.server.server_port)
+        for budget in (True, float('nan'), float('inf'), 0, -1):
+            with self.subTest(budget=budget):
+                args = SimpleNamespace(system_id=SYSTEM, method_id=METHOD, unit_id=UNIT,
+                                       flow_property_id=PROPERTY, amount=1, wait_seconds=budget,
+                                       software_version='2.7', database_label='test', database_version='1',
+                                       system_model='test', functional_unit='test', unit_label='kg')
+                with self.assertRaisesRegex(module.IPCError, 'wait_seconds'):
+                    module.calculate(client, args)
+                self.assertEqual(self.server.calls, [])
+
     def test_missing_system_stops_before_calculation(self):
         r=self.invoke('calculate','--system-id','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','--method-id',METHOD,'--amount','1','--unit-id',UNIT,'--flow-property-id',PROPERTY,'--unit-label','kg','--database-label','test','--database-version','1','--system-model','test','--software-version','2.7','--functional-unit','test')
         self.assertNotEqual(r.returncode,0);self.assertNotIn('result/calculate',[c['method'] for c in self.server.calls])
