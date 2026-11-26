@@ -1,8 +1,8 @@
 # Changelog
 
-## Unreleased (1.7.9 candidate)
+## 1.7.9 — 2026-11-27
 
-- Add a single local entry point for timed scenario reruns and exact LCIA, inventory and snapshot comparison across two Skill copies.
+- Add a single local entry point for timed scenario reruns and exact LCIA, inventory and snapshot comparison across two Skill copies. [Benchmark guide](docs/openlca-regression-benchmark.md)
 - Verify the descriptor lookup fallback on a real openLCA fixture with 33 linked suppliers.
 - Shorten the README and align its software citation with the formal Zenodo archive.
 
