@@ -1,9 +1,11 @@
 # Changelog
 
-## Unreleased (1.7.10 candidate)
+## 1.8.0 — Unreleased
 
-- Wait for an openLCA calculation that is still scheduled to settle before disposing it. Bound that cleanup wait and surface an incomplete wait to the caller.
-- Add a manual IPC integration check for a shared fictional database, covering LCIA, snapshots, readiness timeout and result disposal after recovery.
+- Reduce repeated work in openLCA 2.7.0 scenario reruns. The verified macOS guard uses indexed snapshot reads and bounded reuse of descriptors, result references and characterization-factor rows. Upstream queries cover larger or ambiguous selections.
+- Dispose of timed-out IPC results after scheduled work settles. Bound that cleanup wait and report when the server has yet to settle.
+- Verify stable LCIA, contribution, inventory and snapshot outputs with the timed scenario rerun entry point. Use the same fictional 33-supplier database to check manual IPC and result disposal after recovery on Windows and macOS.
+- Check research-delivery artifacts against their replay specification. Preserve original digests on older captures and assemble complete deliveries before publishing the output directory.
 
 ## 1.7.9 — 2026-11-27
 
