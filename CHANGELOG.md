@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.8.0 — Unreleased
+## 1.8.0 — 2026-11-27
 
 - Reduce repeated work in openLCA 2.7.0 scenario reruns. The verified macOS guard uses indexed snapshot reads and bounded reuse of descriptors, result references and characterization-factor rows. Upstream queries cover larger or ambiguous selections.
 - Dispose of timed-out IPC results after scheduled work settles. Bound that cleanup wait and report when the server has yet to settle.
