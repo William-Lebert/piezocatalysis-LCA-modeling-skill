@@ -20,6 +20,6 @@ An agent skill for life-cycle assessment of piezocatalytic, photocatalytic and p
 
 ## 引用 / Citation
 
-Pu, X. (2026). *Piezocatalysis LCA Modeling Skill (v1.7.0)* [Computer software]. Zenodo. [版本 DOI](https://doi.org/10.5281/zenodo.24395295)
+Pu, X. (2026). *Piezocatalysis LCA Modeling Skill (v1.8.0)* [Computer software]. Zenodo. [版本 DOI](https://doi.org/10.5281/zenodo.24579934)
 
 [Zenodo 归档记录 / Archived versions](https://doi.org/10.5281/zenodo.23813629) · [机器可读引用 / Citation metadata](CITATION.cff)
